@@ -117,7 +117,7 @@ export class DragDropManager {
 
       requestAnimationFrame(() => {
         // Insert placeholder before hiding so layout doesn't shift
-        this.placeholderEl = activeDocument.createDiv();
+        this.placeholderEl = this.boardEl!.createDiv();
         this.placeholderEl.className = "base-board-column-placeholder";
         columnEl.parentElement?.insertBefore(this.placeholderEl, columnEl);
         columnEl.addClass("base-board-column--dragging");
@@ -140,9 +140,11 @@ export class DragDropManager {
     const isMultiDrag = selectedCards.size > 1 && selectedCards.has(filePath);
     const dragCount = isMultiDrag ? selectedCards.size : 1;
 
-    // Create the drag ghost
+    // Create the drag ghost on boardEl (avoids HierarchyRequestError that
+    // hits when creating elements directly on the document), build its
+    // content, then move it to the body so it renders correctly for capture.
     const PAD = 20;
-    const ghostWrapper = activeDocument.createDiv();
+    const ghostWrapper = this.boardEl!.createDiv();
     ghostWrapper.style.cssText = `
       position: fixed;
       top: -9999px;
@@ -154,7 +156,7 @@ export class DragDropManager {
 
     if (isMultiDrag) {
       // Stacked cards effect: offset shadow cards behind the main card
-      const stackContainer = activeDocument.createDiv();
+      const stackContainer = ghostWrapper.createDiv();
       stackContainer.style.cssText = `
         position: relative;
         width: ${cardRect.width}px;
@@ -172,7 +174,7 @@ export class DragDropManager {
       // Shadow layers (bottom-most first) — visible offset behind the main card
       const layerCount = Math.min(dragCount - 1, 2);
       for (let i = layerCount; i >= 1; i--) {
-        const layer = activeDocument.createDiv();
+        const layer = stackContainer.createDiv();
         layer.style.cssText = `
           position: absolute;
           top: ${i * 6}px;
@@ -185,7 +187,6 @@ export class DragDropManager {
           opacity: ${0.6 - i * 0.15};
           box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         `;
-        stackContainer.appendChild(layer);
       }
 
       // Top card (the actual dragged card clone)
@@ -204,7 +205,7 @@ export class DragDropManager {
       stackContainer.appendChild(ghost);
 
       // Count badge
-      const badge = activeDocument.createDiv();
+      const badge = stackContainer.createDiv();
       badge.textContent = String(dragCount);
       badge.style.cssText = `
         position: absolute;
@@ -223,9 +224,6 @@ export class DragDropManager {
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         z-index: 1;
       `;
-      stackContainer.appendChild(badge);
-
-      ghostWrapper.appendChild(stackContainer);
     } else {
       // Single card: tilted clone
       const ghost = cardEl.cloneNode(true) as HTMLElement;
@@ -239,7 +237,15 @@ export class DragDropManager {
       ghostWrapper.appendChild(ghost);
     }
 
+    // Move the ghost from boardEl to the body so setDragImage can capture a
+    // properly rendered bitmap (elements nested inside overflow containers
+    // may not be painted when off-screen).
+    ghostWrapper.remove();
     activeDocument.body.appendChild(ghostWrapper);
+
+    // Force layout so the browser paints the ghost before we capture it
+    void ghostWrapper.getBoundingClientRect();
+
     e.dataTransfer.setDragImage(
       ghostWrapper,
       e.clientX - cardRect.left + PAD,
@@ -251,7 +257,7 @@ export class DragDropManager {
       ghostWrapper.remove();
 
       // Collapse the dragged card and insert placeholder
-      this.placeholderEl = activeDocument.createDiv();
+      this.placeholderEl = this.boardEl!.createDiv();
       this.placeholderEl.className = "base-board-card-placeholder";
       this.placeholderEl.style.height = `${this.draggedCardHeight}px`;
       cardEl.parentElement?.insertBefore(this.placeholderEl, cardEl);
@@ -331,7 +337,7 @@ export class DragDropManager {
     }
 
     if (!this.placeholderEl) {
-      this.placeholderEl = activeDocument.createDiv();
+      this.placeholderEl = this.boardEl!.createDiv();
       this.placeholderEl.className = "base-board-card-placeholder";
       this.placeholderEl.style.height = `${this.draggedCardHeight}px`;
     }
@@ -353,7 +359,7 @@ export class DragDropManager {
     if (!this.boardEl) return;
 
     if (!this.placeholderEl) {
-      this.placeholderEl = activeDocument.createDiv();
+      this.placeholderEl = this.boardEl.createDiv();
       this.placeholderEl.className = "base-board-column-placeholder";
     }
 
