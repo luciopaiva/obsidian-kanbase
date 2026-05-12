@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
+      attestations: write
 
     steps:
       - name: Checkout repository
@@ -28,6 +30,13 @@ jobs:
 
       - name: Build plugin
         run: npm run build
+
+      - name: Attest build provenance
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            main.js
+            styles.css
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2

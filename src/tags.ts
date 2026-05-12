@@ -64,7 +64,7 @@ export class Tags {
       cache?.frontmatter?.tag) as unknown;
     let fileTags: string[] = [];
     if (Array.isArray(tags)) {
-      fileTags = tags.filter((t) => typeof t === "string");
+      fileTags = tags.filter((t): t is string => typeof t === "string");
     } else if (typeof tags === "string") {
       fileTags = tags
         .split(",")

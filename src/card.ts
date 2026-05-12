@@ -107,7 +107,7 @@ export class CardManager {
       dragging = true;
     });
     cardEl.addEventListener("dragend", () => {
-      activeWindow.setTimeout(() => {
+      window.setTimeout(() => {
         dragging = false;
       }, 0);
     });

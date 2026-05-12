@@ -115,7 +115,7 @@ export class DragDropManager {
         e.clientY - headerRect.top,
       );
 
-      requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
         // Insert placeholder before hiding so layout doesn't shift
         this.placeholderEl = this.boardEl!.createDiv();
         this.placeholderEl.className = "base-board-column-placeholder";
@@ -253,7 +253,7 @@ export class DragDropManager {
     );
 
     // Clean up the ghost after the browser captures it, and dim cards
-    requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
       ghostWrapper.remove();
 
       // Collapse the dragged card and insert placeholder
@@ -455,9 +455,9 @@ export class DragDropManager {
         if (this.autoScrollVerticalEl && this.autoScrollVerticalSpeed !== 0) {
           this.autoScrollVerticalEl.scrollTop += this.autoScrollVerticalSpeed;
         }
-        this.autoScrollRAF = requestAnimationFrame(tick);
+        this.autoScrollRAF = window.requestAnimationFrame(tick);
       };
-      this.autoScrollRAF = requestAnimationFrame(tick);
+      this.autoScrollRAF = window.requestAnimationFrame(tick);
     } else if (!needsScroll && this.autoScrollRAF !== null) {
       cancelAnimationFrame(this.autoScrollRAF);
       this.autoScrollRAF = null;

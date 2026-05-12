@@ -30,8 +30,8 @@
 }
 
 /* Utility — used to hide the + button while inline card creation input is open */
-.base-board-hidden {
-  display: none !important;
+.base-board-column-header .base-board-hidden {
+  display: none;
 }
 
 /* ---- Placeholder (no groupBy set) ---- */
@@ -67,19 +67,20 @@
     transform 0.15s ease;
 }
 
-.base-board-column--dragging {
+.base-board-column--dragging,
+.base-board-column.base-board-column--dragging {
   /* Collapse to zero so it doesn't occupy space alongside the placeholder.
      Can't use display:none — that cancels the browser drag event.
      Negative margin eats the parent's flex gap so no extra space remains. */
   opacity: 0;
   pointer-events: none;
-  flex: 0 0 0 !important;
-  width: 0 !important;
-  min-width: 0 !important;
+  flex: 0 0 0;
+  width: 0;
+  min-width: 0;
   overflow: hidden;
-  padding: 0 !important;
-  margin: 0 0 0 -12px !important;
-  border: none !important;
+  padding: 0;
+  margin: 0 0 0 -12px;
+  border: none;
 }
 
 /* ---- Column drag placeholder ---- */
@@ -328,10 +329,6 @@
 
 /* ---- Card title ---- */
 
-.base-board-card {
-  position: relative;
-}
-
 .base-board-card-title {
   font-size: var(--font-ui-small);
   font-weight: var(--font-medium);
@@ -564,10 +561,6 @@
     transform 0.1s ease,
     box-shadow 0.15s ease;
   border: 1px solid transparent;
-}
-
-/* Ensure color contrast if a user picks a deep color - standard hack is to just add a slight text shadow or use CSS relative colors but we keep it simple */
-.base-board-filter-pill {
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
@@ -614,23 +607,23 @@
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
-.base-board-filter-pill-light {
-  color: #ffffff !important;
+.base-board-filter-pill.base-board-filter-pill-light {
+  color: #ffffff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.base-board-filter-pill-dark {
-  color: #1c212b !important;
+.base-board-filter-pill.base-board-filter-pill-dark {
+  color: #1c212b;
   text-shadow: none;
 }
 
-.base-board-card-tag-light {
-  color: #ffffff !important;
+.base-board-card-tag.base-board-card-tag-light {
+  color: #ffffff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.base-board-card-tag-dark {
-  color: #1c212b !important;
+.base-board-card-tag.base-board-card-tag-dark {
+  color: #1c212b;
   text-shadow: none;
 }
 
@@ -664,10 +657,10 @@
   flex-direction: column;
 }
 
-.base-board-rogue-leaf-container {
+.modal.base-board-card-modal .base-board-rogue-leaf-container {
   flex: 1;
-  position: relative !important;
-  height: 100% !important;
+  position: relative;
+  height: 100%;
   width: 100%;
 }
 
@@ -721,7 +714,7 @@
 }
 
 .base-board-tag-chip.base-board-tag-chip-light {
-  color: #ffffff !important;
+  color: #ffffff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
@@ -731,20 +724,20 @@
 }
 
 .base-board-tag-chip.base-board-tag-chip-dark {
-  color: #1c212b !important;
+  color: #1c212b;
   text-shadow: none;
 }
 
-.base-board-tag-input {
-  border: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  outline: none !important;
+.base-board-tag-input-container .base-board-tag-input {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
   min-width: 100px;
   flex: 1 1 auto;
-  padding: 0 !important;
+  padding: 0;
   font-size: var(--font-ui-small);
-  color: var(--text-normal) !important;
+  color: var(--text-normal);
 }
 
 .base-board-modal-actions-right {

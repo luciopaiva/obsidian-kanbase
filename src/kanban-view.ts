@@ -80,7 +80,7 @@ export class KanbanView extends BasesView implements HoverParent {
 
   onunload(): void {
     this.dragDropManager.destroy();
-    if (this.renderTimer) activeWindow.clearTimeout(this.renderTimer);
+    if (this.renderTimer) window.clearTimeout(this.renderTimer);
   }
 
   public focus(): void {
@@ -197,9 +197,14 @@ export class KanbanView extends BasesView implements HoverParent {
     if (key === undefined || key === null || key instanceof NullValue) {
       return NO_VALUE_COLUMN;
     }
-    if (typeof key === "object" && key !== null && "value" in key) {
-      const val = (key as Record<string, unknown>).value;
-      return String(val);
+    if (typeof key === "object" && key !== null) {
+      if ("value" in key) {
+        const val = (key as Record<string, unknown>).value;
+        return String(val);
+      }
+      // Bases group-key objects expose the column name via toString()
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string -- Bases-controlled object with custom toString
+      return String(key);
     }
     if (typeof key === "string") return key;
     if (typeof key === "number" || typeof key === "boolean") return String(key);
@@ -293,7 +298,6 @@ export class KanbanView extends BasesView implements HoverParent {
 
     // Use the official API: this.data is a BasesQueryResult
     const groupedData: BasesEntryGroup[] = this.data?.groupedData ?? [];
-
     const hasGroupBy =
       groupedData.length > 1 ||
       (groupedData.length === 1 &&
@@ -346,7 +350,7 @@ export class KanbanView extends BasesView implements HoverParent {
 
     // Restore scroll positions after the browser has laid out the new DOM
     if (savedScrollLeft > 0 || savedScrollTop > 0) {
-      requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
         boardEl.scrollLeft = savedScrollLeft;
         this.scrollEl.scrollTop = savedScrollTop;
       });
@@ -456,8 +460,8 @@ export class KanbanView extends BasesView implements HoverParent {
 
   /** Debounced render — coalesces multiple calls into one. */
   public scheduleRender(): void {
-    if (this.renderTimer) activeWindow.clearTimeout(this.renderTimer);
-    this.renderTimer = activeWindow.setTimeout(() => {
+    if (this.renderTimer) window.clearTimeout(this.renderTimer);
+    this.renderTimer = window.setTimeout(() => {
       this.renderTimer = null;
       this.render();
     }, 50);

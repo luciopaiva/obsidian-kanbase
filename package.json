@@ -1,6 +1,6 @@
 {
   "name": "obsidian-base-board",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Kanban board view for Bases with drag and drop",
   "main": "main.js",
   "scripts": {
@@ -24,16 +24,15 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@eslint/json": "^1.2.0",
-    "builtin-modules": "^5.1.0",
     "esbuild": "^0.28.0",
     "eslint": "^10.3.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-obsidianmd": "^0.2.9",
+    "eslint-plugin-obsidianmd": "^0.3.0",
     "eslint-plugin-prettier": "^5.5.5",
     "globals": "^17.6.0",
     "obsidian": "^1.12.3",
     "prettier": "^3.8.3",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.2"
+    "typescript-eslint": "^8.59.3"
   }
 }
