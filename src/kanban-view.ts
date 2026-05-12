@@ -294,6 +294,18 @@ export class KanbanView extends BasesView implements HoverParent {
     const savedScrollLeft = prevBoardEl?.scrollLeft ?? 0;
     const savedScrollTop = this.scrollEl.scrollTop;
 
+    // Save per-column vertical scroll (each .base-board-cards has overflow-y)
+    const savedColumnScrolls: Record<string, number> = {};
+    if (prevBoardEl) {
+      prevBoardEl.querySelectorAll(".base-board-column").forEach((col) => {
+        const name = (col as HTMLElement).dataset.columnName;
+        const cardsEl = col.querySelector(".base-board-cards");
+        if (name && cardsEl) {
+          savedColumnScrolls[name] = cardsEl.scrollTop;
+        }
+      });
+    }
+
     this.containerEl.empty();
 
     // Use the official API: this.data is a BasesQueryResult
@@ -349,10 +361,22 @@ export class KanbanView extends BasesView implements HoverParent {
     this.dragDropManager.initBoard(boardEl);
 
     // Restore scroll positions after the browser has laid out the new DOM
-    if (savedScrollLeft > 0 || savedScrollTop > 0) {
+    const hasColumnScrolls = Object.keys(savedColumnScrolls).some(
+      (k) => savedColumnScrolls[k] > 0,
+    );
+    if (savedScrollLeft > 0 || savedScrollTop > 0 || hasColumnScrolls) {
       window.requestAnimationFrame(() => {
         boardEl.scrollLeft = savedScrollLeft;
         this.scrollEl.scrollTop = savedScrollTop;
+
+        boardEl.querySelectorAll(".base-board-column").forEach((col) => {
+          const name = (col as HTMLElement).dataset.columnName;
+          const cardsEl = col.querySelector(".base-board-cards");
+          const scroll = name ? savedColumnScrolls[name] : undefined;
+          if (cardsEl && scroll != null && scroll > 0) {
+            cardsEl.scrollTop = scroll;
+          }
+        });
       });
     }
   }
