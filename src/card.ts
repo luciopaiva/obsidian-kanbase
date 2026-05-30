@@ -16,21 +16,6 @@ import { ORDER_PROPERTY, sanitizeFilename } from "./constants";
 import { relativeLuminance } from "./color-utils";
 import { CardDetailModal } from "./card-detail-modal";
 
-const SUFFIX_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789";
-
-function generateCardId(title: string): string {
-  const slug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
-  const suffix = Array.from(
-    { length: 4 },
-    () => SUFFIX_CHARS[Math.floor(Math.random() * SUFFIX_CHARS.length)],
-  ).join("");
-  return `${slug}-${suffix}`;
-}
-
 // Format a Value for chip display:
 //   - DateValue    → relative ("3 days ago")
 //   - LinkValue    → alias if set, otherwise basename without .md extension
@@ -513,12 +498,10 @@ export class CardManager {
       counter++;
     }
 
-    const id = generateCardId(title);
     const frontmatter = [
       "---",
       `${groupByProp}: ${columnName}`,
       `${ORDER_PROPERTY}: ${orderIndex}`,
-      `id: ${id}`,
       "---",
       "",
       `# ${title}`,
