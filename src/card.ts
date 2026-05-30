@@ -118,7 +118,25 @@ export class CardManager {
       const file = this.view.app.vault.getAbstractFileByPath(filePath);
       if (!(file instanceof TFile)) return;
 
-      new CardDetailModal(this.view.app, file, this.view).open();
+      const openBehavior = this.view.getCardOpenBehavior();
+      if (openBehavior === "split") {
+        if (
+          this.view.detailLeaf &&
+          this.view.isLeafAttached(this.view.detailLeaf)
+        ) {
+          void this.view.detailLeaf.openFile(file);
+        } else {
+          this.view.detailLeaf = this.view.app.workspace.getLeaf(
+            "split",
+            "vertical",
+          );
+          void this.view.detailLeaf.openFile(file);
+        }
+      } else if (openBehavior === "tab") {
+        void this.view.app.workspace.getLeaf("tab").openFile(file);
+      } else {
+        new CardDetailModal(this.view.app, file, this.view).open();
+      }
     });
 
     // Middle-click → always open in new tab
@@ -338,7 +356,25 @@ export class CardManager {
         .setTitle("Open")
         .setIcon("lucide-file-text")
         .onClick(() => {
-          new CardDetailModal(this.view.app, file, this.view).open();
+          const openBehavior = this.view.getCardOpenBehavior();
+          if (openBehavior === "split") {
+            if (
+              this.view.detailLeaf &&
+              this.view.isLeafAttached(this.view.detailLeaf)
+            ) {
+              void this.view.detailLeaf.openFile(file);
+            } else {
+              this.view.detailLeaf = this.view.app.workspace.getLeaf(
+                "split",
+                "vertical",
+              );
+              void this.view.detailLeaf.openFile(file);
+            }
+          } else if (openBehavior === "tab") {
+            void this.view.app.workspace.getLeaf("tab").openFile(file);
+          } else {
+            new CardDetailModal(this.view.app, file, this.view).open();
+          }
         });
     });
 

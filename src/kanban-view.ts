@@ -2,12 +2,14 @@ import {
   BasesView,
   BasesEntry,
   BasesEntryGroup,
+  BasesAllOptions,
   HoverParent,
   HoverPopover,
   QueryController,
   NullValue,
   setIcon,
   TFile,
+  WorkspaceLeaf,
 } from "obsidian";
 import type BaseBoardPlugin from "./main";
 import { DragDropManager } from "./drag-drop";
@@ -18,6 +20,7 @@ import {
   NO_VALUE_COLUMN,
   ORDER_PROPERTY,
   CONFIG_KEY_COLUMNS,
+  CONFIG_KEY_OPEN_BEHAVIOR,
 } from "./constants";
 
 // ---------------------------------------------------------------------------
@@ -49,6 +52,7 @@ export class KanbanView extends BasesView implements HoverParent {
   public tags: Tags;
   /** Currently selected card file paths (for batch operations) */
   public selectedCards: Set<string> = new Set();
+  public detailLeaf: WorkspaceLeaf | null = null;
 
   constructor(
     controller: QueryController,
@@ -118,8 +122,26 @@ export class KanbanView extends BasesView implements HoverParent {
     }
   }
 
-  static getViewOptions(): never[] {
-    return [];
+  static getViewOptions(): BasesAllOptions[] {
+    return [
+      {
+        type: "group" as const,
+        displayName: "Display",
+        items: [
+          {
+            key: CONFIG_KEY_OPEN_BEHAVIOR,
+            type: "dropdown" as const,
+            displayName: "Open card in",
+            default: "modal",
+            options: {
+              modal: "Floating modal",
+              split: "Split to the right",
+              tab: "New tab",
+            },
+          },
+        ],
+      },
+    ];
   }
 
   // ---------------------------------------------------------------------------
@@ -191,6 +213,20 @@ export class KanbanView extends BasesView implements HoverParent {
     }
 
     return null;
+  }
+
+  public getCardOpenBehavior(): "modal" | "split" | "tab" {
+    const val = this.config?.get(CONFIG_KEY_OPEN_BEHAVIOR);
+    if (val === "split" || val === "tab") return val;
+    return "modal";
+  }
+
+  public isLeafAttached(leaf: WorkspaceLeaf): boolean {
+    let found = false;
+    this.app.workspace.iterateAllLeaves((l) => {
+      if (l === leaf) found = true;
+    });
+    return found;
   }
 
   private getColumnName(key: unknown): string {
