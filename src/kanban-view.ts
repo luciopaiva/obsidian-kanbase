@@ -133,8 +133,9 @@ export class KanbanView extends BasesView implements HoverParent {
             key: CONFIG_KEY_OPEN_BEHAVIOR,
             type: "dropdown" as const,
             displayName: "Open card in",
-            default: "modal",
+            default: "active",
             options: {
+              active: "Active pane / tab",
               modal: "Floating modal",
               split: "Split to the right",
               tab: "New tab",
@@ -216,10 +217,10 @@ export class KanbanView extends BasesView implements HoverParent {
     return null;
   }
 
-  public getCardOpenBehavior(): "modal" | "split" | "tab" {
+  public getCardOpenBehavior(): "active" | "modal" | "split" | "tab" {
     const val = this.config?.get(CONFIG_KEY_OPEN_BEHAVIOR);
-    if (val === "split" || val === "tab") return val;
-    return "modal";
+    if (val === "modal" || val === "split" || val === "tab") return val;
+    return "active";
   }
 
   public isLeafAttached(leaf: WorkspaceLeaf): boolean {

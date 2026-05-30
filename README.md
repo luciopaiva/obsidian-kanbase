@@ -28,6 +28,18 @@
 
 Open the **Command palette** (`Ctrl/Cmd + P`) and run **"Base Board: Create new board"**. Enter a name, choose a folder, and the plugin will scaffold everything for you — a `.base` file, a tasks folder, and sample task notes. The board opens automatically.
 
+### Card Navigation & Selection
+
+By default, card interaction respects native Obsidian conventions:
+
+* **Click:** Open the card's note in the active tab / pane.
+* **Ctrl/Cmd + Click:** Open the note in a new tab.
+* **Ctrl/Cmd + Alt + Click** (or **Cmd + Option + Click** on macOS): Open the note to the side in a split pane.
+* **Alt / Option + Click:** Toggle selection of a card (for bulk actions or dragging).
+* **Shift + Click:** Select a range of cards.
+
+You can customize the default click behavior (e.g. to always open in a floating modal, split pane, or new tab) via the board toolbar under the view options menu.
+
 ## Installation
 
 ### From Obsidian Community Plugins

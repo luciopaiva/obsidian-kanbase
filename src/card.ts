@@ -10,6 +10,7 @@ import {
   Notice,
   Menu,
   Value,
+  Keymap,
 } from "obsidian";
 import { KanbanView } from "./kanban-view";
 import { ORDER_PROPERTY, sanitizeFilename } from "./constants";
@@ -100,10 +101,10 @@ export class CardManager {
     cardEl.addEventListener("click", (e: MouseEvent) => {
       if (dragging) return;
 
-      const isMultiKey = e.ctrlKey || e.metaKey;
+      const isAlt = e.altKey;
       const isShift = e.shiftKey;
 
-      if (isMultiKey || isShift) {
+      if (isAlt || isShift) {
         e.preventDefault();
         this.handleCardSelect(filePath, columnName, isShift);
         return;
@@ -117,6 +118,14 @@ export class CardManager {
 
       const file = this.view.app.vault.getAbstractFileByPath(filePath);
       if (!(file instanceof TFile)) return;
+
+      // Handle standard Obsidian modifiers using Keymap.isModEvent(e)
+      const mod = Keymap.isModEvent(e);
+      if (mod) {
+        e.preventDefault();
+        void this.view.app.workspace.getLeaf(mod).openFile(file);
+        return;
+      }
 
       const openBehavior = this.view.getCardOpenBehavior();
       if (openBehavior === "split") {
@@ -134,6 +143,8 @@ export class CardManager {
         }
       } else if (openBehavior === "tab") {
         void this.view.app.workspace.getLeaf("tab").openFile(file);
+      } else if (openBehavior === "active") {
+        void this.view.app.workspace.getLeaf(false).openFile(file);
       } else {
         new CardDetailModal(this.view.app, file, this.view).open();
       }
@@ -372,6 +383,8 @@ export class CardManager {
             }
           } else if (openBehavior === "tab") {
             void this.view.app.workspace.getLeaf("tab").openFile(file);
+          } else if (openBehavior === "active") {
+            void this.view.app.workspace.getLeaf(false).openFile(file);
           } else {
             new CardDetailModal(this.view.app, file, this.view).open();
           }
