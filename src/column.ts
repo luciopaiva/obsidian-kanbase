@@ -9,6 +9,7 @@ import {
 import { KanbanView } from "./kanban-view";
 import { InputModal } from "./modals";
 import { NO_VALUE_COLUMN } from "./constants";
+import { ColorPickerModal } from "./tags";
 
 export class ColumnManager {
   private view: KanbanView;
@@ -49,6 +50,13 @@ export class ColumnManager {
     const columnEl = boardEl.createDiv({ cls: "base-board-column" });
     columnEl.dataset.columnName = columnName;
     columnEl.dataset.columnIndex = String(columnIndex);
+
+    const columnColor = this.view.getColumnColor(columnName);
+    if (columnColor) {
+      columnEl.style.setProperty("--column-color", columnColor);
+      const accentEl = columnEl.createDiv({ cls: "base-board-column-accent" });
+      accentEl.style.backgroundColor = columnColor;
+    }
 
     // ---- Header ----
     const headerEl = columnEl.createDiv({ cls: "base-board-column-header" });
@@ -116,6 +124,24 @@ export class ColumnManager {
         });
         menu.addSeparator();
       }
+
+      const currentColor = this.view.getColumnColor(columnName) ?? "";
+      menu.addItem((item) => {
+        item
+          .setTitle("Change color")
+          .setIcon("lucide-palette")
+          .onClick(() => {
+            new ColorPickerModal(
+              this.view.app,
+              columnName,
+              currentColor,
+              (color) => {
+                this.view.setColumnColor(columnName, color);
+              },
+            ).open();
+          });
+      });
+      menu.addSeparator();
 
       menu.addItem((item) => {
         item

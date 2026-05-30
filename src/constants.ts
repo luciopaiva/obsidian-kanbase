@@ -13,6 +13,9 @@ export const CONFIG_KEY_TAG_COLORS = "tagColors";
 /** Key used by BasesViewConfig.set/get to persist card click behavior in the .base file. */
 export const CONFIG_KEY_OPEN_BEHAVIOR = "cardOpenBehavior";
 
+/** Key used by BasesViewConfig.set/get to persist column colors in the .base file. */
+export const CONFIG_KEY_COLUMN_COLORS = "columnColors";
+
 /**
  * Regex matching characters that are invalid in file/folder names.
  * Used when sanitizing user input before creating vault items.

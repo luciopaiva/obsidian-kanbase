@@ -21,6 +21,7 @@ import {
   ORDER_PROPERTY,
   CONFIG_KEY_COLUMNS,
   CONFIG_KEY_OPEN_BEHAVIOR,
+  CONFIG_KEY_COLUMN_COLORS,
 } from "./constants";
 
 // ---------------------------------------------------------------------------
@@ -227,6 +228,29 @@ export class KanbanView extends BasesView implements HoverParent {
       if (l === leaf) found = true;
     });
     return found;
+  }
+
+  public getColumnColors(): Record<string, string> {
+    const raw = this.config?.get(CONFIG_KEY_COLUMN_COLORS);
+    return raw && typeof raw === "object"
+      ? (raw as Record<string, string>)
+      : {};
+  }
+
+  public getColumnColor(columnName: string): string | null {
+    const customColors = this.getColumnColors();
+    return customColors[columnName] ?? null;
+  }
+
+  public setColumnColor(columnName: string, color: string): void {
+    const colors = this.getColumnColors();
+    if (color) {
+      colors[columnName] = color;
+    } else {
+      delete colors[columnName];
+    }
+    this.config?.set(CONFIG_KEY_COLUMN_COLORS, colors);
+    this.scheduleRender();
   }
 
   private getColumnName(key: unknown): string {

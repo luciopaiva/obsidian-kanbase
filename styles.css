@@ -67,6 +67,27 @@
     transform 0.15s ease;
 }
 
+.base-board-column[style*="--column-color"] {
+  background-color: color-mix(
+    in srgb,
+    var(--column-color) 4%,
+    var(--background-secondary)
+  );
+}
+
+.base-board-column[style*="--column-color"] .base-board-column-count {
+  background-color: color-mix(
+    in srgb,
+    var(--column-color) 15%,
+    var(--background-secondary)
+  );
+  color: var(--column-color);
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-weight: var(--font-semibold);
+  margin-left: 4px;
+}
+
 .base-board-column--dragging,
 .base-board-column.base-board-column--dragging {
   /* Collapse to zero so it doesn't occupy space alongside the placeholder.
@@ -81,6 +102,12 @@
   padding: 0;
   margin: 0 0 0 -12px;
   border: none;
+}
+
+.base-board-column-accent {
+  height: 4px;
+  width: 100%;
+  flex-shrink: 0;
 }
 
 /* ---- Column drag placeholder ---- */
