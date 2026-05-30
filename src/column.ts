@@ -95,11 +95,11 @@ export class ColumnManager {
     }
 
     // ---- Right-click context menu on header ----
-    if (!isNoValue) {
-      headerEl.addEventListener("contextmenu", (e: MouseEvent) => {
-        e.preventDefault();
-        const menu = new Menu();
+    headerEl.addEventListener("contextmenu", (e: MouseEvent) => {
+      e.preventDefault();
+      const menu = new Menu();
 
+      if (!isNoValue) {
         menu.addItem((item) => {
           item
             .setTitle("Rename column")
@@ -114,25 +114,25 @@ export class ColumnManager {
               );
             });
         });
-
         menu.addSeparator();
-        menu.addItem((item) => {
-          item
-            .setTitle(
-              entries.length > 0
-                ? `Delete column (${entries.length} card${entries.length > 1 ? "s" : ""} will remain)`
-                : "Delete column",
-            )
-            .setIcon("lucide-trash-2")
-            .setWarning(true)
-            .onClick(() => {
-              this.handleDeleteColumn(columnName);
-            });
-        });
+      }
 
-        menu.showAtMouseEvent(e);
+      menu.addItem((item) => {
+        item
+          .setTitle(
+            entries.length > 0
+              ? `Delete column (${entries.length} card${entries.length > 1 ? "s" : ""} will remain)`
+              : "Delete column",
+          )
+          .setIcon("lucide-trash-2")
+          .setWarning(true)
+          .onClick(() => {
+            this.handleDeleteColumn(columnName);
+          });
       });
-    }
+
+      menu.showAtMouseEvent(e);
+    });
 
     // ---- Cards container ----
     const cardsEl = columnEl.createDiv({ cls: "base-board-cards" });
