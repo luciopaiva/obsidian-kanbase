@@ -1,5 +1,4 @@
 import { Modal, App, Setting, Notice, TextComponent } from "obsidian";
-import { CONFIG_KEY_WIP_LIMITS } from "./constants";
 
 // ---------------------------------------------------------------------------
 //  Simple input modal (for column names, etc.)
@@ -101,7 +100,7 @@ export class WipLimitModal extends Modal {
       .setName("Maximum cards")
       .setDesc("Leave empty to remove the limit")
       .addText((text) => {
-        text.setPlaceholder("e.g. 5");
+        text.setPlaceholder("E.g. 5");
         if (this.currentLimit !== null) {
           text.setValue(String(this.currentLimit));
         }
@@ -141,7 +140,7 @@ export class WipLimitModal extends Modal {
     } else {
       const num = parseInt(trimmed, 10);
       if (isNaN(num) || num <= 0) {
-        new Notice("WIP limit must be a positive number.");
+        new Notice("Wip limit must be a positive number.");
         return;
       }
       this.onSubmit(num);
