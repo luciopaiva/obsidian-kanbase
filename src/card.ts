@@ -528,12 +528,12 @@ export class CardManager {
     const titleSpan = titleEl.querySelector("span");
     if (!titleSpan) return;
 
-    const input = activeDocument.createEl("input");
+    const input = titleEl.createEl("input");
     input.type = "text";
     input.value = file.basename;
     input.className = "base-board-card-rename-input";
 
-    titleSpan.replaceWith(input);
+    titleSpan.remove();
     input.focus();
     input.select();
 
@@ -819,7 +819,7 @@ export class CardManager {
   }
 
   private renderCardThumbnail(cardEl: HTMLElement, src: string): void {
-    const thumbEl = activeDocument.createDiv();
+    const thumbEl = cardEl.createDiv();
     thumbEl.className = "base-board-card-thumbnail";
     thumbEl
       .createEl("img", {

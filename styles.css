@@ -566,8 +566,8 @@
 .base-board-board--is-dragging .base-board-card-placeholder,
 .base-board-board--is-dragging .base-board-card--drag-ghost,
 .base-board-board--is-dragging .base-board-column-placeholder {
-  transition: none !important;
-  animation: none !important;
+  transition: none;
+  animation: none;
 }
 
 /* ---- Add column button ---- */
