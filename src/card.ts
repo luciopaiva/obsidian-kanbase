@@ -279,8 +279,7 @@ export class CardManager {
     // (e.g. "title") as the card heading instead of the filename.
     let cardTitle = entry.file?.basename ?? "Untitled";
     const titleProp = this.view.config.get("cardTitleProperty") as
-      | string
-      | undefined;
+      string | undefined;
     if (titleProp) {
       const propId = titleProp.startsWith("note.")
         ? titleProp
@@ -529,7 +528,7 @@ export class CardManager {
     const titleSpan = titleEl.querySelector("span");
     if (!titleSpan) return;
 
-    const input = activeDocument.createElement("input");
+    const input = activeDocument.createEl("input");
     input.type = "text";
     input.value = file.basename;
     input.className = "base-board-card-rename-input";
@@ -820,7 +819,7 @@ export class CardManager {
   }
 
   private renderCardThumbnail(cardEl: HTMLElement, src: string): void {
-    const thumbEl = activeDocument.createElement("div");
+    const thumbEl = activeDocument.createDiv();
     thumbEl.className = "base-board-card-thumbnail";
     thumbEl
       .createEl("img", {

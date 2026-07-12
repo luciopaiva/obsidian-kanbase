@@ -433,8 +433,7 @@ export class KanbanView extends BasesView implements HoverParent {
   public getColumns(): string[] {
     // 1. Try .base file config first (new preferred storage)
     const fromConfig = this.config?.get(CONFIG_KEY_COLUMNS) as
-      | string[]
-      | undefined;
+      string[] | undefined;
 
     // 2. Fallback: legacy plugin data.json
     const fromPlugin = this.plugin.getColumnConfig(this.getBaseId());

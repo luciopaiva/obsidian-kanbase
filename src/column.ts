@@ -340,7 +340,7 @@ export class ColumnManager {
     addCardBtn?: HTMLElement | null,
     menuBtn?: HTMLElement | null,
   ): void {
-    const input = activeDocument.createElement("input");
+    const input = activeDocument.createEl("input");
     input.type = "text";
     input.value = oldName;
     input.className = "base-board-column-title-input";
