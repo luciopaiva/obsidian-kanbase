@@ -1,4 +1,4 @@
-import { App } from "obsidian";
+import { App, Platform } from "obsidian";
 
 // We use dataTransfer types to distinguish card vs column drags
 const CARD_MIME = "application/x-kanban-card";
@@ -530,14 +530,18 @@ export class DragDropManager {
     } else if (this.dragType === "card") {
       const success = await this.handleCardDrop(e);
       this.cardDropped = success;
-      // Don't call onDragEnd here — the browser fires dragend automatically,
+      // Don't call onDragEnd here on desktop — the browser fires dragend automatically,
       // and our flag ensures we skip visual cleanup on success.
+      // On mobile, the dragend event is often not fired, so we must call it manually.
+      if (Platform.isMobile) {
+        this.onDragEnd();
+      }
     }
   }
 
   private handleColumnDrop(e: DragEvent): void {
     if (!this.boardEl) return;
-    const draggedColumnName = e.dataTransfer?.getData(COLUMN_MIME);
+    const draggedColumnName = this.draggedEl?.dataset.columnName;
     if (!draggedColumnName) return;
 
     // Collect column names in DOM order (placeholder marks the new position)
@@ -564,7 +568,7 @@ export class DragDropManager {
   }
 
   private async handleCardDrop(e: DragEvent): Promise<boolean> {
-    const filePath = e.dataTransfer?.getData(CARD_MIME);
+    const filePath = this.draggedEl?.dataset.filePath;
     if (!filePath) return false;
 
     const columnEl = (e.target as HTMLElement).closest(".base-board-column");

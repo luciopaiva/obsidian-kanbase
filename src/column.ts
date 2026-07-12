@@ -5,6 +5,7 @@ import {
   TFile,
   Notice,
   Menu,
+  Platform,
 } from "obsidian";
 import { KanbanView } from "./kanban-view";
 import { InputModal } from "./modals";
@@ -114,83 +115,40 @@ export class ColumnManager {
       });
     }
 
+    // ---- Column menu button ----
+    let menuBtn: HTMLElement | null = null;
+    if (!isNoValue) {
+      menuBtn = headerEl.createDiv({
+        cls: "base-board-column-menu-btn",
+      });
+      setIcon(menuBtn, "more-horizontal");
+      menuBtn.addEventListener("click", (e: MouseEvent) => {
+        e.stopPropagation();
+        this.showColumnMenu(
+          e,
+          columnName,
+          entries,
+          titleEl,
+          countEl,
+          addCardHeaderBtn,
+          menuBtn,
+        );
+      });
+    }
+
     // ---- Right-click context menu on header ----
     headerEl.addEventListener("contextmenu", (e: MouseEvent) => {
       e.preventDefault();
-      const menu = new Menu();
-
-      if (!isNoValue) {
-        menu.addItem((item) => {
-          item
-            .setTitle("Rename column")
-            .setIcon("lucide-pencil")
-            .onClick(() => {
-              this.startColumnRename(
-                titleEl,
-                columnName,
-                entries,
-                countEl,
-                addCardHeaderBtn,
-              );
-            });
-        });
-        menu.addSeparator();
-      }
-
-      const currentColor = this.view.getColumnColor(columnName) ?? "";
-      menu.addItem((item) => {
-        item
-          .setTitle("Change color")
-          .setIcon("lucide-palette")
-          .onClick(() => {
-            new ColorPickerModal(
-              this.view.app,
-              columnName,
-              currentColor,
-              (color) => {
-                this.view.setColumnColor(columnName, color);
-              },
-            ).open();
-          });
-      });
-
-      const currentWipLimit = this.view.getWipLimit(columnName);
-      menu.addItem((item) => {
-        item
-          .setTitle(
-            currentWipLimit !== null
-              ? `WIP limit: ${currentWipLimit}`
-              : "Set WIP limit",
-          )
-          .setIcon("lucide-gauge")
-          .onClick(() => {
-            new WipLimitModal(
-              this.view.app,
-              columnName,
-              currentWipLimit,
-              (limit) => {
-                this.view.setWipLimit(columnName, limit);
-              },
-            ).open();
-          });
-      });
-      menu.addSeparator();
-
-      menu.addItem((item) => {
-        item
-          .setTitle(
-            entries.length > 0
-              ? `Delete column (${entries.length} card${entries.length > 1 ? "s" : ""} will remain)`
-              : "Delete column",
-          )
-          .setIcon("lucide-trash-2")
-          .setWarning(true)
-          .onClick(() => {
-            this.handleDeleteColumn(columnName);
-          });
-      });
-
-      menu.showAtMouseEvent(e);
+      if (Platform.isMobile) return;
+      this.showColumnMenu(
+        e,
+        columnName,
+        entries,
+        titleEl,
+        countEl,
+        addCardHeaderBtn,
+        menuBtn,
+      );
     });
 
     // ---- Cards container ----
@@ -199,6 +157,93 @@ export class ColumnManager {
     visibleCards.forEach((entry) => {
       this.view.cardManager.renderCard(cardsEl, entry, columnName);
     });
+  }
+
+  private showColumnMenu(
+    e: MouseEvent,
+    columnName: string,
+    entries: BasesEntry[],
+    titleEl: HTMLElement,
+    countEl?: HTMLElement | null,
+    addCardHeaderBtn?: HTMLElement | null,
+    menuBtn?: HTMLElement | null,
+  ): void {
+    const isNoValue = columnName === NO_VALUE_COLUMN;
+    const menu = new Menu();
+
+    if (!isNoValue) {
+      menu.addItem((item) => {
+        item
+          .setTitle("Rename column")
+          .setIcon("lucide-pencil")
+          .onClick(() => {
+            this.startColumnRename(
+              titleEl,
+              columnName,
+              entries,
+              countEl,
+              addCardHeaderBtn,
+              menuBtn,
+            );
+          });
+      });
+      menu.addSeparator();
+    }
+
+    const currentColor = this.view.getColumnColor(columnName) ?? "";
+    menu.addItem((item) => {
+      item
+        .setTitle("Change color")
+        .setIcon("lucide-palette")
+        .onClick(() => {
+          new ColorPickerModal(
+            this.view.app,
+            columnName,
+            currentColor,
+            (color) => {
+              this.view.setColumnColor(columnName, color);
+            },
+          ).open();
+        });
+    });
+
+    const currentWipLimit = this.view.getWipLimit(columnName);
+    menu.addItem((item) => {
+      item
+        .setTitle(
+          currentWipLimit !== null
+            ? `WIP limit: ${currentWipLimit}`
+            : "Set WIP limit",
+        )
+        .setIcon("lucide-gauge")
+        .onClick(() => {
+          new WipLimitModal(
+            this.view.app,
+            columnName,
+            currentWipLimit,
+            (limit) => {
+              this.view.setWipLimit(columnName, limit);
+            },
+          ).open();
+        });
+    });
+    menu.addSeparator();
+
+    menu.addItem((item) => {
+      item
+        .setTitle(
+          entries.length > 0
+            ? `Delete column (${entries.length} card${entries.length > 1 ? "s" : ""} will remain)`
+            : "Delete column",
+        )
+        .setIcon("lucide-trash-2")
+        .setWarning(true)
+        .onClick(() => {
+          this.handleDeleteColumn(columnName);
+        });
+    });
+
+    menu.showAtMouseEvent(e);
   }
 
   public renderAddColumnButton(boardEl: HTMLElement): void {
@@ -238,6 +283,7 @@ export class ColumnManager {
     entries: BasesEntry[],
     countEl?: HTMLElement | null,
     addCardBtn?: HTMLElement | null,
+    menuBtn?: HTMLElement | null,
   ): void {
     const input = activeDocument.createElement("input");
     input.type = "text";
@@ -247,10 +293,12 @@ export class ColumnManager {
     // Hide count and + during editing so the input can use the full width
     if (countEl) countEl.classList.add("base-board-hidden");
     if (addCardBtn) addCardBtn.classList.add("base-board-hidden");
+    if (menuBtn) menuBtn.classList.add("base-board-hidden");
 
     const restoreChrome = () => {
       if (countEl) countEl.classList.remove("base-board-hidden");
       if (addCardBtn) addCardBtn.classList.remove("base-board-hidden");
+      if (menuBtn) menuBtn.classList.remove("base-board-hidden");
     };
 
     // Replace the span with the input
