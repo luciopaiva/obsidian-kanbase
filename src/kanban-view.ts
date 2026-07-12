@@ -34,6 +34,12 @@ import {
   CONFIG_KEY_ADD_TO_TOP,
 } from "./constants";
 
+interface BoardScrollState {
+  boardLeft: number;
+  viewTop: number;
+  columnTops: Map<string, number>;
+}
+
 // ---------------------------------------------------------------------------
 //  Kanban View
 // ---------------------------------------------------------------------------
@@ -478,6 +484,7 @@ export class KanbanView extends BasesView implements HoverParent {
 
   public render(): void {
     this.selectedCards.clear();
+    const scrollState = this.captureScrollState();
 
     // Index stable DOM nodes before rebuilding the lightweight board shell.
     // Columns are detached as complete subtrees, preserving their card lists,
@@ -500,25 +507,6 @@ export class KanbanView extends BasesView implements HoverParent {
           el.remove();
         }
       });
-
-    // Save scroll positions before destroying the DOM so we can restore
-    // them after rebuild.  Without this the board jumps back to 0 on every
-    // re-render (metadata update, drag hover, etc.).
-    const prevBoardEl = this.containerEl.querySelector(".base-board-board");
-    const savedScrollLeft = prevBoardEl?.scrollLeft ?? 0;
-    const savedScrollTop = this.scrollEl.scrollTop;
-
-    // Save per-column vertical scroll (each .base-board-cards has overflow-y)
-    const savedColumnScrolls: Record<string, number> = {};
-    if (prevBoardEl) {
-      prevBoardEl.querySelectorAll(".base-board-column").forEach((col) => {
-        const name = (col as HTMLElement).dataset.columnName;
-        const cardsEl = col.querySelector(".base-board-cards");
-        if (name && cardsEl) {
-          savedColumnScrolls[name] = cardsEl.scrollTop;
-        }
-      });
-    }
 
     this.containerEl.empty();
 
@@ -579,26 +567,50 @@ export class KanbanView extends BasesView implements HoverParent {
 
     this.columnManager.renderAddColumnButton(boardEl);
     this.dragDropManager.initBoard(boardEl);
+    this.restoreScrollState(boardEl, scrollState);
+  }
 
-    // Restore scroll positions after the browser has laid out the new DOM
-    const hasColumnScrolls = Object.keys(savedColumnScrolls).some(
-      (k) => savedColumnScrolls[k] > 0,
-    );
-    if (savedScrollLeft > 0 || savedScrollTop > 0 || hasColumnScrolls) {
-      window.requestAnimationFrame(() => {
-        boardEl.scrollLeft = savedScrollLeft;
-        this.scrollEl.scrollTop = savedScrollTop;
+  private captureScrollState(): BoardScrollState {
+    const boardEl =
+      this.containerEl.querySelector<HTMLElement>(".base-board-board");
+    const columnTops = new Map<string, number>();
 
-        boardEl.querySelectorAll(".base-board-column").forEach((col) => {
-          const name = (col as HTMLElement).dataset.columnName;
-          const cardsEl = col.querySelector(".base-board-cards");
-          const scroll = name ? savedColumnScrolls[name] : undefined;
-          if (cardsEl && scroll != null && scroll > 0) {
-            cardsEl.scrollTop = scroll;
-          }
-        });
+    boardEl
+      ?.querySelectorAll<HTMLElement>(".base-board-column")
+      .forEach((columnEl) => {
+        const name = columnEl.dataset.columnName;
+        const cardsEl =
+          columnEl.querySelector<HTMLElement>(".base-board-cards");
+        if (name && cardsEl) columnTops.set(name, cardsEl.scrollTop);
       });
-    }
+
+    return {
+      boardLeft: boardEl?.scrollLeft ?? 0,
+      viewTop: this.scrollEl.scrollTop,
+      columnTops,
+    };
+  }
+
+  private restoreScrollState(
+    boardEl: HTMLElement,
+    state: BoardScrollState,
+  ): void {
+    // All columns are attached, so these assignments restore against the final
+    // layout and cannot race a deferred callback from an earlier render.
+    boardEl.scrollLeft = state.boardLeft;
+    this.scrollEl.scrollTop = state.viewTop;
+
+    boardEl
+      .querySelectorAll<HTMLElement>(".base-board-column")
+      .forEach((columnEl) => {
+        const name = columnEl.dataset.columnName;
+        const cardsEl =
+          columnEl.querySelector<HTMLElement>(".base-board-cards");
+        const scrollTop = name ? state.columnTops.get(name) : undefined;
+        if (cardsEl && scrollTop !== undefined) {
+          cardsEl.scrollTop = scrollTop;
+        }
+      });
   }
 
   // ---------------------------------------------------------------------------
