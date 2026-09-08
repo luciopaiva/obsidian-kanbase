@@ -792,6 +792,8 @@
 
 .base-board-filter-pill {
   position: relative;
+  display: inline-flex;
+  align-items: center;
   font-size: var(--font-ui-smaller);
   padding: 4px 10px;
   border-radius: 12px;
@@ -805,6 +807,20 @@
     box-shadow 0.15s ease;
   border: 1px solid transparent;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+.base-board-filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5em;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background-color: rgba(0, 0, 0, 0.16);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
 }
 
 .base-board-filter-pill:hover {

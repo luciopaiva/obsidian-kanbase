@@ -3,6 +3,7 @@ import { CONFIG_KEY_TAG_COLORS } from "./constants";
 import { App, Modal, TFile, setIcon, setTooltip, Setting } from "obsidian";
 import { TagEditModal } from "./tag-edit-modal";
 import { relativeLuminance } from "./color-utils";
+import { countTagsByCard } from "./tag-counts";
 
 export class Tags {
   private view: KanbanView;
@@ -94,18 +95,19 @@ export class Tags {
   }
 
   public renderFilterBar(container: HTMLElement): void {
-    const allTags = new Set<string>();
+    const tagsByCard: string[][] = [];
 
     for (const group of this.view.currentGroups) {
       for (const entry of group.entries) {
         if (entry.file instanceof TFile) {
-          const fileTags = this.extractTagsFromFile(entry.file);
-          fileTags.forEach((t) => allTags.add(t));
+          tagsByCard.push(this.extractTagsFromFile(entry.file));
         }
       }
     }
 
-    if (allTags.size === 0 && this.activeFilters.size === 0) {
+    const tagCounts = countTagsByCard(tagsByCard);
+
+    if (tagCounts.size === 0 && this.activeFilters.size === 0) {
       return;
     }
 
@@ -122,16 +124,22 @@ export class Tags {
     });
     setIcon(titleEl, "lucide-filter");
 
-    const tagsArray = Array.from(allTags).sort();
+    const tagsArray = Array.from(tagCounts.keys()).sort();
 
     // Also include any active filters that might not be in the current cards
     for (const activeTag of this.activeFilters) {
-      if (!allTags.has(activeTag)) tagsArray.push(activeTag);
+      if (!tagCounts.has(activeTag)) tagsArray.push(activeTag);
     }
 
     for (const tag of tagsArray) {
       const pill = barEl.createSpan({ cls: "base-board-filter-pill" });
-      pill.textContent = tag;
+      const count = tagCounts.get(tag) ?? 0;
+      pill.createSpan({ cls: "base-board-filter-label", text: tag });
+      pill.createSpan({ cls: "base-board-filter-count", text: String(count) });
+      pill.setAttr(
+        "aria-label",
+        `${tag}, ${count} ${count === 1 ? "card" : "cards"}`,
+      );
 
       const tagColor = this.getColorForTag(tag);
       if (tagColor) {
@@ -147,7 +155,10 @@ export class Tags {
         pill.addClass("is-active");
       }
 
-      setTooltip(pill, "Click to filter · Right-click to change color");
+      setTooltip(
+        pill,
+        `${count} ${count === 1 ? "card" : "cards"} · Click to filter · Right-click to change color`,
+      );
 
       pill.addEventListener("contextmenu", (e) => {
         e.preventDefault();
