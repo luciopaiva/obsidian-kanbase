@@ -7,6 +7,7 @@ import { countTagsByCard } from "./tag-counts";
 
 export class Tags {
   private view: KanbanView;
+  private isFilterBarVisible = true;
   public activeFilters: Set<string> = new Set();
 
   constructor(view: KanbanView) {
@@ -94,7 +95,39 @@ export class Tags {
     }).open();
   }
 
+  public renderToolbar(container: HTMLElement): void {
+    const boardEl = container.querySelector(".base-board-board");
+    if (!boardEl) return;
+
+    const toolbarEl = container.createDiv({ cls: "base-board-toolbar" });
+    container.insertBefore(toolbarEl, boardEl);
+
+    const filterButton = toolbarEl.createEl("button", {
+      cls: "clickable-icon base-board-toolbar-button",
+      attr: {
+        type: "button",
+        "aria-label": this.isFilterBarVisible
+          ? "Hide tag filters"
+          : "Show tag filters",
+        "aria-pressed": String(this.isFilterBarVisible),
+      },
+    });
+    setIcon(filterButton, "lucide-filter");
+    filterButton.toggleClass("is-active", this.isFilterBarVisible);
+    setTooltip(
+      filterButton,
+      this.isFilterBarVisible ? "Hide tag filters" : "Show tag filters",
+    );
+
+    filterButton.addEventListener("click", () => {
+      this.isFilterBarVisible = !this.isFilterBarVisible;
+      this.view.scheduleRender();
+    });
+  }
+
   public renderFilterBar(container: HTMLElement): void {
+    if (!this.isFilterBarVisible) return;
+
     const tagsByCard: string[][] = [];
 
     for (const group of this.view.currentGroups) {
@@ -117,12 +150,6 @@ export class Tags {
 
     const barEl = container.createDiv({ cls: "base-board-filter-bar" });
     container.insertBefore(barEl, boardEl);
-
-    const titleEl = barEl.createSpan({
-      cls: "base-board-filter-title",
-      text: "Filters:",
-    });
-    setIcon(titleEl, "lucide-filter");
 
     const tagsArray = Array.from(tagCounts.keys()).sort();
 

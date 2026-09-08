@@ -632,6 +632,7 @@ export class KanbanView extends BasesView implements HoverParent {
       this.isFirstRender = false;
     }
 
+    this.tags.renderToolbar(this.containerEl);
     this.tags.renderFilterBar(this.containerEl);
 
     columns.forEach((columnName, idx) => {

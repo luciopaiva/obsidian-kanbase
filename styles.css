@@ -769,7 +769,34 @@
   color: var(--text-faint);
 }
 
-/* ---- Filter Bar ---- */
+/* ---- Board Toolbar / Filter Bar ---- */
+
+.base-board-toolbar {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 4px;
+  min-height: 36px;
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background-color: var(--background-primary);
+}
+
+.base-board-toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  border: 0;
+  color: var(--text-muted);
+}
+
+.base-board-toolbar-button.is-active {
+  color: var(--interactive-accent);
+  background-color: var(--background-modifier-hover);
+}
 
 .base-board-filter-bar {
   display: flex;
@@ -779,15 +806,6 @@
   padding: 8px 12px;
   border-bottom: 1px solid var(--background-modifier-border);
   background-color: var(--background-secondary);
-}
-
-.base-board-filter-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--font-ui-small);
-  font-weight: var(--font-semibold);
-  color: var(--text-muted);
 }
 
 .base-board-filter-pill {
