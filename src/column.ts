@@ -29,14 +29,14 @@ export class ColumnManager {
     existingColumnEl?: HTMLElement,
   ): void {
     const isNoValue = columnName === NO_VALUE_COLUMN;
-    const entries = this.view.getEntriesForColumn(columnName, group);
+    const entries = this.view.cardMoves.getEntriesForColumn(columnName, group);
     const isCollapsed = this.view.isColumnCollapsed(columnName);
 
     // Sort entries up-front using a stable fallback
     const sorted = [...entries].sort((a: BasesEntry, b: BasesEntry) => {
       const pathA = a.file?.path ?? "";
       const pathB = b.file?.path ?? "";
-      const orderComparison = this.view.compareCardOrder(
+      const orderComparison = this.view.cardMoves.compareCardOrder(
         columnName,
         pathA,
         pathB,
@@ -149,7 +149,9 @@ export class ColumnManager {
       let targetOrder: OrderValue = generateOrderKey(null, null);
       if (sorted.length > 0) {
         const orders = sorted.map((entry) =>
-          entry.file?.path ? this.view.getFileOrder(entry.file.path) : null,
+          entry.file?.path
+            ? this.view.cardMoves.getFileOrder(entry.file.path)
+            : null,
         );
         if (orders.every(isOrderKey)) {
           targetOrder = addToTop

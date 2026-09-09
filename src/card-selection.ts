@@ -1,4 +1,4 @@
-import { Menu, Notice, TFile } from "obsidian";
+import { Menu, Notice } from "obsidian";
 import type { KanbanView } from "./kanban-view";
 
 export class CardSelectionManager {
@@ -117,30 +117,11 @@ export class CardSelectionManager {
     targetColumn: string,
     groupByProperty: string,
   ): Promise<void> {
-    const selected = new Set(filePaths);
-    const orderedPaths = this.view
-      .getOrderedPathsForColumn(targetColumn)
-      .filter((path) => !selected.has(path));
-    orderedPaths.push(...filePaths);
-
-    await this.view.applyBatchUpdate(async () => {
-      const updates = filePaths.map((filePath) => {
-        const file = this.view.app.vault.getAbstractFileByPath(filePath);
-        if (!(file instanceof TFile)) return Promise.resolve();
-        return this.view.app.fileManager.processFrontMatter(
-          file,
-          (frontmatter: Record<string, unknown>) => {
-            this.view.applyGroupByValue(
-              frontmatter,
-              groupByProperty,
-              targetColumn,
-            );
-          },
-        );
-      });
-      await Promise.all(updates);
-      await this.view.writeCardOrder(orderedPaths, filePaths);
-    });
+    await this.view.cardMoves.movePathsToColumn(
+      filePaths,
+      targetColumn,
+      groupByProperty,
+    );
 
     this.clear();
     new Notice(

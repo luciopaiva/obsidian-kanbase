@@ -10,7 +10,6 @@ import {
   NullValue,
   QueryController,
   setIcon,
-  TFile,
   WorkspaceLeaf,
 } from "obsidian";
 import type BaseBoardPlugin from "./main";
@@ -21,17 +20,10 @@ import { Tags } from "./tags";
 import { BoardToolbar } from "./toolbar";
 import { TagFilterBar } from "./tag-filter-bar";
 import { CardSelectionManager } from "./card-selection";
-import {
-  compareOrderValues,
-  generateOrderKeys,
-  isOrderKey,
-  OrderValue,
-  readOrderValue,
-} from "./order";
+import { CardMoveCoordinator } from "./card-move";
 import { coerceColumnValue, GroupByValueType } from "./value-utils";
 import {
   NO_VALUE_COLUMN,
-  ORDER_PROPERTY,
   CONFIG_KEY_COLUMNS,
   CONFIG_KEY_COLLAPSED_COLUMNS,
   CONFIG_KEY_OPEN_BEHAVIOR,
@@ -66,6 +58,8 @@ export class KanbanView extends BasesView implements HoverParent {
   public tagFilterBar: TagFilterBar;
   /** Card selection state, range selection, and batch actions. */
   public cardSelection: CardSelectionManager;
+  /** Card ordering, cross-column moves, and optimistic render state. */
+  public cardMoves: CardMoveCoordinator;
   public currentGroups: BasesEntryGroup[] = [];
   public cardManager: CardManager;
 
@@ -77,9 +71,6 @@ export class KanbanView extends BasesView implements HoverParent {
   private isFirstRender = true;
   /** Debounce timer for render calls. */
   private renderTimer: ReturnType<typeof setTimeout> | null = null;
-  /** Local drop intent retained until Bases publishes the matching groups. */
-  private optimisticMoves = new Map<string, string>();
-  private optimisticColumnOrders = new Map<string, string[]>();
   /** Tag metadata, colors, editing, and Base-filter suppression. */
   public tags: Tags;
   public detailLeaf: WorkspaceLeaf | null = null;
@@ -98,6 +89,7 @@ export class KanbanView extends BasesView implements HoverParent {
     this.toolbar = new BoardToolbar(this);
     this.tagFilterBar = new TagFilterBar(this, this.tags);
     this.cardSelection = new CardSelectionManager(this);
+    this.cardMoves = new CardMoveCoordinator(this);
     this.cardManager = new CardManager(this);
     this.columnManager = new ColumnManager(this);
 
@@ -106,7 +98,7 @@ export class KanbanView extends BasesView implements HoverParent {
         filePath: string,
         targetColumn: string,
         orderedPaths: string[],
-      ) => this.handleCardDrop(filePath, targetColumn, orderedPaths),
+      ) => this.cardMoves.handleDrop(filePath, targetColumn, orderedPaths),
       onColumnReorder: (orderedNames: string[]) =>
         this.handleColumnReorder(orderedNames),
       getSelectedCards: () => this.cardSelection.getSelectedPaths(),
@@ -129,7 +121,7 @@ export class KanbanView extends BasesView implements HoverParent {
       this.pendingDataRender = true;
       return;
     }
-    this.acknowledgeOptimisticMoves();
+    this.cardMoves.acknowledge();
     this.scheduleRender();
   }
 
@@ -340,7 +332,7 @@ export class KanbanView extends BasesView implements HoverParent {
     this.scheduleRender();
   }
 
-  private getColumnName(key: unknown): string {
+  public getColumnName(key: unknown): string {
     if (key === undefined || key === null || key instanceof NullValue) {
       return NO_VALUE_COLUMN;
     }
@@ -390,76 +382,6 @@ export class KanbanView extends BasesView implements HoverParent {
       return;
     }
     fm[groupByProp] = coerceColumnValue(columnName, this.groupByValueType());
-  }
-
-  /**
-   * Read kanban_order from metadataCache (more reliable than entry.values
-   * since the Bases engine may not expose all properties).
-   */
-  public getFileOrder(filePath: string): OrderValue {
-    const file = this.app.vault.getAbstractFileByPath(filePath);
-    if (!file || !(file instanceof TFile)) return null;
-    const cache = this.app.metadataCache.getFileCache(file);
-    return readOrderValue(cache?.frontmatter?.[ORDER_PROPERTY]);
-  }
-
-  public compareFileOrder(pathA: string, pathB: string): number {
-    return compareOrderValues(
-      this.getFileOrder(pathA),
-      this.getFileOrder(pathB),
-    );
-  }
-
-  public compareCardOrder(
-    columnName: string,
-    pathA: string,
-    pathB: string,
-  ): number {
-    const optimisticOrder = this.optimisticColumnOrders.get(columnName);
-    if (optimisticOrder) {
-      const indexA = optimisticOrder.indexOf(pathA);
-      const indexB = optimisticOrder.indexOf(pathB);
-      if (indexA !== -1 || indexB !== -1) {
-        if (indexA === -1) return 1;
-        if (indexB === -1) return -1;
-        return indexA - indexB;
-      }
-    }
-    return this.compareFileOrder(pathA, pathB);
-  }
-
-  public getEntriesForColumn(
-    columnName: string,
-    group: BasesEntryGroup | null,
-  ): BasesEntry[] {
-    const entries = [...(group?.entries ?? [])].filter((entry) => {
-      const path = entry.file?.path;
-      const optimisticColumn = path ? this.optimisticMoves.get(path) : null;
-      return !optimisticColumn || optimisticColumn === columnName;
-    });
-    const present = new Set(entries.map((entry) => entry.file?.path));
-
-    for (const entry of this.data?.data ?? []) {
-      const path = entry.file?.path;
-      if (
-        path &&
-        this.optimisticMoves.get(path) === columnName &&
-        !present.has(path)
-      ) {
-        entries.push(entry);
-      }
-    }
-    return entries;
-  }
-
-  public getOrderedPathsForColumn(columnName: string): string[] {
-    const group = this.currentGroups.find(
-      (candidate) => this.getColumnName(candidate.key) === columnName,
-    );
-    const paths = (group?.entries ?? [])
-      .map((entry) => entry.file?.path)
-      .filter((path): path is string => typeof path === "string");
-    return paths.sort((a, b) => this.compareFileOrder(a, b));
   }
 
   // ---------------------------------------------------------------------------
@@ -750,150 +672,6 @@ export class KanbanView extends BasesView implements HoverParent {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  //  Card drop handler (column move + reordering)
-  // ---------------------------------------------------------------------------
-
-  private async handleCardDrop(
-    filePath: string,
-    targetColumnName: string,
-    orderedPaths: string[],
-  ): Promise<void> {
-    const groupByProp = this.getGroupByProperty();
-    if (!groupByProp) {
-      throw new Error("Cannot move a card without a group by property");
-    }
-
-    // Snapshot the selection NOW, before any async work or re-render can clear it
-    const selectedSnapshot = this.cardSelection.snapshot();
-    const isMultiDrag =
-      selectedSnapshot.size > 1 && selectedSnapshot.has(filePath);
-
-    // If the dragged card is part of a multi-selection, expand the drop to
-    // include all selected cards. The dragged card goes where it was dropped
-    // (already in orderedPaths); the rest of the selection is appended after.
-    const otherSelected = isMultiDrag
-      ? Array.from(selectedSnapshot).filter(
-          (p) => p !== filePath && !orderedPaths.includes(p),
-        )
-      : [];
-
-    // Insert co-selected cards right after the dragged card's position
-    const fullOrderedPaths = [...orderedPaths];
-    if (otherSelected.length > 0) {
-      const dropIdx = fullOrderedPaths.indexOf(filePath);
-      const insertAt = dropIdx !== -1 ? dropIdx + 1 : fullOrderedPaths.length;
-      fullOrderedPaths.splice(insertAt, 0, ...otherSelected);
-    }
-
-    const pathsToMove = isMultiDrag ? [filePath, ...otherSelected] : [filePath];
-    for (const path of pathsToMove) {
-      this.optimisticMoves.set(path, targetColumnName);
-    }
-    this.optimisticColumnOrders.set(targetColumnName, fullOrderedPaths);
-
-    try {
-      await this.applyBatchUpdate(async () => {
-        // 1. Move all cards to the target column (dragged card + any co-selected)
-        const movePromises = pathsToMove.map((fp) => {
-          const file = this.app.vault.getAbstractFileByPath(fp);
-          if (!file || !(file instanceof TFile)) return Promise.resolve();
-          const sourceColumn = this.getCardSourceColumn(fp);
-          if (sourceColumn === targetColumnName) return Promise.resolve();
-          return this.app.fileManager.processFrontMatter(
-            file,
-            (fm: Record<string, unknown>) => {
-              this.applyGroupByValue(fm, groupByProp, targetColumnName);
-            },
-          );
-        });
-        await Promise.all(movePromises);
-
-        // 2. Update only the moved cards when the column already uses string
-        // fractional keys. Numeric legacy columns are migrated once, in DOM order.
-        await this.writeCardOrder(fullOrderedPaths, pathsToMove);
-      });
-    } catch (error) {
-      this.clearOptimisticMoves(pathsToMove, targetColumnName);
-      this.scheduleRender();
-      throw error;
-    }
-
-    // The optimistic DOM move remains visible until Bases acknowledges the
-    // write through onDataUpdated(), which is the only fresh-data render path.
-  }
-
-  private acknowledgeOptimisticMoves(): void {
-    const confirmedPaths: string[] = [];
-    for (const [path, expectedColumn] of this.optimisticMoves) {
-      if (
-        this.findCardColumn(this.data?.groupedData ?? [], path) ===
-        expectedColumn
-      ) {
-        confirmedPaths.push(path);
-      }
-    }
-    for (const path of confirmedPaths) this.optimisticMoves.delete(path);
-
-    for (const [columnName, orderedPaths] of this.optimisticColumnOrders) {
-      if (orderedPaths.every((path) => !this.optimisticMoves.has(path))) {
-        this.optimisticColumnOrders.delete(columnName);
-      }
-    }
-  }
-
-  private clearOptimisticMoves(paths: string[], columnName: string): void {
-    for (const path of paths) this.optimisticMoves.delete(path);
-    this.optimisticColumnOrders.delete(columnName);
-  }
-
-  /** Persist a contiguous block within an ordered column. */
-  public async writeCardOrder(
-    orderedPaths: string[],
-    pathsToAssign: string[],
-  ): Promise<void> {
-    if (pathsToAssign.length === 0) return;
-
-    const startIdx = orderedPaths.indexOf(pathsToAssign[0]);
-    const prevPath = startIdx > 0 ? orderedPaths[startIdx - 1] : null;
-    const nextPath =
-      startIdx + pathsToAssign.length < orderedPaths.length
-        ? orderedPaths[startIdx + pathsToAssign.length]
-        : null;
-    const existingPaths = orderedPaths.filter(
-      (path) => !pathsToAssign.includes(path),
-    );
-    const hasLegacyOrder = existingPaths.some(
-      (path) => !isOrderKey(this.getFileOrder(path)),
-    );
-    const pathsToWrite = hasLegacyOrder ? orderedPaths : pathsToAssign;
-    const previousOrder = prevPath ? this.getFileOrder(prevPath) : null;
-    const followingOrder = nextPath ? this.getFileOrder(nextPath) : null;
-    const newOrders = hasLegacyOrder
-      ? generateOrderKeys(null, null, orderedPaths.length)
-      : generateOrderKeys(
-          isOrderKey(previousOrder) ? previousOrder : null,
-          isOrderKey(followingOrder) ? followingOrder : null,
-          pathsToAssign.length,
-        );
-
-    await Promise.all(
-      pathsToWrite.map((cardPath, index) => {
-        const file = this.app.vault.getAbstractFileByPath(cardPath);
-        if (!file || !(file instanceof TFile)) return Promise.resolve();
-        const orderVal = hasLegacyOrder
-          ? newOrders[index]
-          : newOrders[pathsToAssign.indexOf(cardPath)];
-        return this.app.fileManager.processFrontMatter(
-          file,
-          (fm: Record<string, unknown>) => {
-            fm[ORDER_PROPERTY] = orderVal;
-          },
-        );
-      }),
-    );
-  }
-
   /** Debounced render — coalesces multiple calls into one. */
   public scheduleRender(): void {
     if (this.renderTimer) window.clearTimeout(this.renderTimer);
@@ -901,23 +679,5 @@ export class KanbanView extends BasesView implements HoverParent {
       this.renderTimer = null;
       this.render();
     }, 50);
-  }
-
-  private getCardSourceColumn(filePath: string): string | null {
-    return this.findCardColumn(this.currentGroups, filePath);
-  }
-
-  private findCardColumn(
-    groups: BasesEntryGroup[],
-    filePath: string,
-  ): string | null {
-    for (const group of groups) {
-      for (const entry of group.entries) {
-        if (entry.file?.path === filePath) {
-          return this.getColumnName(group.key);
-        }
-      }
-    }
-    return null;
   }
 }
