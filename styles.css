@@ -853,6 +853,24 @@
   font-weight: var(--font-bold);
 }
 
+.base-board-filter-pill.is-excluded {
+  box-shadow:
+    0 0 0 2px var(--background-secondary),
+    0 0 0 4px var(--text-error);
+  font-weight: var(--font-bold);
+}
+
+.base-board-filter-state-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 5px;
+}
+
+.base-board-filter-state-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
 .base-board-filter-clear {
   margin-left: auto;
   font-size: var(--font-ui-smaller);

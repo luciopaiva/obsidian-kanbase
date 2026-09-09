@@ -1,15 +1,21 @@
-import { setTooltip, TFile } from "obsidian";
+import { setIcon, setTooltip, TFile } from "obsidian";
 import { relativeLuminance } from "./color-utils";
 import { countTagsByCard } from "./tag-counts";
 import { ColorPickerModal } from "./color-picker-modal";
 import type { KanbanView } from "./kanban-view";
 import type { Tags } from "./tags";
+import {
+  getNextTagFilterState,
+  matchesTagFilters,
+  type ActiveTagFilterState,
+  type TagFilterState,
+} from "./tag-filter-state";
 
 export class TagFilterBar {
   private view: KanbanView;
   private tags: Tags;
   private tagCounts = new Map<string, number>();
-  private activeFilters = new Set<string>();
+  private filters = new Map<string, ActiveTagFilterState>();
 
   constructor(view: KanbanView, tags: Tags) {
     this.view = view;
@@ -29,16 +35,13 @@ export class TagFilterBar {
   }
 
   public matches(file: TFile): boolean {
-    if (this.activeFilters.size === 0) return true;
     const fileTags = this.tags.extractTagsFromFile(file);
-    return Array.from(this.activeFilters).some((filter) =>
-      fileTags.includes(filter),
-    );
+    return matchesTagFilters(fileTags, this.filters);
   }
 
   public render(container: HTMLElement, isVisible: boolean): void {
     if (!isVisible) return;
-    if (this.tagCounts.size === 0 && this.activeFilters.size === 0) return;
+    if (this.tagCounts.size === 0 && this.filters.size === 0) return;
 
     const boardEl = container.querySelector(".base-board-board");
     if (!boardEl) return;
@@ -47,7 +50,7 @@ export class TagFilterBar {
     container.insertBefore(barEl, boardEl);
 
     const tagsArray = Array.from(this.tagCounts.keys()).sort();
-    for (const activeTag of this.activeFilters) {
+    for (const activeTag of this.filters.keys()) {
       if (!this.tagCounts.has(activeTag)) tagsArray.push(activeTag);
     }
 
@@ -55,13 +58,13 @@ export class TagFilterBar {
       this.renderTagPill(barEl, tag);
     }
 
-    if (this.activeFilters.size > 0) {
+    if (this.filters.size > 0) {
       const clearButton = barEl.createSpan({
         cls: "base-board-filter-clear",
         text: "Clear",
       });
       clearButton.addEventListener("click", () => {
-        this.activeFilters.clear();
+        this.filters.clear();
         this.view.scheduleRender();
       });
     }
@@ -69,12 +72,17 @@ export class TagFilterBar {
 
   private renderTagPill(container: HTMLElement, tag: string): void {
     const count = this.tagCounts.get(tag) ?? 0;
+    const state = this.getFilterState(tag);
     const pill = container.createSpan({ cls: "base-board-filter-pill" });
+    if (state === "exclude") {
+      const iconEl = pill.createSpan({ cls: "base-board-filter-state-icon" });
+      setIcon(iconEl, "lucide-eye-off");
+    }
     pill.createSpan({ cls: "base-board-filter-label", text: tag });
     pill.createSpan({ cls: "base-board-filter-count", text: String(count) });
     pill.setAttr(
       "aria-label",
-      `${tag}, ${count} ${count === 1 ? "card" : "cards"}`,
+      `${tag}, ${count} ${count === 1 ? "card" : "cards"}, ${this.getStateLabel(state)}`,
     );
 
     const tagColor = this.tags.getColorForTag(tag);
@@ -85,11 +93,12 @@ export class TagFilterBar {
       pill.addClass("base-board-filter-pill-dark");
     }
 
-    if (this.activeFilters.has(tag)) pill.addClass("is-active");
+    if (state === "include") pill.addClass("is-active");
+    if (state === "exclude") pill.addClass("is-excluded");
 
     setTooltip(
       pill,
-      `${count} ${count === 1 ? "card" : "cards"} · Click to filter · Right-click to change color`,
+      `${count} ${count === 1 ? "card" : "cards"} · ${this.getClickAction(state)} · Right-click to change color`,
     );
 
     pill.addEventListener("contextmenu", (event) => {
@@ -100,12 +109,29 @@ export class TagFilterBar {
     });
 
     pill.addEventListener("click", () => {
-      if (this.activeFilters.has(tag)) {
-        this.activeFilters.delete(tag);
+      const nextState = getNextTagFilterState(this.getFilterState(tag));
+      if (nextState === "none") {
+        this.filters.delete(tag);
       } else {
-        this.activeFilters.add(tag);
+        this.filters.set(tag, nextState);
       }
       this.view.scheduleRender();
     });
+  }
+
+  private getFilterState(tag: string): TagFilterState {
+    return this.filters.get(tag) ?? "none";
+  }
+
+  private getStateLabel(state: TagFilterState): string {
+    if (state === "include") return "filtering in";
+    if (state === "exclude") return "filtering out";
+    return "not filtering";
+  }
+
+  private getClickAction(state: TagFilterState): string {
+    if (state === "include") return "Click to filter out";
+    if (state === "exclude") return "Click to clear filter";
+    return "Click to filter in";
   }
 }
