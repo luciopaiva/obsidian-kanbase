@@ -3,6 +3,7 @@ import type BaseBoardPlugin from "./main";
 
 const CARD_TAG_POSITION_KEY = "cardTagPosition";
 const CARD_TITLE_FONT_SIZE_KEY = "cardTitleFontSize";
+const HIDE_BASE_FILTER_TAGS_KEY = "hideBaseFilterTags";
 
 export const DEFAULT_CARD_TITLE_FONT_SIZE = 13;
 export const MIN_CARD_TITLE_FONT_SIZE = 10;
@@ -43,6 +44,15 @@ export class BaseBoardSettingTab extends PluginSettingTab {
           step: 1,
         },
       },
+      {
+        name: "Hide Base filter tags",
+        desc: "Hide tags on cards when a Base filter already requires them.",
+        control: {
+          type: "toggle",
+          key: HIDE_BASE_FILTER_TAGS_KEY,
+          defaultValue: true,
+        },
+      },
     ];
   }
 
@@ -52,6 +62,9 @@ export class BaseBoardSettingTab extends PluginSettingTab {
     }
     if (key === CARD_TITLE_FONT_SIZE_KEY) {
       return this.baseBoardPlugin.getCardTitleFontSize();
+    }
+    if (key === HIDE_BASE_FILTER_TAGS_KEY) {
+      return this.baseBoardPlugin.shouldHideBaseFilterTags();
     }
     return undefined;
   }
@@ -65,6 +78,9 @@ export class BaseBoardSettingTab extends PluginSettingTab {
     }
     if (key === CARD_TITLE_FONT_SIZE_KEY && typeof value === "number") {
       return this.baseBoardPlugin.setCardTitleFontSize(value);
+    }
+    if (key === HIDE_BASE_FILTER_TAGS_KEY && typeof value === "boolean") {
+      return this.baseBoardPlugin.setHideBaseFilterTags(value);
     }
   }
 }

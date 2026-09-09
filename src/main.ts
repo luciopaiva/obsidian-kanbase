@@ -21,12 +21,14 @@ export interface PluginData {
   columnConfigs: Record<string, ColumnConfig>;
   cardTagPosition: CardTagPosition;
   cardTitleFontSize: number;
+  hideBaseFilterTags: boolean;
 }
 
 const DEFAULT_DATA: PluginData = {
   columnConfigs: {},
   cardTagPosition: "top",
   cardTitleFontSize: DEFAULT_CARD_TITLE_FONT_SIZE,
+  hideBaseFilterTags: true,
 };
 
 // ---------------------------------------------------------------------------
@@ -180,6 +182,16 @@ export default class BaseBoardPlugin extends Plugin {
     for (const view of this.boardViews) view.scheduleRender();
   }
 
+  shouldHideBaseFilterTags(): boolean {
+    return this.settings.hideBaseFilterTags;
+  }
+
+  async setHideBaseFilterTags(hidden: boolean): Promise<void> {
+    this.settings.hideBaseFilterTags = hidden;
+    await this.savePluginData();
+    for (const view of this.boardViews) view.scheduleRender();
+  }
+
   // -- Persistence ------------------------------------------------------------
 
   async loadPluginData(): Promise<void> {
@@ -195,6 +207,9 @@ export default class BaseBoardPlugin extends Plugin {
     this.settings.cardTitleFontSize = this.normalizeCardTitleFontSize(
       this.settings.cardTitleFontSize,
     );
+    if (typeof this.settings.hideBaseFilterTags !== "boolean") {
+      this.settings.hideBaseFilterTags = DEFAULT_DATA.hideBaseFilterTags;
+    }
   }
 
   async savePluginData(): Promise<void> {

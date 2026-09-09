@@ -106,9 +106,9 @@ export class Tags {
   }
 
   public getTagsForCardDisplay(file: TFile): string[] {
-    return this.extractTagsFromFile(file).filter(
-      (tag) => !this.tagsRequiredByBaseFilters.has(tag),
-    );
+    const tags = this.extractTagsFromFile(file);
+    if (!this.view.plugin.shouldHideBaseFilterTags()) return tags;
+    return tags.filter((tag) => !this.tagsRequiredByBaseFilters.has(tag));
   }
 
   /**
