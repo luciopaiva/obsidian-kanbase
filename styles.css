@@ -802,7 +802,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   padding: 8px 12px;
   border-bottom: 1px solid var(--background-modifier-border);
   background-color: var(--background-secondary);
@@ -812,9 +812,9 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  font-size: var(--font-ui-smaller);
-  padding: 4px 10px;
-  border-radius: 12px;
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 6px;
   background-color: var(--tag-color, var(--background-modifier-hover));
   color: var(--text-normal);
   cursor: pointer;
@@ -831,9 +831,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.5em;
-  margin-left: 6px;
-  padding: 0 5px;
+  min-width: 1.4em;
+  margin-left: 4px;
+  padding: 0 4px;
   border-radius: 999px;
   background-color: rgba(0, 0, 0, 0.16);
   font-size: 0.85em;
@@ -863,12 +863,12 @@
 .base-board-filter-state-icon {
   display: inline-flex;
   align-items: center;
-  margin-right: 5px;
+  margin-right: 4px;
 }
 
 .base-board-filter-state-icon svg {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
 }
 
 .base-board-filter-clear {
