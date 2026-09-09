@@ -196,7 +196,7 @@ export class ColumnManager {
 
     visibleCards.forEach((entry) => {
       const filePath = entry.file?.path ?? "";
-      const cachedCardEl = this.view.cardElCache.get(filePath);
+      const cachedCardEl = this.view.renderer.cardElCache.get(filePath);
       this.view.cardManager.renderCard(
         cardsEl,
         entry,

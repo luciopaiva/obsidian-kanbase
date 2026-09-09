@@ -3,9 +3,7 @@ import {
   BasesEntryGroup,
   HoverParent,
   HoverPopover,
-  NullValue,
   QueryController,
-  setIcon,
   WorkspaceLeaf,
 } from "obsidian";
 import type BaseBoardPlugin from "./main";
@@ -19,15 +17,10 @@ import { CardSelectionManager } from "./card-selection";
 import { CardMoveCoordinator } from "./card-move";
 import { BoardPreferences } from "./board-preferences";
 import { CardCreationManager } from "./card-creation";
-import { getColumnName, getGroupForColumn } from "./board-grouping";
+import { getColumnName } from "./board-grouping";
 import { getBaseFileName, isLeafAttached } from "./base-view-context";
 import { BoardConfig } from "./board-config";
-
-interface BoardScrollState {
-  boardLeft: number;
-  viewTop: number;
-  columnTops: Map<string, number>;
-}
+import { BoardRenderer } from "./board-renderer";
 
 // ---------------------------------------------------------------------------
 //  Kanban View
@@ -41,9 +34,9 @@ export class KanbanView extends BasesView implements HoverParent {
   containerEl: HTMLElement;
   plugin: BaseBoardPlugin;
 
-  private dragDropManager: DragDropManager;
-  private columnManager: ColumnManager;
-  private toolbar: BoardToolbar;
+  public dragDropManager: DragDropManager;
+  public columnManager: ColumnManager;
+  public toolbar: BoardToolbar;
   /** Tag filter state, matching, counts, and filter-bar rendering. */
   public tagFilterBar: TagFilterBar;
   /** Card selection state, range selection, and batch actions. */
@@ -56,14 +49,13 @@ export class KanbanView extends BasesView implements HoverParent {
   public cardCreation: CardCreationManager;
   public currentGroups: BasesEntryGroup[] = [];
   public boardConfig: BoardConfig;
+  public renderer: BoardRenderer;
   public cardManager: CardManager;
 
   /** Prevent re-renders while we batch-update frontmatter. */
   private isUpdating = false;
   /** Track if Bases delivered fresh query data while we were updating. */
   private pendingDataRender = false;
-  /** True until the first successful render completes. */
-  private isFirstRender = true;
   /** Debounce timer for render calls. */
   private renderTimer: ReturnType<typeof setTimeout> | null = null;
   /** Tag metadata, colors, editing, and Base-filter suppression. */
@@ -84,6 +76,7 @@ export class KanbanView extends BasesView implements HoverParent {
       () => this.currentGroups,
       () => this.scheduleRender(),
     );
+    this.renderer = new BoardRenderer(this);
 
     this.tags = new Tags(this);
     this.toolbar = new BoardToolbar(this);
@@ -167,146 +160,8 @@ export class KanbanView extends BasesView implements HoverParent {
   //  Rendering
   // ---------------------------------------------------------------------------
 
-  /**
-   * Ensure `file.name` is present in the view's property `order:` configuration.
-   * This guarantees that Obsidian's database engine indexes card titles for search.
-   */
-  public cardElCache = new Map<string, HTMLElement>();
-  public columnElCache = new Map<string, HTMLElement>();
-
   public render(): void {
-    this.boardConfig.ensureFileNameInOrder();
-    this.cardSelection.clear();
-    const scrollState = this.captureScrollState();
-
-    // Index stable DOM nodes before rebuilding the lightweight board shell.
-    // Columns are detached as complete subtrees, preserving their card lists,
-    // card descendants, scroll state, image elements, and event listeners.
-    this.cardElCache.clear();
-    this.containerEl.querySelectorAll(".base-board-card").forEach((el) => {
-      const path = (el as HTMLElement).dataset.filePath;
-      if (path) {
-        this.cardElCache.set(path, el as HTMLElement);
-      }
-    });
-
-    this.columnElCache.clear();
-    this.containerEl
-      .querySelectorAll<HTMLElement>(".base-board-column")
-      .forEach((el) => {
-        const name = el.dataset.columnName;
-        if (name) {
-          this.columnElCache.set(name, el);
-          el.remove();
-        }
-      });
-
-    this.containerEl.empty();
-
-    // Use the official API: this.data is a BasesQueryResult
-    const groupedData: BasesEntryGroup[] = this.data?.groupedData ?? [];
-    const hasGroupBy =
-      groupedData.length > 1 ||
-      (groupedData.length === 1 &&
-        groupedData[0].key !== undefined &&
-        !(groupedData[0].key instanceof NullValue));
-
-    // If the board has configured columns (from .base or data.json) but
-    // no cards exist yet, render the empty columns so users can see and
-    // add cards instead of showing an opaque placeholder.
-    const hasStoredColumns = this.preferences.hasStoredColumns();
-    const shouldShowPlaceholder =
-      !hasGroupBy && groupedData.length <= 1 && !hasStoredColumns;
-
-    if (shouldShowPlaceholder) {
-      const msgEl = this.containerEl.createDiv({
-        cls: "base-board-placeholder",
-      });
-      setIcon(
-        msgEl.createSpan({ cls: "base-board-placeholder-icon" }),
-        "lucide-kanban",
-      );
-      msgEl.createEl("p", {
-        text: 'Set "group by" in the sort menu to organize cards into columns.',
-      });
-      return;
-    }
-
-    this.currentGroups = groupedData;
-    this.tags.refreshBaseFilterTags();
-    this.tagFilterBar.refresh();
-    const columns = this.preferences.getColumns();
-    const boardEl = this.containerEl.createDiv({ cls: "base-board-board" });
-
-    // Only animate cards on the very first render
-    if (this.isFirstRender) {
-      boardEl.addClass("base-board-board--animate");
-      this.isFirstRender = false;
-    }
-
-    this.toolbar.render(this.containerEl);
-    this.tagFilterBar.render(
-      this.containerEl,
-      this.toolbar.areTagFiltersVisible(),
-    );
-
-    columns.forEach((columnName, idx) => {
-      const group = getGroupForColumn(this.currentGroups, columnName);
-      this.columnManager.renderColumn(
-        boardEl,
-        columnName,
-        group,
-        idx,
-        this.columnElCache.get(columnName),
-      );
-    });
-
-    this.columnManager.renderAddColumnButton(boardEl);
-    this.dragDropManager.initBoard(boardEl);
-    this.restoreScrollState(boardEl, scrollState);
-  }
-
-  private captureScrollState(): BoardScrollState {
-    const boardEl =
-      this.containerEl.querySelector<HTMLElement>(".base-board-board");
-    const columnTops = new Map<string, number>();
-
-    boardEl
-      ?.querySelectorAll<HTMLElement>(".base-board-column")
-      .forEach((columnEl) => {
-        const name = columnEl.dataset.columnName;
-        const cardsEl =
-          columnEl.querySelector<HTMLElement>(".base-board-cards");
-        if (name && cardsEl) columnTops.set(name, cardsEl.scrollTop);
-      });
-
-    return {
-      boardLeft: boardEl?.scrollLeft ?? 0,
-      viewTop: this.scrollEl.scrollTop,
-      columnTops,
-    };
-  }
-
-  private restoreScrollState(
-    boardEl: HTMLElement,
-    state: BoardScrollState,
-  ): void {
-    // All columns are attached, so these assignments restore against the final
-    // layout and cannot race a deferred callback from an earlier render.
-    boardEl.scrollLeft = state.boardLeft;
-    this.scrollEl.scrollTop = state.viewTop;
-
-    boardEl
-      .querySelectorAll<HTMLElement>(".base-board-column")
-      .forEach((columnEl) => {
-        const name = columnEl.dataset.columnName;
-        const cardsEl =
-          columnEl.querySelector<HTMLElement>(".base-board-cards");
-        const scrollTop = name ? state.columnTops.get(name) : undefined;
-        if (cardsEl && scrollTop !== undefined) {
-          cardsEl.scrollTop = scrollTop;
-        }
-      });
+    this.renderer.render();
   }
 
   // ---------------------------------------------------------------------------
