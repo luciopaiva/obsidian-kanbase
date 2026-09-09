@@ -74,8 +74,9 @@ export class TagFilterBar {
     const count = this.tagCounts.get(tag) ?? 0;
     const state = this.getFilterState(tag);
     const pill = container.createSpan({ cls: "base-board-filter-pill" });
+    const iconEl = pill.createSpan({ cls: "base-board-filter-state-icon" });
+    iconEl.setAttr("aria-hidden", "true");
     if (state !== "none") {
-      const iconEl = pill.createSpan({ cls: "base-board-filter-state-icon" });
       setIcon(iconEl, state === "include" ? "lucide-filter" : "lucide-eye-off");
     }
     pill.createSpan({ cls: "base-board-filter-label", text: tag });

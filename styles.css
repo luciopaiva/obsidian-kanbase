@@ -856,6 +856,9 @@
 .base-board-filter-state-icon {
   display: inline-flex;
   align-items: center;
+  flex: 0 0 11px;
+  width: 11px;
+  height: 11px;
   margin-right: 4px;
 }
 
