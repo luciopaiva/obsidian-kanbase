@@ -3,6 +3,9 @@ import { KanbanView } from "./kanban-view";
 import { CreateBoardModal } from "./modals";
 import { updateBaseFolderReferences } from "./folder-rename";
 import { BoardScaffolder } from "./board-scaffolder";
+import { BaseBoardSettingTab } from "./settings";
+
+export type CardTagPosition = "top" | "bottom";
 
 /** Per-base column configuration */
 export interface ColumnConfig {
@@ -11,10 +14,12 @@ export interface ColumnConfig {
 
 export interface PluginData {
   columnConfigs: Record<string, ColumnConfig>;
+  cardTagPosition: CardTagPosition;
 }
 
 const DEFAULT_DATA: PluginData = {
   columnConfigs: {},
+  cardTagPosition: "top",
 };
 
 // ---------------------------------------------------------------------------
@@ -22,7 +27,8 @@ const DEFAULT_DATA: PluginData = {
 // ---------------------------------------------------------------------------
 
 export default class BaseBoardPlugin extends Plugin {
-  data_: PluginData = DEFAULT_DATA;
+  settings: PluginData = DEFAULT_DATA;
+  private boardViews = new Set<KanbanView>();
 
   /** Folder rename mappings collected during one rename burst, pending flush. */
   private pendingFolderRenames: Array<{ oldPath: string; newPath: string }> =
@@ -33,12 +39,17 @@ export default class BaseBoardPlugin extends Plugin {
   async onload() {
     await this.loadPluginData();
     const boardScaffolder = new BoardScaffolder(this.app);
+    this.addSettingTab(new BaseBoardSettingTab(this.app, this));
 
     this.registerBasesView("kanban", {
       name: "Kanban",
       icon: "lucide-kanban",
-      factory: (controller: QueryController, containerEl: HTMLElement) =>
-        new KanbanView(controller, containerEl, this),
+      factory: (controller: QueryController, containerEl: HTMLElement) => {
+        const view = new KanbanView(controller, containerEl, this);
+        this.boardViews.add(view);
+        view.register(() => this.boardViews.delete(view));
+        return view;
+      },
       options: () => KanbanView.getViewOptions(),
     });
 
@@ -134,23 +145,39 @@ export default class BaseBoardPlugin extends Plugin {
   // -- Column config helpers --------------------------------------------------
 
   getColumnConfig(baseId: string): ColumnConfig | null {
-    return this.data_.columnConfigs[baseId] ?? null;
+    return this.settings.columnConfigs[baseId] ?? null;
   }
 
   async saveColumnConfig(baseId: string, config: ColumnConfig): Promise<void> {
-    this.data_.columnConfigs[baseId] = config;
+    this.settings.columnConfigs[baseId] = config;
     await this.savePluginData();
+  }
+
+  getCardTagPosition(): CardTagPosition {
+    return this.settings.cardTagPosition;
+  }
+
+  async setCardTagPosition(position: CardTagPosition): Promise<void> {
+    this.settings.cardTagPosition = position;
+    await this.savePluginData();
+    for (const view of this.boardViews) view.scheduleRender();
   }
 
   // -- Persistence ------------------------------------------------------------
 
   async loadPluginData(): Promise<void> {
     const saved = (await this.loadData()) as PluginData | null | undefined;
-    this.data_ = Object.assign({}, DEFAULT_DATA, saved ?? {});
-    if (!this.data_.columnConfigs) this.data_.columnConfigs = {};
+    this.settings = Object.assign({}, DEFAULT_DATA, saved ?? {});
+    if (!this.settings.columnConfigs) this.settings.columnConfigs = {};
+    if (
+      this.settings.cardTagPosition !== "top" &&
+      this.settings.cardTagPosition !== "bottom"
+    ) {
+      this.settings.cardTagPosition = DEFAULT_DATA.cardTagPosition;
+    }
   }
 
   async savePluginData(): Promise<void> {
-    await this.saveData(this.data_);
+    await this.saveData(this.settings);
   }
 }

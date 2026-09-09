@@ -871,7 +871,14 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+.base-board-tag-container--top {
   margin-bottom: 8px;
+}
+
+.base-board-tag-container--bottom {
+  margin-top: 8px;
 }
 
 .base-board-card-tag {

@@ -247,28 +247,9 @@ export class CardManager {
       });
     }
 
-    if (file instanceof TFile) {
-      const fileTags = this.view.tags.getTagsForCardDisplay(file);
-      const tagContainerEl =
-        fileTags.length > 0
-          ? cardEl.createDiv({ cls: "base-board-tag-container" })
-          : null;
-      for (const tag of fileTags) {
-        const tagEl = tagContainerEl?.createSpan({
-          cls: "base-board-card-tag",
-          text: tag,
-        });
-        if (!tagEl) continue;
-        const color = this.view.tags.getColorForTag(tag);
-        if (color) {
-          tagEl.style.setProperty("--tag-color", color);
-          if (relativeLuminance(color) === "dark") {
-            tagEl.addClass("base-board-card-tag-light");
-          } else {
-            tagEl.addClass("base-board-card-tag-dark");
-          }
-        }
-      }
+    const tagPosition = this.view.plugin.getCardTagPosition();
+    if (file instanceof TFile && tagPosition === "top") {
+      this.renderCardTags(cardEl, file, tagPosition);
     }
 
     const titleEl = cardEl.createDiv({ cls: "base-board-card-title" });
@@ -369,6 +350,41 @@ export class CardManager {
         toggleBtn.setText(expanded ? "show less" : `+${overflowCount} more`);
       });
     }
+
+    if (file instanceof TFile && tagPosition === "bottom") {
+      this.renderCardTags(cardEl, file, tagPosition);
+    }
+  }
+
+  private renderCardTags(
+    cardEl: HTMLElement,
+    file: TFile,
+    position: "top" | "bottom",
+  ): void {
+    const fileTags = this.view.tags.getTagsForCardDisplay(file);
+    if (fileTags.length === 0) return;
+
+    const tagContainerEl = cardEl.createDiv({
+      cls: [
+        "base-board-tag-container",
+        `base-board-tag-container--${position}`,
+      ],
+    });
+    for (const tag of fileTags) {
+      const tagEl = tagContainerEl.createSpan({
+        cls: "base-board-card-tag",
+        text: tag,
+      });
+      const color = this.view.tags.getColorForTag(tag);
+      if (color) {
+        tagEl.style.setProperty("--tag-color", color);
+        if (relativeLuminance(color) === "dark") {
+          tagEl.addClass("base-board-card-tag-light");
+        } else {
+          tagEl.addClass("base-board-card-tag-dark");
+        }
+      }
+    }
   }
 
   private getRenderVersion(entry: BasesEntry): string {
@@ -425,6 +441,7 @@ export class CardManager {
       visibleProperties,
       tags,
       tagColors: this.view.tags.getColors(),
+      tagPosition: this.view.plugin.getCardTagPosition(),
     });
   }
 
