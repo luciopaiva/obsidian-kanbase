@@ -113,6 +113,7 @@ export class KanbanView extends BasesView implements HoverParent {
       {
         type: "group" as const,
         displayName: "Display",
+        shouldHide: () => true,
         items: [
           {
             key: "cardOpenBehavior",
