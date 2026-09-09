@@ -1,6 +1,6 @@
 import { KanbanView } from "./kanban-view";
 import { CONFIG_KEY_TAG_COLORS } from "./constants";
-import { App, Modal, TFile, setIcon, setTooltip, Setting } from "obsidian";
+import { App, Modal, TFile, setTooltip, Setting } from "obsidian";
 import { TagEditModal } from "./tag-edit-modal";
 import { relativeLuminance } from "./color-utils";
 import { countTagsByCard } from "./tag-counts";
@@ -13,7 +13,6 @@ interface SerializableBasesFilter {
 
 export class Tags {
   private view: KanbanView;
-  private isFilterBarVisible = true;
   private tagCounts = new Map<string, number>();
   private tagsRequiredByBaseFilters = new Set<string>();
   public activeFilters: Set<string> = new Set();
@@ -151,38 +150,8 @@ export class Tags {
     return serialized;
   }
 
-  public renderToolbar(container: HTMLElement): void {
-    const boardEl = container.querySelector(".base-board-board");
-    if (!boardEl) return;
-
-    const toolbarEl = container.createDiv({ cls: "base-board-toolbar" });
-    container.insertBefore(toolbarEl, boardEl);
-
-    const filterButton = toolbarEl.createEl("button", {
-      cls: "clickable-icon base-board-toolbar-button",
-      attr: {
-        type: "button",
-        "aria-label": this.isFilterBarVisible
-          ? "Hide tag filters"
-          : "Show tag filters",
-        "aria-pressed": String(this.isFilterBarVisible),
-      },
-    });
-    setIcon(filterButton, "lucide-filter");
-    filterButton.toggleClass("is-active", this.isFilterBarVisible);
-    setTooltip(
-      filterButton,
-      this.isFilterBarVisible ? "Hide tag filters" : "Show tag filters",
-    );
-
-    filterButton.addEventListener("click", () => {
-      this.isFilterBarVisible = !this.isFilterBarVisible;
-      this.view.scheduleRender();
-    });
-  }
-
-  public renderFilterBar(container: HTMLElement): void {
-    if (!this.isFilterBarVisible) return;
+  public renderFilterBar(container: HTMLElement, isVisible: boolean): void {
+    if (!isVisible) return;
 
     if (this.tagCounts.size === 0 && this.activeFilters.size === 0) {
       return;

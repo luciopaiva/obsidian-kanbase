@@ -18,6 +18,7 @@ import { DragDropManager } from "./drag-drop";
 import { ColumnManager } from "./column";
 import { CardManager } from "./card";
 import { Tags } from "./tags";
+import { BoardToolbar } from "./toolbar";
 import {
   compareOrderValues,
   generateOrderKeys,
@@ -58,6 +59,7 @@ export class KanbanView extends BasesView implements HoverParent {
 
   private dragDropManager: DragDropManager;
   private columnManager: ColumnManager;
+  private toolbar: BoardToolbar;
   public currentGroups: BasesEntryGroup[] = [];
   public cardManager: CardManager;
 
@@ -89,6 +91,7 @@ export class KanbanView extends BasesView implements HoverParent {
     this.containerEl = scrollEl.createDiv({ cls: "base-board-container" });
 
     this.tags = new Tags(this);
+    this.toolbar = new BoardToolbar(this);
     this.cardManager = new CardManager(this);
     this.columnManager = new ColumnManager(this);
 
@@ -633,8 +636,11 @@ export class KanbanView extends BasesView implements HoverParent {
       this.isFirstRender = false;
     }
 
-    this.tags.renderToolbar(this.containerEl);
-    this.tags.renderFilterBar(this.containerEl);
+    this.toolbar.render(this.containerEl);
+    this.tags.renderFilterBar(
+      this.containerEl,
+      this.toolbar.areTagFiltersVisible(),
+    );
 
     columns.forEach((columnName, idx) => {
       const group = this.getGroupForColumn(columnName);
