@@ -782,6 +782,15 @@
   background-color: var(--background-primary);
 }
 
+.base-board-toolbar-title {
+  margin-right: auto;
+  font-weight: var(--font-semibold);
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .base-board-toolbar-button {
   display: inline-flex;
   align-items: center;

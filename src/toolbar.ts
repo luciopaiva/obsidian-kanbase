@@ -20,6 +20,12 @@ export class BoardToolbar {
     container.insertBefore(toolbarEl, boardEl);
     const tagFiltersVisible = this.areTagFiltersVisible();
 
+    const baseName = this.view.getBaseFileName();
+    toolbarEl.createDiv({
+      cls: "base-board-toolbar-title",
+      text: baseName ? `${baseName} kanban` : "Kanban",
+    });
+
     const filterButton = toolbarEl.createEl("button", {
       cls: "clickable-icon base-board-toolbar-button",
       attr: {
