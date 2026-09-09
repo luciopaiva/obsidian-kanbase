@@ -5,7 +5,7 @@ import {
   generateOrderKeys,
   isOrderKey,
   readOrderValue,
-} from "../src/order";
+} from "../src/support/order";
 
 describe("fractional card ordering", () => {
   it("generates keys before, between, and after existing keys", () => {

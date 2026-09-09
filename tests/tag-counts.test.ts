@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countTagsByCard } from "../src/tag-counts";
+import { countTagsByCard } from "../src/tags/tag-counts";
 
 describe("countTagsByCard", () => {
   it("counts the cards containing each tag", () => {

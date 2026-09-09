@@ -1,6 +1,6 @@
 import { App, Modal, Setting, setIcon } from "obsidian";
-import { Tags } from "./tags";
-import { relativeLuminance } from "./color-utils";
+import { Tags } from "../tags/tags";
+import { relativeLuminance } from "../support/color-utils";
 
 export class TagEditModal extends Modal {
   private tags: string[];

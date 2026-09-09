@@ -1,5 +1,5 @@
 import { Modal, App, Setting, Notice, TextComponent } from "obsidian";
-import type { BoardConfig } from "./board-scaffolder";
+import type { BoardConfig } from "../board/board-scaffolder";
 
 // ---------------------------------------------------------------------------
 //  Simple input modal (for column names, etc.)

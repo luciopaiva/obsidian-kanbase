@@ -3,7 +3,7 @@ import {
   getNextTagFilterState,
   matchesTagFilters,
   type ActiveTagFilterState,
-} from "../src/tag-filter-state";
+} from "../src/tags/tag-filter-state";
 
 describe("getNextTagFilterState", () => {
   it("cycles from none to include to exclude and back to none", () => {

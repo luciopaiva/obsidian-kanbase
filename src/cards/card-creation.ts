@@ -1,7 +1,7 @@
 import { BasesEntry, Notice } from "obsidian";
-import { CONFIG_KEY_ADD_TO_TOP, ORDER_PROPERTY } from "./constants";
-import { generateOrderKey, isOrderKey, OrderValue } from "./order";
-import type { KanbanView } from "./kanban-view";
+import { CONFIG_KEY_ADD_TO_TOP, ORDER_PROPERTY } from "../support/constants";
+import { generateOrderKey, isOrderKey, OrderValue } from "../support/order";
+import type { KanbanView } from "../kanban-view";
 
 export class CardCreationManager {
   private view: KanbanView;

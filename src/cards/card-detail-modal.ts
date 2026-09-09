@@ -1,5 +1,5 @@
 import { App, ButtonComponent, Modal, TFile, WorkspaceLeaf } from "obsidian";
-import { KanbanView } from "./kanban-view";
+import { KanbanView } from "../kanban-view";
 
 export class CardDetailModal extends Modal {
   private file: TFile;

@@ -1,13 +1,13 @@
 import { BasesEntry, BasesEntryGroup, TFile } from "obsidian";
-import { ORDER_PROPERTY } from "./constants";
+import { ORDER_PROPERTY } from "../support/constants";
 import {
   compareOrderValues,
   generateOrderKeys,
   isOrderKey,
   OrderValue,
   readOrderValue,
-} from "./order";
-import type { KanbanView } from "./kanban-view";
+} from "../support/order";
+import type { KanbanView } from "../kanban-view";
 
 export class CardMoveCoordinator {
   private view: KanbanView;

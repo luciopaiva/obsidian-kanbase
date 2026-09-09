@@ -1,5 +1,5 @@
 import { BasesEntryGroup, NullValue, setIcon } from "obsidian";
-import type { KanbanView } from "./kanban-view";
+import type { KanbanView } from "../kanban-view";
 import { getGroupForColumn } from "./board-grouping";
 
 interface BoardScrollState {

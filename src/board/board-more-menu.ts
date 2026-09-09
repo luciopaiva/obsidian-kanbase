@@ -1,5 +1,5 @@
 import { Menu, Modal, Setting, setIcon, setTooltip } from "obsidian";
-import type { KanbanView } from "./kanban-view";
+import type { KanbanView } from "../kanban-view";
 
 export class BoardMoreMenu {
   constructor(private readonly view: KanbanView) {}

@@ -1,7 +1,7 @@
 import { TFile, WorkspaceLeaf } from "obsidian";
-import type { KanbanView } from "./kanban-view";
+import type { KanbanView } from "../kanban-view";
 import { CardDetailModal } from "./card-detail-modal";
-import { isLeafAttached } from "./base-view-context";
+import { isLeafAttached } from "../board/base-view-context";
 
 export class CardNavigation {
   private detailLeaf: WorkspaceLeaf | null = null;

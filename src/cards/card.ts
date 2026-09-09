@@ -13,9 +13,9 @@ import {
   Keymap,
   Platform,
 } from "obsidian";
-import { KanbanView } from "./kanban-view";
-import { ORDER_PROPERTY, sanitizeFilename } from "./constants";
-import { relativeLuminance } from "./color-utils";
+import { KanbanView } from "../kanban-view";
+import { ORDER_PROPERTY, sanitizeFilename } from "../support/constants";
+import { relativeLuminance } from "../support/color-utils";
 
 const IMAGE_EXTENSIONS = new Set([
   "apng",

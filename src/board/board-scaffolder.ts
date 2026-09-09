@@ -1,5 +1,5 @@
 import { App, Notice, TFile } from "obsidian";
-import { sanitizeFilename } from "./constants";
+import { sanitizeFilename } from "../support/constants";
 
 export interface BoardConfig {
   name: string;

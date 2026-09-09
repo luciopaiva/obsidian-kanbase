@@ -7,11 +7,10 @@ import {
   Menu,
   Platform,
 } from "obsidian";
-import { KanbanView } from "./kanban-view";
-import { InputModal } from "./modals";
-import { NO_VALUE_COLUMN } from "./constants";
-import { ColorPickerModal } from "./color-picker-modal";
-import { WipLimitModal } from "./modals";
+import { KanbanView } from "../kanban-view";
+import { InputModal, WipLimitModal } from "../ui/modals";
+import { NO_VALUE_COLUMN } from "../support/constants";
+import { ColorPickerModal } from "../ui/color-picker-modal";
 
 export class ColumnManager {
   private view: KanbanView;

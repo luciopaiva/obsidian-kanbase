@@ -1,7 +1,7 @@
-import type { KanbanView } from "./kanban-view";
-import { CONFIG_KEY_TAG_COLORS } from "./constants";
+import type { KanbanView } from "../kanban-view";
+import { CONFIG_KEY_TAG_COLORS } from "../support/constants";
 import { TFile } from "obsidian";
-import { TagEditModal } from "./tag-edit-modal";
+import { TagEditModal } from "../ui/tag-edit-modal";
 import { getTagsRequiredByFilters } from "./base-filter-tags";
 import type { BasesConfigFileFilter } from "obsidian";
 

@@ -1,8 +1,8 @@
 import { Plugin, QueryController, TFolder, TAbstractFile } from "obsidian";
 import { KanbanView } from "./kanban-view";
-import { CreateBoardModal } from "./modals";
-import { updateBaseFolderReferences } from "./folder-rename";
-import { BoardScaffolder } from "./board-scaffolder";
+import { CreateBoardModal } from "./ui/modals";
+import { updateBaseFolderReferences } from "./support/folder-rename";
+import { BoardScaffolder } from "./board/board-scaffolder";
 import {
   BaseBoardSettingTab,
   DEFAULT_CARD_TITLE_FONT_SIZE,

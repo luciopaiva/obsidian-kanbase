@@ -1,5 +1,5 @@
 import { Menu, Notice } from "obsidian";
-import type { KanbanView } from "./kanban-view";
+import type { KanbanView } from "../kanban-view";
 
 export class CardSelectionManager {
   private view: KanbanView;

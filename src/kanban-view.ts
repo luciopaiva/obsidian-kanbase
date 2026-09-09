@@ -6,22 +6,22 @@ import {
   QueryController,
 } from "obsidian";
 import type BaseBoardPlugin from "./main";
-import { DragDropManager } from "./drag-drop";
-import { ColumnManager } from "./column";
-import { CardManager } from "./card";
-import { Tags } from "./tags";
-import { BoardToolbar } from "./toolbar";
-import { TagFilterBar } from "./tag-filter-bar";
-import { CardSelectionManager } from "./card-selection";
-import { CardMoveCoordinator } from "./card-move";
-import { BoardPreferences } from "./board-preferences";
-import { CardCreationManager } from "./card-creation";
-import { getColumnName } from "./board-grouping";
-import { getBaseFileName } from "./base-view-context";
-import { BoardConfig } from "./board-config";
-import { BoardRenderer } from "./board-renderer";
-import { BoardUpdateCoordinator } from "./board-update-coordinator";
-import { CardNavigation } from "./card-navigation";
+import { DragDropManager } from "./board/drag-drop";
+import { ColumnManager } from "./board/column";
+import { CardManager } from "./cards/card";
+import { Tags } from "./tags/tags";
+import { BoardToolbar } from "./board/toolbar";
+import { TagFilterBar } from "./tags/tag-filter-bar";
+import { CardSelectionManager } from "./cards/card-selection";
+import { CardMoveCoordinator } from "./cards/card-move";
+import { BoardPreferences } from "./board/board-preferences";
+import { CardCreationManager } from "./cards/card-creation";
+import { getColumnName } from "./board/board-grouping";
+import { getBaseFileName } from "./board/base-view-context";
+import { BoardConfig } from "./board/board-config";
+import { BoardRenderer } from "./board/board-renderer";
+import { BoardUpdateCoordinator } from "./board/board-update-coordinator";
+import { CardNavigation } from "./cards/card-navigation";
 
 // ---------------------------------------------------------------------------
 //  Kanban View

@@ -3,7 +3,7 @@ import {
   CONFIG_KEY_ADD_TO_TOP,
   CONFIG_KEY_COVER_PROPERTY,
   CONFIG_KEY_OPEN_BEHAVIOR,
-} from "./constants";
+} from "../support/constants";
 import { applyGroupByValue, getGroupByValueType } from "./board-grouping";
 
 export type CardOpenBehavior = "active" | "modal" | "split" | "tab";

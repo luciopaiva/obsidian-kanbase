@@ -5,8 +5,8 @@ import {
   CONFIG_KEY_TAG_FILTERS_VISIBLE,
   CONFIG_KEY_WIP_LIMITS,
   NO_VALUE_COLUMN,
-} from "./constants";
-import type { KanbanView } from "./kanban-view";
+} from "../support/constants";
+import type { KanbanView } from "../kanban-view";
 
 export class BoardPreferences {
   private view: KanbanView;

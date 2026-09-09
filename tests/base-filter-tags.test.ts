@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getTagsRequiredByFilter,
   getTagsRequiredByFilters,
-} from "../src/base-filter-tags";
+} from "../src/tags/base-filter-tags";
 
 describe("getTagsRequiredByFilter", () => {
   it("extracts a positive tag containment filter", () => {

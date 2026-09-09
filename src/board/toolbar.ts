@@ -1,4 +1,4 @@
-import type { KanbanView } from "./kanban-view";
+import type { KanbanView } from "../kanban-view";
 import { BoardFilterButton } from "./board-filter-button";
 import { BoardMoreMenu } from "./board-more-menu";
 

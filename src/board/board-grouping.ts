@@ -4,8 +4,8 @@ import {
   NumberValue,
   NullValue,
 } from "obsidian";
-import { NO_VALUE_COLUMN } from "./constants";
-import { coerceColumnValue, GroupByValueType } from "./value-utils";
+import { NO_VALUE_COLUMN } from "../support/constants";
+import { coerceColumnValue, GroupByValueType } from "../support/value-utils";
 
 export function getColumnName(key: unknown): string {
   if (key === undefined || key === null || key instanceof NullValue) {
