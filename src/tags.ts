@@ -4,10 +4,18 @@ import { App, Modal, TFile, setIcon, setTooltip, Setting } from "obsidian";
 import { TagEditModal } from "./tag-edit-modal";
 import { relativeLuminance } from "./color-utils";
 import { countTagsByCard } from "./tag-counts";
+import { getTagsRequiredByFilters } from "./base-filter-tags";
+import type { BasesConfigFileFilter } from "obsidian";
+
+interface SerializableBasesFilter {
+  serialize(): BasesConfigFileFilter;
+}
 
 export class Tags {
   private view: KanbanView;
   private isFilterBarVisible = true;
+  private tagCounts = new Map<string, number>();
+  private tagsRequiredByBaseFilters = new Set<string>();
   public activeFilters: Set<string> = new Set();
 
   constructor(view: KanbanView) {
@@ -95,6 +103,54 @@ export class Tags {
     }).open();
   }
 
+  /** Refresh tag data from the entries already filtered by the Bases query. */
+  public refreshTagStats(): void {
+    const tagsByCard: string[][] = [];
+    for (const group of this.view.currentGroups) {
+      for (const entry of group.entries) {
+        if (entry.file instanceof TFile) {
+          tagsByCard.push(this.extractTagsFromFile(entry.file));
+        }
+      }
+    }
+
+    this.tagCounts = countTagsByCard(tagsByCard);
+    this.tagsRequiredByBaseFilters = getTagsRequiredByFilters(
+      this.getSerializedBaseFilters(),
+    );
+  }
+
+  public getTagsForCardDisplay(file: TFile): string[] {
+    return this.extractTagsFromFile(file).filter(
+      (tag) => !this.tagsRequiredByBaseFilters.has(tag),
+    );
+  }
+
+  /**
+   * Obsidian does not expose Base filters on the public custom-view API, but
+   * the runtime view config retains the parsed global and per-view filters.
+   * Treat this as optional: if the internal shape changes, hide no tags.
+   */
+  private getSerializedBaseFilters(): BasesConfigFileFilter[] {
+    const config = this.view.config as typeof this.view.config & {
+      filters?: SerializableBasesFilter | null;
+      query?: { filters?: SerializableBasesFilter | null };
+    };
+    const runtimeFilters = [config.query?.filters, config.filters];
+    const serialized: BasesConfigFileFilter[] = [];
+
+    for (const filter of runtimeFilters) {
+      if (!filter || typeof filter.serialize !== "function") continue;
+      try {
+        serialized.push(filter.serialize());
+      } catch {
+        // Internal API mismatch: leave this filter unsupported and visible.
+      }
+    }
+
+    return serialized;
+  }
+
   public renderToolbar(container: HTMLElement): void {
     const boardEl = container.querySelector(".base-board-board");
     if (!boardEl) return;
@@ -128,19 +184,7 @@ export class Tags {
   public renderFilterBar(container: HTMLElement): void {
     if (!this.isFilterBarVisible) return;
 
-    const tagsByCard: string[][] = [];
-
-    for (const group of this.view.currentGroups) {
-      for (const entry of group.entries) {
-        if (entry.file instanceof TFile) {
-          tagsByCard.push(this.extractTagsFromFile(entry.file));
-        }
-      }
-    }
-
-    const tagCounts = countTagsByCard(tagsByCard);
-
-    if (tagCounts.size === 0 && this.activeFilters.size === 0) {
+    if (this.tagCounts.size === 0 && this.activeFilters.size === 0) {
       return;
     }
 
@@ -151,16 +195,16 @@ export class Tags {
     const barEl = container.createDiv({ cls: "base-board-filter-bar" });
     container.insertBefore(barEl, boardEl);
 
-    const tagsArray = Array.from(tagCounts.keys()).sort();
+    const tagsArray = Array.from(this.tagCounts.keys()).sort();
 
     // Also include any active filters that might not be in the current cards
     for (const activeTag of this.activeFilters) {
-      if (!tagCounts.has(activeTag)) tagsArray.push(activeTag);
+      if (!this.tagCounts.has(activeTag)) tagsArray.push(activeTag);
     }
 
     for (const tag of tagsArray) {
       const pill = barEl.createSpan({ cls: "base-board-filter-pill" });
-      const count = tagCounts.get(tag) ?? 0;
+      const count = this.tagCounts.get(tag) ?? 0;
       pill.createSpan({ cls: "base-board-filter-label", text: tag });
       pill.createSpan({ cls: "base-board-filter-count", text: String(count) });
       pill.setAttr(

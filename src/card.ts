@@ -251,16 +251,18 @@ export class CardManager {
       });
     }
 
-    const tagContainerEl = cardEl.createDiv({
-      cls: "base-board-tag-container",
-    });
     if (file instanceof TFile) {
-      const fileTags = this.view.tags.extractTagsFromFile(file);
+      const fileTags = this.view.tags.getTagsForCardDisplay(file);
+      const tagContainerEl =
+        fileTags.length > 0
+          ? cardEl.createDiv({ cls: "base-board-tag-container" })
+          : null;
       for (const tag of fileTags) {
-        const tagEl = tagContainerEl.createSpan({
+        const tagEl = tagContainerEl?.createSpan({
           cls: "base-board-card-tag",
           text: tag,
         });
+        if (!tagEl) continue;
         const color = this.view.tags.getColorForTag(tag);
         if (color) {
           tagEl.style.setProperty("--tag-color", color);
@@ -397,7 +399,7 @@ export class CardManager {
       : null;
     const tags =
       resolvedFile instanceof TFile
-        ? this.view.tags.extractTagsFromFile(resolvedFile)
+        ? this.view.tags.getTagsForCardDisplay(resolvedFile)
         : [];
     const coverProperty = this.view.getCardCoverProperty();
     const cover =

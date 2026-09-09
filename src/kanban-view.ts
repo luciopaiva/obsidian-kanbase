@@ -623,6 +623,7 @@ export class KanbanView extends BasesView implements HoverParent {
     }
 
     this.currentGroups = groupedData;
+    this.tags.refreshTagStats();
     const columns = this.getColumns();
     const boardEl = this.containerEl.createDiv({ cls: "base-board-board" });
 
