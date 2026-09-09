@@ -1,10 +1,8 @@
 import {
   BasesView,
   BasesEntryGroup,
-  BooleanValue,
   HoverParent,
   HoverPopover,
-  NumberValue,
   NullValue,
   QueryController,
   setIcon,
@@ -22,9 +20,13 @@ import { CardSelectionManager } from "./card-selection";
 import { CardMoveCoordinator } from "./card-move";
 import { BoardPreferences } from "./board-preferences";
 import { CardCreationManager } from "./card-creation";
-import { coerceColumnValue, GroupByValueType } from "./value-utils";
 import {
-  NO_VALUE_COLUMN,
+  applyGroupByValue,
+  getColumnName,
+  getGroupByValueType,
+  getGroupForColumn,
+} from "./board-grouping";
+import {
   CONFIG_KEY_OPEN_BEHAVIOR,
   CONFIG_KEY_COVER_PROPERTY,
   CONFIG_KEY_ADD_TO_TOP,
@@ -258,21 +260,7 @@ export class KanbanView extends BasesView implements HoverParent {
   }
 
   public getColumnName(key: unknown): string {
-    if (key === undefined || key === null || key instanceof NullValue) {
-      return NO_VALUE_COLUMN;
-    }
-    if (typeof key === "object" && key !== null) {
-      if ("value" in key) {
-        const val = (key as Record<string, unknown>).value;
-        return String(val);
-      }
-      // Bases group-key objects expose the column name via toString()
-      // eslint-disable-next-line @typescript-eslint/no-base-to-string -- Bases-controlled object with custom toString
-      return String(key);
-    }
-    if (typeof key === "string") return key;
-    if (typeof key === "number" || typeof key === "boolean") return String(key);
-    return "";
+    return getColumnName(key);
   }
 
   /**
@@ -282,14 +270,6 @@ export class KanbanView extends BasesView implements HoverParent {
    * NumberValue keys. Booleans win outright so a mix of real checkboxes and
    * already-corrupted "false" strings still resolves to "boolean".
    */
-  private groupByValueType(): GroupByValueType {
-    for (const group of this.currentGroups) {
-      if (group.key instanceof BooleanValue) return "boolean";
-      if (group.key instanceof NumberValue) return "number";
-    }
-    return "other";
-  }
-
   /**
    * Write the groupBy property for a card into `fm`, preserving its real type.
    *
@@ -302,20 +282,12 @@ export class KanbanView extends BasesView implements HoverParent {
     groupByProp: string,
     columnName: string,
   ): void {
-    if (columnName === NO_VALUE_COLUMN) {
-      delete fm[groupByProp];
-      return;
-    }
-    fm[groupByProp] = coerceColumnValue(columnName, this.groupByValueType());
-  }
-
-  private getGroupForColumn(columnName: string): BasesEntryGroup | null {
-    for (const group of this.currentGroups) {
-      if (this.getColumnName(group.key) === columnName) {
-        return group;
-      }
-    }
-    return null;
+    applyGroupByValue(
+      fm,
+      groupByProp,
+      columnName,
+      getGroupByValueType(this.currentGroups),
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -418,7 +390,7 @@ export class KanbanView extends BasesView implements HoverParent {
     );
 
     columns.forEach((columnName, idx) => {
-      const group = this.getGroupForColumn(columnName);
+      const group = getGroupForColumn(this.currentGroups, columnName);
       this.columnManager.renderColumn(
         boardEl,
         columnName,
