@@ -27,7 +27,7 @@ export class BoardToolbar {
     const baseName = this.view.getBaseFileName();
     toolbarEl.createDiv({
       cls: "kanbase-toolbar-title",
-      text: baseName ? `${baseName} kanban` : "Kanban",
+      text: baseName ? `${baseName} Kanbase` : "Kanbase",
     });
 
     this.filterButton.render(toolbarEl);

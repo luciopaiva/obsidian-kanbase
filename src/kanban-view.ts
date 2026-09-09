@@ -29,7 +29,7 @@ import { CardNavigation } from "./cards/card-navigation";
 // ---------------------------------------------------------------------------
 
 export class KanbanView extends BasesView implements HoverParent {
-  type = "kanban";
+  type = "kanbase";
   // Required by HoverParent — Obsidian manages the popover lifecycle.
   hoverPopover: HoverPopover | null = null;
   scrollEl: HTMLElement;
