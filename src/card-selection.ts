@@ -60,7 +60,7 @@ export class CardSelectionManager {
     });
     menu.addSeparator();
 
-    for (const column of this.view.getColumns()) {
+    for (const column of this.view.preferences.getColumns()) {
       menu.addItem((item) => {
         item.setTitle(column).onClick(() => {
           void this.moveToColumn(selectedPaths, column, groupByProperty);

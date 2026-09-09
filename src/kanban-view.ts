@@ -1,6 +1,5 @@
 import {
   BasesView,
-  BasesEntry,
   BasesEntryGroup,
   BasesAllOptions,
   BooleanValue,
@@ -21,14 +20,11 @@ import { BoardToolbar } from "./toolbar";
 import { TagFilterBar } from "./tag-filter-bar";
 import { CardSelectionManager } from "./card-selection";
 import { CardMoveCoordinator } from "./card-move";
+import { BoardPreferences } from "./board-preferences";
 import { coerceColumnValue, GroupByValueType } from "./value-utils";
 import {
   NO_VALUE_COLUMN,
-  CONFIG_KEY_COLUMNS,
-  CONFIG_KEY_COLLAPSED_COLUMNS,
   CONFIG_KEY_OPEN_BEHAVIOR,
-  CONFIG_KEY_COLUMN_COLORS,
-  CONFIG_KEY_WIP_LIMITS,
   CONFIG_KEY_COVER_PROPERTY,
   CONFIG_KEY_ADD_TO_TOP,
 } from "./constants";
@@ -60,6 +56,8 @@ export class KanbanView extends BasesView implements HoverParent {
   public cardSelection: CardSelectionManager;
   /** Card ordering, cross-column moves, and optimistic render state. */
   public cardMoves: CardMoveCoordinator;
+  /** Column order, appearance, limits, collapse state, and persistence. */
+  public preferences: BoardPreferences;
   public currentGroups: BasesEntryGroup[] = [];
   public cardManager: CardManager;
 
@@ -90,6 +88,7 @@ export class KanbanView extends BasesView implements HoverParent {
     this.tagFilterBar = new TagFilterBar(this, this.tags);
     this.cardSelection = new CardSelectionManager(this);
     this.cardMoves = new CardMoveCoordinator(this);
+    this.preferences = new BoardPreferences(this);
     this.cardManager = new CardManager(this);
     this.columnManager = new ColumnManager(this);
 
@@ -189,37 +188,6 @@ export class KanbanView extends BasesView implements HoverParent {
   }
 
   // ---------------------------------------------------------------------------
-  //  Base identity
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Build a stable, unique identifier for this board view.
-   *
-   * Uses the view's display name (unique within a .base file) combined with
-   * the groupBy property.  If neither is available we fall back to a hash
-   * derived from the file paths currently in the dataset so that column
-   * configs never collide across different boards.
-   */
-  private getBaseId(): string {
-    const viewName = this.config?.name ?? "";
-    const groupBy = this.getGroupByProperty() ?? "";
-
-    // Try to discover the .base file path from the entries in the dataset.
-    // All entries originate from the same .base query so any entry's folder
-    // ancestor pattern is a reasonable proxy.  This gives us a path-qualified
-    // key even when two .base files share the same view name.
-    let basePath = "";
-    const entries: BasesEntry[] = this.data?.data ?? [];
-    if (entries.length > 0) {
-      const firstPath = entries[0].file?.path ?? "";
-      const lastSlash = firstPath.lastIndexOf("/");
-      basePath = lastSlash > 0 ? firstPath.substring(0, lastSlash) : "";
-    }
-
-    return `${basePath}::${viewName}::${groupBy}`;
-  }
-
-  // ---------------------------------------------------------------------------
   //  Helpers
   // ---------------------------------------------------------------------------
 
@@ -281,57 +249,6 @@ export class KanbanView extends BasesView implements HoverParent {
     return found;
   }
 
-  public getColumnColors(): Record<string, string> {
-    const raw = this.config?.get(CONFIG_KEY_COLUMN_COLORS);
-    return raw && typeof raw === "object"
-      ? (raw as Record<string, string>)
-      : {};
-  }
-
-  public getColumnColor(columnName: string): string | null {
-    const customColors = this.getColumnColors();
-    return customColors[columnName] ?? null;
-  }
-
-  public setColumnColor(columnName: string, color: string): void {
-    const colors = this.getColumnColors();
-    if (color) {
-      colors[columnName] = color;
-    } else {
-      delete colors[columnName];
-    }
-    this.config?.set(CONFIG_KEY_COLUMN_COLORS, colors);
-    this.scheduleRender();
-  }
-
-  // ---------------------------------------------------------------------------
-  //  WIP Limits
-  // ---------------------------------------------------------------------------
-
-  public getWipLimits(): Record<string, number> {
-    const raw = this.config?.get(CONFIG_KEY_WIP_LIMITS);
-    return raw && typeof raw === "object"
-      ? (raw as Record<string, number>)
-      : {};
-  }
-
-  public getWipLimit(columnName: string): number | null {
-    const limits = this.getWipLimits();
-    const val = limits[columnName];
-    return typeof val === "number" && val > 0 ? val : null;
-  }
-
-  public setWipLimit(columnName: string, limit: number | null): void {
-    const limits = this.getWipLimits();
-    if (limit !== null && limit > 0) {
-      limits[columnName] = limit;
-    } else {
-      delete limits[columnName];
-    }
-    this.config?.set(CONFIG_KEY_WIP_LIMITS, limits);
-    this.scheduleRender();
-  }
-
   public getColumnName(key: unknown): string {
     if (key === undefined || key === null || key instanceof NullValue) {
       return NO_VALUE_COLUMN;
@@ -382,82 +299,6 @@ export class KanbanView extends BasesView implements HoverParent {
       return;
     }
     fm[groupByProp] = coerceColumnValue(columnName, this.groupByValueType());
-  }
-
-  // ---------------------------------------------------------------------------
-  //  Column config  (dual-layer: .base file via config API + plugin data.json)
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Read the persisted column order.
-   *
-   * Priority:
-   *  1. View-level config stored inside the .base file (via BasesViewConfig)
-   *  2. Legacy plugin data.json (for backwards-compat with existing boards)
-   *  3. Fall back to whatever columns the data naturally produces
-   *
-   * Any columns present in the live data but missing from the stored list
-   * are appended at the end so they are never silently hidden.
-   */
-  public getColumns(): string[] {
-    // 1. Try .base file config first (new preferred storage)
-    const fromConfig = this.config?.get(CONFIG_KEY_COLUMNS) as
-      string[] | undefined;
-
-    // 2. Fallback: legacy plugin data.json
-    const fromPlugin = this.plugin.getColumnConfig(this.getBaseId());
-
-    const rawStored = fromConfig?.length
-      ? fromConfig
-      : fromPlugin?.columns?.length
-        ? fromPlugin.columns
-        : null;
-
-    const stored = rawStored
-      ? rawStored.map((col) => (col === "" ? NO_VALUE_COLUMN : col))
-      : null;
-
-    const dataColumns = this.currentGroups.map((g) =>
-      this.getColumnName(g.key),
-    );
-
-    if (stored && stored.length > 0) {
-      const result = [...stored];
-      for (const col of dataColumns) {
-        if (!result.includes(col)) {
-          result.push(col);
-        }
-      }
-      return result;
-    }
-
-    return dataColumns;
-  }
-
-  public getCollapsedColumns(): Record<string, boolean> {
-    const raw = this.config?.get(CONFIG_KEY_COLLAPSED_COLUMNS);
-    return raw && typeof raw === "object"
-      ? (raw as Record<string, boolean>)
-      : {};
-  }
-
-  public isColumnCollapsed(columnName: string): boolean {
-    return !!this.getCollapsedColumns()[columnName];
-  }
-
-  public setColumnCollapsed(columnName: string, collapsed: boolean): void {
-    const state = this.getCollapsedColumns();
-    if (collapsed) {
-      state[columnName] = true;
-    } else {
-      delete state[columnName];
-    }
-    this.config?.set(CONFIG_KEY_COLLAPSED_COLUMNS, state);
-    this.scheduleRender();
-  }
-
-  public toggleColumnCollapsed(columnName: string): void {
-    this.setColumnCollapsed(columnName, !this.isColumnCollapsed(columnName));
   }
 
   private getGroupForColumn(columnName: string): BasesEntryGroup | null {
@@ -532,10 +373,7 @@ export class KanbanView extends BasesView implements HoverParent {
     // If the board has configured columns (from .base or data.json) but
     // no cards exist yet, render the empty columns so users can see and
     // add cards instead of showing an opaque placeholder.
-    const stored =
-      (this.config?.get(CONFIG_KEY_COLUMNS) as string[] | undefined) ??
-      this.plugin.getColumnConfig(this.getBaseId())?.columns;
-    const hasStoredColumns = stored && stored.length > 0;
+    const hasStoredColumns = this.preferences.hasStoredColumns();
     const shouldShowPlaceholder =
       !hasGroupBy && groupedData.length <= 1 && !hasStoredColumns;
 
@@ -556,7 +394,7 @@ export class KanbanView extends BasesView implements HoverParent {
     this.currentGroups = groupedData;
     this.tags.refreshBaseFilterTags();
     this.tagFilterBar.refresh();
-    const columns = this.getColumns();
+    const columns = this.preferences.getColumns();
     const boardEl = this.containerEl.createDiv({ cls: "base-board-board" });
 
     // Only animate cards on the very first render
@@ -635,41 +473,8 @@ export class KanbanView extends BasesView implements HoverParent {
   // ---------------------------------------------------------------------------
 
   private handleColumnReorder(orderedNames: string[]): void {
-    this.saveColumns(orderedNames);
+    this.preferences.saveColumns(orderedNames);
     this.render();
-  }
-
-  /**
-   * Persist the column list.
-   *
-   * Writes to two locations for compatibility:
-   *  - BasesViewConfig (stored inside the .base file itself — portable)
-   *  - Plugin data.json (legacy, kept so older board setups still work)
-   */
-  public saveColumns(columns: string[]): void {
-    // Primary: persist in .base file via the official config API
-    const toSave = columns.map((col) => (col === NO_VALUE_COLUMN ? "" : col));
-    this.config?.set(CONFIG_KEY_COLUMNS, toSave);
-
-    // Legacy fallback: also write to plugin data.json
-    void this.plugin.saveColumnConfig(this.getBaseId(), { columns });
-  }
-
-  public updateColumnPreferences(oldName: string, newName: string): void {
-    const collapsed = this.getCollapsedColumns();
-    if (collapsed[oldName]) {
-      delete collapsed[oldName];
-      collapsed[newName] = true;
-      this.config?.set(CONFIG_KEY_COLLAPSED_COLUMNS, collapsed);
-    }
-  }
-
-  public removeColumnPreferences(columnName: string): void {
-    const collapsed = this.getCollapsedColumns();
-    if (collapsed[columnName]) {
-      delete collapsed[columnName];
-      this.config?.set(CONFIG_KEY_COLLAPSED_COLUMNS, collapsed);
-    }
   }
 
   /** Debounced render — coalesces multiple calls into one. */

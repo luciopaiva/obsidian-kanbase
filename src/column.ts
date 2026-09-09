@@ -30,7 +30,7 @@ export class ColumnManager {
   ): void {
     const isNoValue = columnName === NO_VALUE_COLUMN;
     const entries = this.view.cardMoves.getEntriesForColumn(columnName, group);
-    const isCollapsed = this.view.isColumnCollapsed(columnName);
+    const isCollapsed = this.view.preferences.isColumnCollapsed(columnName);
 
     // Sort entries up-front using a stable fallback
     const sorted = [...entries].sort((a: BasesEntry, b: BasesEntry) => {
@@ -66,12 +66,12 @@ export class ColumnManager {
     columnEl.classList.toggle("base-board-column--collapsed", isCollapsed);
 
     // ---- WIP limit check ----
-    const wipLimit = this.view.getWipLimit(columnName);
+    const wipLimit = this.view.preferences.getWipLimit(columnName);
     if (wipLimit !== null && entries.length > wipLimit) {
       columnEl.addClass("base-board-column--wip-overflow");
     }
 
-    const columnColor = this.view.getColumnColor(columnName);
+    const columnColor = this.view.preferences.getColumnColor(columnName);
     if (columnColor) {
       columnEl.style.setProperty("--column-color", columnColor);
       const accentEl = columnEl.createDiv({ cls: "base-board-column-accent" });
@@ -90,7 +90,7 @@ export class ColumnManager {
     headerEl.addEventListener("click", (e: MouseEvent) => {
       if (isCollapsed) {
         e.stopPropagation();
-        this.view.toggleColumnCollapsed(columnName);
+        this.view.preferences.toggleColumnCollapsed(columnName);
       }
     });
 
@@ -105,13 +105,13 @@ export class ColumnManager {
     setIcon(collapseBtn, isCollapsed ? "chevron-right" : "chevron-down");
     collapseBtn.addEventListener("click", (e: MouseEvent) => {
       e.stopPropagation();
-      this.view.toggleColumnCollapsed(columnName);
+      this.view.preferences.toggleColumnCollapsed(columnName);
     });
     collapseBtn.addEventListener("keydown", (e: KeyboardEvent) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         e.stopPropagation();
-        this.view.toggleColumnCollapsed(columnName);
+        this.view.preferences.toggleColumnCollapsed(columnName);
       }
     });
 
@@ -267,7 +267,7 @@ export class ColumnManager {
       menu.addSeparator();
     }
 
-    const currentColor = this.view.getColumnColor(columnName) ?? "";
+    const currentColor = this.view.preferences.getColumnColor(columnName) ?? "";
     menu.addItem((item) => {
       item
         .setTitle("Change color")
@@ -278,13 +278,13 @@ export class ColumnManager {
             columnName,
             currentColor,
             (color) => {
-              this.view.setColumnColor(columnName, color);
+              this.view.preferences.setColumnColor(columnName, color);
             },
           ).open();
         });
     });
 
-    const currentWipLimit = this.view.getWipLimit(columnName);
+    const currentWipLimit = this.view.preferences.getWipLimit(columnName);
     menu.addItem((item) => {
       item
         .setTitle(
@@ -299,7 +299,7 @@ export class ColumnManager {
             columnName,
             currentWipLimit,
             (limit) => {
-              this.view.setWipLimit(columnName, limit);
+              this.view.preferences.setWipLimit(columnName, limit);
             },
           ).open();
         });
@@ -336,22 +336,24 @@ export class ColumnManager {
       "Add column",
       "Column name…",
       (name: string) => {
-        const columns = this.view.getColumns();
+        const columns = this.view.preferences.getColumns();
         if (columns.includes(name)) {
           new Notice(`Column "${name}" already exists.`);
           return;
         }
         columns.push(name);
-        this.view.saveColumns(columns);
+        this.view.preferences.saveColumns(columns);
         this.view.render();
       },
     ).open();
   }
 
   public handleDeleteColumn(columnName: string): void {
-    const columns = this.view.getColumns().filter((c) => c !== columnName);
-    this.view.saveColumns(columns);
-    this.view.removeColumnPreferences(columnName);
+    const columns = this.view.preferences
+      .getColumns()
+      .filter((column) => column !== columnName);
+    this.view.preferences.saveColumns(columns);
+    this.view.preferences.removeColumnState(columnName);
     this.view.render();
   }
 
@@ -417,7 +419,7 @@ export class ColumnManager {
     newName: string,
     entries: BasesEntry[],
   ): Promise<void> {
-    const columns = this.view.getColumns();
+    const columns = this.view.preferences.getColumns();
     if (columns.includes(newName)) {
       new Notice(`Column "${newName}" already exists.`);
       this.view.render();
@@ -429,8 +431,8 @@ export class ColumnManager {
     await this.view.applyBatchUpdate(async () => {
       // 1. Update column config
       const updatedColumns = columns.map((c) => (c === oldName ? newName : c));
-      this.view.saveColumns(updatedColumns);
-      this.view.updateColumnPreferences(oldName, newName);
+      this.view.preferences.saveColumns(updatedColumns);
+      this.view.preferences.renameColumnState(oldName, newName);
 
       // 2. Update frontmatter for all cards in this column
       if (groupByProp) {
