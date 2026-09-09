@@ -1,11 +1,16 @@
-import { setIcon, setTooltip } from "obsidian";
 import type { KanbanView } from "./kanban-view";
+import { BoardFilterButton } from "./board-filter-button";
+import { BoardMoreMenu } from "./board-more-menu";
 
 export class BoardToolbar {
   private view: KanbanView;
+  private filterButton: BoardFilterButton;
+  private moreMenu: BoardMoreMenu;
 
   constructor(view: KanbanView) {
     this.view = view;
+    this.filterButton = new BoardFilterButton(view);
+    this.moreMenu = new BoardMoreMenu(view);
   }
 
   public areTagFiltersVisible(): boolean {
@@ -18,7 +23,6 @@ export class BoardToolbar {
 
     const toolbarEl = container.createDiv({ cls: "base-board-toolbar" });
     container.insertBefore(toolbarEl, boardEl);
-    const tagFiltersVisible = this.areTagFiltersVisible();
 
     const baseName = this.view.getBaseFileName();
     toolbarEl.createDiv({
@@ -26,25 +30,8 @@ export class BoardToolbar {
       text: baseName ? `${baseName} kanban` : "Kanban",
     });
 
-    const filterButton = toolbarEl.createEl("button", {
-      cls: "clickable-icon base-board-toolbar-button",
-      attr: {
-        type: "button",
-        "aria-label": tagFiltersVisible
-          ? "Hide tag filters"
-          : "Show tag filters",
-        "aria-pressed": String(tagFiltersVisible),
-      },
-    });
-    setIcon(filterButton, "lucide-filter");
-    filterButton.toggleClass("is-active", tagFiltersVisible);
-    setTooltip(
-      filterButton,
-      tagFiltersVisible ? "Hide tag filters" : "Show tag filters",
-    );
+    this.filterButton.render(toolbarEl);
 
-    filterButton.addEventListener("click", () => {
-      this.view.preferences.setTagFiltersVisible(!tagFiltersVisible);
-    });
+    this.moreMenu.render(toolbarEl);
   }
 }

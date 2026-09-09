@@ -1,7 +1,6 @@
 import {
   BasesView,
   BasesEntryGroup,
-  BasesAllOptions,
   BooleanValue,
   HoverParent,
   HoverPopover,
@@ -152,42 +151,6 @@ export class KanbanView extends BasesView implements HoverParent {
     }
   }
 
-  static getViewOptions(): BasesAllOptions[] {
-    return [
-      {
-        type: "group" as const,
-        displayName: "Display",
-        items: [
-          {
-            key: CONFIG_KEY_OPEN_BEHAVIOR,
-            type: "dropdown" as const,
-            displayName: "Open card in",
-            default: "active",
-            options: {
-              active: "Active pane / tab",
-              modal: "Floating modal",
-              split: "Split to the right",
-              tab: "New tab",
-            },
-          },
-          {
-            key: CONFIG_KEY_COVER_PROPERTY,
-            type: "text" as const,
-            displayName: "Cover property",
-            default: "cover",
-            placeholder: "E.g. cover",
-          },
-          {
-            key: CONFIG_KEY_ADD_TO_TOP,
-            type: "toggle" as const,
-            displayName: "Add new cards to top",
-            default: false,
-          },
-        ],
-      },
-    ];
-  }
-
   // ---------------------------------------------------------------------------
   //  Helpers
   // ---------------------------------------------------------------------------
@@ -234,12 +197,33 @@ export class KanbanView extends BasesView implements HoverParent {
     return "active";
   }
 
+  public setCardOpenBehavior(
+    behavior: "active" | "modal" | "split" | "tab",
+  ): void {
+    this.config?.set(CONFIG_KEY_OPEN_BEHAVIOR, behavior);
+    this.scheduleRender();
+  }
+
   public getCardCoverProperty(): string | null {
     const val = this.config?.get(CONFIG_KEY_COVER_PROPERTY);
     if (val === undefined || val === null) {
       return "cover";
     }
     return typeof val === "string" && val.trim() !== "" ? val.trim() : null;
+  }
+
+  public setCardCoverProperty(property: string): void {
+    this.config?.set(CONFIG_KEY_COVER_PROPERTY, property);
+    this.scheduleRender();
+  }
+
+  public shouldAddNewCardsToTop(): boolean {
+    return this.config?.get(CONFIG_KEY_ADD_TO_TOP) === true;
+  }
+
+  public setAddNewCardsToTop(value: boolean): void {
+    this.config?.set(CONFIG_KEY_ADD_TO_TOP, value);
+    this.scheduleRender();
   }
 
   public isLeafAttached(leaf: WorkspaceLeaf): boolean {
