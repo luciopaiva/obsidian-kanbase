@@ -216,7 +216,7 @@ export class CardManager {
       // Use mouseenter (not mouseover) — mouseover bubbles from every child element
       // and would re-trigger the preview on each chip/tag/title crossing.
       cardEl.addEventListener("mouseenter", (evt: MouseEvent) => {
-        if (!filePath) return;
+        if (!filePath || !this.view.plugin.isHoverPreviewEnabled()) return;
         this.view.app.workspace.trigger("hover-link", {
           event: evt,
           source: "base-board",

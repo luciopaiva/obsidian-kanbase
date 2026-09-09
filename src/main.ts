@@ -22,6 +22,7 @@ export interface PluginData {
   cardTagPosition: CardTagPosition;
   cardTitleFontSize: number;
   hideBaseFilterTags: boolean;
+  hoverPreviewEnabled: boolean;
 }
 
 const DEFAULT_DATA: PluginData = {
@@ -29,6 +30,7 @@ const DEFAULT_DATA: PluginData = {
   cardTagPosition: "top",
   cardTitleFontSize: DEFAULT_CARD_TITLE_FONT_SIZE,
   hideBaseFilterTags: true,
+  hoverPreviewEnabled: false,
 };
 
 // ---------------------------------------------------------------------------
@@ -49,6 +51,10 @@ export default class BaseBoardPlugin extends Plugin {
     await this.loadPluginData();
     const boardScaffolder = new BoardScaffolder(this.app);
     this.addSettingTab(new BaseBoardSettingTab(this.app, this));
+    this.registerHoverLinkSource("base-board", {
+      display: "Base Board",
+      defaultMod: false,
+    });
 
     this.registerBasesView("kanban", {
       name: "Kanban",
@@ -192,6 +198,15 @@ export default class BaseBoardPlugin extends Plugin {
     for (const view of this.boardViews) view.scheduleRender();
   }
 
+  isHoverPreviewEnabled(): boolean {
+    return this.settings.hoverPreviewEnabled;
+  }
+
+  async setHoverPreviewEnabled(enabled: boolean): Promise<void> {
+    this.settings.hoverPreviewEnabled = enabled;
+    await this.savePluginData();
+  }
+
   // -- Persistence ------------------------------------------------------------
 
   async loadPluginData(): Promise<void> {
@@ -209,6 +224,9 @@ export default class BaseBoardPlugin extends Plugin {
     );
     if (typeof this.settings.hideBaseFilterTags !== "boolean") {
       this.settings.hideBaseFilterTags = DEFAULT_DATA.hideBaseFilterTags;
+    }
+    if (typeof this.settings.hoverPreviewEnabled !== "boolean") {
+      this.settings.hoverPreviewEnabled = DEFAULT_DATA.hoverPreviewEnabled;
     }
   }
 

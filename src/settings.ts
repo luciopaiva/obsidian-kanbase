@@ -4,6 +4,7 @@ import type BaseBoardPlugin from "./main";
 const CARD_TAG_POSITION_KEY = "cardTagPosition";
 const CARD_TITLE_FONT_SIZE_KEY = "cardTitleFontSize";
 const HIDE_BASE_FILTER_TAGS_KEY = "hideBaseFilterTags";
+const HOVER_PREVIEW_ENABLED_KEY = "hoverPreviewEnabled";
 
 export const DEFAULT_CARD_TITLE_FONT_SIZE = 13;
 export const MIN_CARD_TITLE_FONT_SIZE = 10;
@@ -53,6 +54,15 @@ export class BaseBoardSettingTab extends PluginSettingTab {
           defaultValue: true,
         },
       },
+      {
+        name: "Hover preview",
+        desc: "Show Obsidian's page preview when hovering over a card.",
+        control: {
+          type: "toggle",
+          key: HOVER_PREVIEW_ENABLED_KEY,
+          defaultValue: false,
+        },
+      },
     ];
   }
 
@@ -65,6 +75,9 @@ export class BaseBoardSettingTab extends PluginSettingTab {
     }
     if (key === HIDE_BASE_FILTER_TAGS_KEY) {
       return this.baseBoardPlugin.shouldHideBaseFilterTags();
+    }
+    if (key === HOVER_PREVIEW_ENABLED_KEY) {
+      return this.baseBoardPlugin.isHoverPreviewEnabled();
     }
     return undefined;
   }
@@ -81,6 +94,9 @@ export class BaseBoardSettingTab extends PluginSettingTab {
     }
     if (key === HIDE_BASE_FILTER_TAGS_KEY && typeof value === "boolean") {
       return this.baseBoardPlugin.setHideBaseFilterTags(value);
+    }
+    if (key === HOVER_PREVIEW_ENABLED_KEY && typeof value === "boolean") {
+      return this.baseBoardPlugin.setHoverPreviewEnabled(value);
     }
   }
 }
