@@ -1,4 +1,5 @@
 import { Modal, App, Setting, Notice, TextComponent } from "obsidian";
+import type { BoardConfig } from "./board-scaffolder";
 
 // ---------------------------------------------------------------------------
 //  Simple input modal (for column names, etc.)
@@ -156,12 +157,6 @@ export class WipLimitModal extends Modal {
 // ---------------------------------------------------------------------------
 //  "Create new board" modal
 // ---------------------------------------------------------------------------
-
-export interface BoardConfig {
-  name: string;
-  folder: string;
-  groupBy: string;
-}
 
 export class CreateBoardModal extends Modal {
   private config: BoardConfig = {
