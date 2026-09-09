@@ -1,5 +1,5 @@
 import { BasesEntry, Notice } from "obsidian";
-import { CONFIG_KEY_ADD_TO_TOP, ORDER_PROPERTY } from "../support/constants";
+import { ORDER_PROPERTY } from "../support/constants";
 import { generateOrderKey, isOrderKey, OrderValue } from "../support/order";
 import type { KanbanView } from "../kanban-view";
 
@@ -62,7 +62,7 @@ export class CardCreationManager {
   private getInitialOrder(orderedEntries: BasesEntry[]): OrderValue {
     if (orderedEntries.length === 0) return generateOrderKey(null, null);
 
-    const addToTop = !!this.view.config?.get(CONFIG_KEY_ADD_TO_TOP);
+    const addToTop = this.view.boardConfig.shouldAddNewCardsToTop();
     const orders = orderedEntries.map((entry) =>
       entry.file?.path
         ? this.view.cardMoves.getFileOrder(entry.file.path)

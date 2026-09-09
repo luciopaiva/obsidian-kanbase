@@ -1,6 +1,7 @@
 import {
   BasesView,
   BasesEntryGroup,
+  BasesAllOptions,
   HoverParent,
   HoverPopover,
   QueryController,
@@ -68,7 +69,8 @@ export class KanbanView extends BasesView implements HoverParent {
     this.plugin = plugin;
     this.containerEl = scrollEl.createDiv({ cls: "base-board-container" });
     this.boardConfig = new BoardConfig(
-      this.config,
+      // Obsidian replaces the config object after updates, so resolve it lazily.
+      () => this.config,
       () => this.currentGroups,
       () => this.updates.scheduleRender(),
     );
@@ -99,6 +101,47 @@ export class KanbanView extends BasesView implements HoverParent {
         this.handleColumnReorder(orderedNames),
       getSelectedCards: () => this.cardSelection.getSelectedPaths(),
     });
+  }
+
+  /**
+   * Keep these keys registered so BasesViewConfig.get/set can access them,
+   * while hiding the controls from Obsidian's built-in configure menu. The
+   * controls are exposed through BoardMoreMenu instead.
+   */
+  static getViewOptions(): BasesAllOptions[] {
+    return [
+      {
+        type: "group" as const,
+        displayName: "Display",
+        items: [
+          {
+            key: "cardOpenBehavior",
+            type: "dropdown" as const,
+            displayName: "Open card in",
+            default: "active",
+            options: {
+              active: "Active pane / tab",
+              modal: "Floating modal",
+              split: "Split to the right",
+              tab: "New tab",
+            },
+          },
+          {
+            key: "cardCoverProperty",
+            type: "text" as const,
+            displayName: "Cover property",
+            default: "cover",
+            placeholder: "E.g. cover",
+          },
+          {
+            key: "newCardsToTop",
+            type: "toggle" as const,
+            displayName: "Add new cards to top",
+            default: false,
+          },
+        ],
+      },
+    ];
   }
 
   onload(): void {}

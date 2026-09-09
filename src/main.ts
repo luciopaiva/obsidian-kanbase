@@ -65,6 +65,7 @@ export default class BaseBoardPlugin extends Plugin {
         view.register(() => this.boardViews.delete(view));
         return view;
       },
+      options: () => KanbanView.getViewOptions(),
     });
 
     // -- Command: Create new board --------------------------------------------

@@ -10,13 +10,13 @@ export type CardOpenBehavior = "active" | "modal" | "split" | "tab";
 
 export class BoardConfig {
   constructor(
-    private readonly config: BasesViewConfig | undefined,
+    private readonly getConfig: () => BasesViewConfig | undefined,
     private readonly groups: () => BasesEntryGroup[],
     private readonly onChange: () => void,
   ) {}
 
   public getGroupByProperty(): string | null {
-    const cfg = this.config as
+    const cfg = this.getConfig() as
       | { groupBy?: { property?: string }; get(key: string): unknown }
       | undefined;
     const groupBy = cfg?.groupBy;
@@ -28,7 +28,7 @@ export class BoardConfig {
   }
 
   public getCardOpenBehavior(): CardOpenBehavior {
-    const value = this.config?.get(CONFIG_KEY_OPEN_BEHAVIOR);
+    const value = this.getConfig()?.get(CONFIG_KEY_OPEN_BEHAVIOR);
     if (value === "modal" || value === "split" || value === "tab") {
       return value;
     }
@@ -36,12 +36,12 @@ export class BoardConfig {
   }
 
   public setCardOpenBehavior(behavior: CardOpenBehavior): void {
-    this.config?.set(CONFIG_KEY_OPEN_BEHAVIOR, behavior);
+    this.getConfig()?.set(CONFIG_KEY_OPEN_BEHAVIOR, behavior);
     this.onChange();
   }
 
   public getCardCoverProperty(): string | null {
-    const value = this.config?.get(CONFIG_KEY_COVER_PROPERTY);
+    const value = this.getConfig()?.get(CONFIG_KEY_COVER_PROPERTY);
     if (value === undefined || value === null) return "cover";
     return typeof value === "string" && value.trim() !== ""
       ? value.trim()
@@ -49,16 +49,16 @@ export class BoardConfig {
   }
 
   public setCardCoverProperty(property: string): void {
-    this.config?.set(CONFIG_KEY_COVER_PROPERTY, property);
+    this.getConfig()?.set(CONFIG_KEY_COVER_PROPERTY, property);
     this.onChange();
   }
 
   public shouldAddNewCardsToTop(): boolean {
-    return this.config?.get(CONFIG_KEY_ADD_TO_TOP) === true;
+    return this.getConfig()?.get(CONFIG_KEY_ADD_TO_TOP) === true;
   }
 
   public setAddNewCardsToTop(value: boolean): void {
-    this.config?.set(CONFIG_KEY_ADD_TO_TOP, value);
+    this.getConfig()?.set(CONFIG_KEY_ADD_TO_TOP, value);
     this.onChange();
   }
 
@@ -76,14 +76,14 @@ export class BoardConfig {
   }
 
   public ensureFileNameInOrder(): void {
-    if (!this.config) return;
-    const currentOrder =
-      (this.config.get("order") as string[] | undefined) ?? [];
+    const config = this.getConfig();
+    if (!config) return;
+    const currentOrder = (config.get("order") as string[] | undefined) ?? [];
     if (
       !currentOrder.includes("file.name") &&
       !currentOrder.includes("file.file")
     ) {
-      this.config.set("order", ["file.name", ...currentOrder]);
+      config.set("order", ["file.name", ...currentOrder]);
     }
   }
 
