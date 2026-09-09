@@ -819,6 +819,7 @@
   color: var(--text-normal);
   cursor: pointer;
   user-select: none;
+  opacity: 0.55;
   transition:
     opacity 0.15s ease,
     transform 0.1s ease,
@@ -842,13 +843,14 @@
 }
 
 .base-board-filter-pill:hover {
-  opacity: 0.8;
+  opacity: 0.75;
   transform: scale(1.02);
 }
 
 .base-board-filter-pill.is-active,
 .base-board-filter-pill.is-excluded {
   font-weight: var(--font-bold);
+  opacity: 1;
 }
 
 .base-board-filter-state-icon {
