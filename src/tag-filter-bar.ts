@@ -65,7 +65,7 @@ export class TagFilterBar {
       });
       clearButton.addEventListener("click", () => {
         this.filters.clear();
-        this.view.scheduleRender();
+        this.view.updates.scheduleRender();
       });
     }
   }
@@ -116,7 +116,7 @@ export class TagFilterBar {
       } else {
         this.filters.set(tag, nextState);
       }
-      this.view.scheduleRender();
+      this.view.updates.scheduleRender();
     });
   }
 

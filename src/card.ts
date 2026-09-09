@@ -587,7 +587,7 @@ export class CardManager {
         }
       }
       // Re-render will pick up the new name via onDataUpdated
-      this.view.scheduleRender();
+      this.view.updates.scheduleRender();
     };
 
     input.addEventListener("keydown", (e) => {
@@ -597,7 +597,7 @@ export class CardManager {
       } else if (e.key === "Escape") {
         e.preventDefault();
         committed = true;
-        this.view.scheduleRender();
+        this.view.updates.scheduleRender();
       }
     });
     input.addEventListener("blur", () => {

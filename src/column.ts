@@ -402,7 +402,7 @@ export class ColumnManager {
 
     const groupByProp = this.view.boardConfig.getGroupByProperty();
 
-    await this.view.applyBatchUpdate(async () => {
+    await this.view.updates.applyBatchUpdate(async () => {
       // 1. Update column config
       const updatedColumns = columns.map((c) => (c === oldName ? newName : c));
       this.view.preferences.saveColumns(updatedColumns);

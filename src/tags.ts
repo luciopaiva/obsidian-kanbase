@@ -60,7 +60,7 @@ export class Tags {
       delete colors[tag];
     }
     this.view.config?.set(CONFIG_KEY_TAG_COLORS, colors);
-    this.view.scheduleRender();
+    this.view.updates.scheduleRender();
   }
 
   public extractTagsFromFile(file: TFile): string[] {

@@ -174,7 +174,7 @@ export default class BaseBoardPlugin extends Plugin {
   async setCardTagPosition(position: CardTagPosition): Promise<void> {
     this.settings.cardTagPosition = position;
     await this.savePluginData();
-    for (const view of this.boardViews) view.scheduleRender();
+    for (const view of this.boardViews) view.updates.scheduleRender();
   }
 
   getCardTitleFontSize(): number {
@@ -184,7 +184,7 @@ export default class BaseBoardPlugin extends Plugin {
   async setCardTitleFontSize(size: number): Promise<void> {
     this.settings.cardTitleFontSize = this.normalizeCardTitleFontSize(size);
     await this.savePluginData();
-    for (const view of this.boardViews) view.scheduleRender();
+    for (const view of this.boardViews) view.updates.scheduleRender();
   }
 
   shouldHideBaseFilterTags(): boolean {
@@ -194,7 +194,7 @@ export default class BaseBoardPlugin extends Plugin {
   async setHideBaseFilterTags(hidden: boolean): Promise<void> {
     this.settings.hideBaseFilterTags = hidden;
     await this.savePluginData();
-    for (const view of this.boardViews) view.scheduleRender();
+    for (const view of this.boardViews) view.updates.scheduleRender();
   }
 
   isHoverPreviewEnabled(): boolean {

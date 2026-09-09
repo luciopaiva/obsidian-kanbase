@@ -21,6 +21,7 @@ import { getColumnName } from "./board-grouping";
 import { getBaseFileName, isLeafAttached } from "./base-view-context";
 import { BoardConfig } from "./board-config";
 import { BoardRenderer } from "./board-renderer";
+import { BoardUpdateCoordinator } from "./board-update-coordinator";
 
 // ---------------------------------------------------------------------------
 //  Kanban View
@@ -50,14 +51,9 @@ export class KanbanView extends BasesView implements HoverParent {
   public currentGroups: BasesEntryGroup[] = [];
   public boardConfig: BoardConfig;
   public renderer: BoardRenderer;
+  public updates: BoardUpdateCoordinator;
   public cardManager: CardManager;
 
-  /** Prevent re-renders while we batch-update frontmatter. */
-  private isUpdating = false;
-  /** Track if Bases delivered fresh query data while we were updating. */
-  private pendingDataRender = false;
-  /** Debounce timer for render calls. */
-  private renderTimer: ReturnType<typeof setTimeout> | null = null;
   /** Tag metadata, colors, editing, and Base-filter suppression. */
   public tags: Tags;
   public detailLeaf: WorkspaceLeaf | null = null;
@@ -74,7 +70,7 @@ export class KanbanView extends BasesView implements HoverParent {
     this.boardConfig = new BoardConfig(
       this.config,
       () => this.currentGroups,
-      () => this.scheduleRender(),
+      () => this.updates.scheduleRender(),
     );
     this.renderer = new BoardRenderer(this);
 
@@ -83,6 +79,10 @@ export class KanbanView extends BasesView implements HoverParent {
     this.tagFilterBar = new TagFilterBar(this, this.tags);
     this.cardSelection = new CardSelectionManager(this);
     this.cardMoves = new CardMoveCoordinator(this);
+    this.updates = new BoardUpdateCoordinator(
+      () => this.cardMoves.acknowledge(),
+      () => this.render(),
+    );
     this.preferences = new BoardPreferences(this);
     this.cardCreation = new CardCreationManager(this);
     this.cardManager = new CardManager(this);
@@ -104,7 +104,7 @@ export class KanbanView extends BasesView implements HoverParent {
 
   onunload(): void {
     this.dragDropManager.destroy();
-    if (this.renderTimer) window.clearTimeout(this.renderTimer);
+    this.updates.destroy();
   }
 
   public focus(): void {
@@ -112,35 +112,7 @@ export class KanbanView extends BasesView implements HoverParent {
   }
 
   public onDataUpdated(): void {
-    if (this.isUpdating) {
-      this.pendingDataRender = true;
-      return;
-    }
-    this.cardMoves.acknowledge();
-    this.scheduleRender();
-  }
-
-  /**
-   * Run a batch of state updates without triggering intermediate re-renders.
-   * Defers rendering until the entire batch is complete.
-   */
-  public async applyBatchUpdate(
-    updateFn: () => Promise<void> | void,
-  ): Promise<void> {
-    this.isUpdating = true;
-    this.pendingDataRender = false;
-
-    try {
-      await updateFn();
-    } finally {
-      this.isUpdating = false;
-    }
-
-    // If Bases fired onDataUpdated during our batch, schedule a debounced render.
-    if (this.pendingDataRender) {
-      this.pendingDataRender = false;
-      this.scheduleRender();
-    }
+    this.updates.onDataUpdated();
   }
 
   public isLeafAttached(leaf: WorkspaceLeaf): boolean {
@@ -171,14 +143,5 @@ export class KanbanView extends BasesView implements HoverParent {
   private handleColumnReorder(orderedNames: string[]): void {
     this.preferences.saveColumns(orderedNames);
     this.render();
-  }
-
-  /** Debounced render — coalesces multiple calls into one. */
-  public scheduleRender(): void {
-    if (this.renderTimer) window.clearTimeout(this.renderTimer);
-    this.renderTimer = window.setTimeout(() => {
-      this.renderTimer = null;
-      this.render();
-    }, 50);
   }
 }

@@ -68,7 +68,7 @@ export class BoardPreferences {
       delete colors[columnName];
     }
     this.view.config?.set(CONFIG_KEY_COLUMN_COLORS, colors);
-    this.view.scheduleRender();
+    this.view.updates.scheduleRender();
   }
 
   public getWipLimit(columnName: string): number | null {
@@ -84,7 +84,7 @@ export class BoardPreferences {
       delete limits[columnName];
     }
     this.view.config?.set(CONFIG_KEY_WIP_LIMITS, limits);
-    this.view.scheduleRender();
+    this.view.updates.scheduleRender();
   }
 
   public areTagFiltersVisible(): boolean {
@@ -93,7 +93,7 @@ export class BoardPreferences {
 
   public setTagFiltersVisible(visible: boolean): void {
     this.view.config?.set(CONFIG_KEY_TAG_FILTERS_VISIBLE, visible);
-    this.view.scheduleRender();
+    this.view.updates.scheduleRender();
   }
 
   public isColumnCollapsed(columnName: string): boolean {
@@ -108,7 +108,7 @@ export class BoardPreferences {
       collapsed[columnName] = true;
     }
     this.view.config?.set(CONFIG_KEY_COLLAPSED_COLUMNS, collapsed);
-    this.view.scheduleRender();
+    this.view.updates.scheduleRender();
   }
 
   public renameColumnState(oldName: string, newName: string): void {

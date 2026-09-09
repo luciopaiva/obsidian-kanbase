@@ -104,7 +104,7 @@ export class CardMoveCoordinator {
     this.optimisticColumnOrders.set(targetColumnName, fullOrderedPaths);
 
     try {
-      await this.view.applyBatchUpdate(async () => {
+      await this.view.updates.applyBatchUpdate(async () => {
         const movePromises = pathsToMove.map((path) => {
           const file = this.view.app.vault.getAbstractFileByPath(path);
           if (!(file instanceof TFile)) return Promise.resolve();
@@ -127,7 +127,7 @@ export class CardMoveCoordinator {
       });
     } catch (error) {
       this.clearOptimisticMoves(pathsToMove, targetColumnName);
-      this.view.scheduleRender();
+      this.view.updates.scheduleRender();
       throw error;
     }
   }
@@ -143,7 +143,7 @@ export class CardMoveCoordinator {
     );
     orderedPaths.push(...filePaths);
 
-    await this.view.applyBatchUpdate(async () => {
+    await this.view.updates.applyBatchUpdate(async () => {
       const updates = filePaths.map((filePath) => {
         const file = this.view.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return Promise.resolve();
