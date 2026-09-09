@@ -10,7 +10,7 @@ import {
 import { KanbanView } from "./kanban-view";
 import { InputModal } from "./modals";
 import { NO_VALUE_COLUMN } from "./constants";
-import { ColorPickerModal } from "./tags";
+import { ColorPickerModal } from "./color-picker-modal";
 import { WipLimitModal } from "./modals";
 import { generateOrderKey, isOrderKey, OrderValue } from "./order";
 

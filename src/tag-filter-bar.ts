@@ -1,7 +1,7 @@
 import { setTooltip, TFile } from "obsidian";
 import { relativeLuminance } from "./color-utils";
 import { countTagsByCard } from "./tag-counts";
-import { ColorPickerModal } from "./tags";
+import { ColorPickerModal } from "./color-picker-modal";
 import type { KanbanView } from "./kanban-view";
 import type { Tags } from "./tags";
 
