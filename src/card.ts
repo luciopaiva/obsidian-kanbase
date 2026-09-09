@@ -102,6 +102,10 @@ export class CardManager {
     const cardEl =
       existingCardEl ?? cardsEl.createDiv({ cls: "base-board-card" });
     const renderVersion = this.getRenderVersion(entry);
+    cardEl.style.setProperty(
+      "--base-board-card-title-font-size",
+      `${this.view.plugin.getCardTitleFontSize()}px`,
+    );
 
     if (existingCardEl) {
       cardsEl.appendChild(cardEl);
@@ -442,6 +446,7 @@ export class CardManager {
       tags,
       tagColors: this.view.tags.getColors(),
       tagPosition: this.view.plugin.getCardTagPosition(),
+      titleFontSize: this.view.plugin.getCardTitleFontSize(),
     });
   }
 

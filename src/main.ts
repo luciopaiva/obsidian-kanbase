@@ -3,7 +3,12 @@ import { KanbanView } from "./kanban-view";
 import { CreateBoardModal } from "./modals";
 import { updateBaseFolderReferences } from "./folder-rename";
 import { BoardScaffolder } from "./board-scaffolder";
-import { BaseBoardSettingTab } from "./settings";
+import {
+  BaseBoardSettingTab,
+  DEFAULT_CARD_TITLE_FONT_SIZE,
+  MAX_CARD_TITLE_FONT_SIZE,
+  MIN_CARD_TITLE_FONT_SIZE,
+} from "./settings";
 
 export type CardTagPosition = "top" | "bottom";
 
@@ -15,11 +20,13 @@ export interface ColumnConfig {
 export interface PluginData {
   columnConfigs: Record<string, ColumnConfig>;
   cardTagPosition: CardTagPosition;
+  cardTitleFontSize: number;
 }
 
 const DEFAULT_DATA: PluginData = {
   columnConfigs: {},
   cardTagPosition: "top",
+  cardTitleFontSize: DEFAULT_CARD_TITLE_FONT_SIZE,
 };
 
 // ---------------------------------------------------------------------------
@@ -163,6 +170,16 @@ export default class BaseBoardPlugin extends Plugin {
     for (const view of this.boardViews) view.scheduleRender();
   }
 
+  getCardTitleFontSize(): number {
+    return this.settings.cardTitleFontSize;
+  }
+
+  async setCardTitleFontSize(size: number): Promise<void> {
+    this.settings.cardTitleFontSize = this.normalizeCardTitleFontSize(size);
+    await this.savePluginData();
+    for (const view of this.boardViews) view.scheduleRender();
+  }
+
   // -- Persistence ------------------------------------------------------------
 
   async loadPluginData(): Promise<void> {
@@ -175,9 +192,22 @@ export default class BaseBoardPlugin extends Plugin {
     ) {
       this.settings.cardTagPosition = DEFAULT_DATA.cardTagPosition;
     }
+    this.settings.cardTitleFontSize = this.normalizeCardTitleFontSize(
+      this.settings.cardTitleFontSize,
+    );
   }
 
   async savePluginData(): Promise<void> {
     await this.saveData(this.settings);
+  }
+
+  private normalizeCardTitleFontSize(size: unknown): number {
+    if (typeof size !== "number" || !Number.isFinite(size)) {
+      return DEFAULT_CARD_TITLE_FONT_SIZE;
+    }
+    return Math.min(
+      MAX_CARD_TITLE_FONT_SIZE,
+      Math.max(MIN_CARD_TITLE_FONT_SIZE, Math.round(size)),
+    );
   }
 }

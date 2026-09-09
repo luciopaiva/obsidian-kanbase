@@ -2,6 +2,11 @@ import { App, PluginSettingTab, SettingDefinitionItem } from "obsidian";
 import type BaseBoardPlugin from "./main";
 
 const CARD_TAG_POSITION_KEY = "cardTagPosition";
+const CARD_TITLE_FONT_SIZE_KEY = "cardTitleFontSize";
+
+export const DEFAULT_CARD_TITLE_FONT_SIZE = 13;
+export const MIN_CARD_TITLE_FONT_SIZE = 10;
+export const MAX_CARD_TITLE_FONT_SIZE = 24;
 
 export class BaseBoardSettingTab extends PluginSettingTab {
   constructor(
@@ -26,12 +31,27 @@ export class BaseBoardSettingTab extends PluginSettingTab {
           },
         },
       },
+      {
+        name: "Card title font size",
+        desc: "Set the card title text size in pixels.",
+        control: {
+          type: "slider",
+          key: CARD_TITLE_FONT_SIZE_KEY,
+          defaultValue: DEFAULT_CARD_TITLE_FONT_SIZE,
+          min: MIN_CARD_TITLE_FONT_SIZE,
+          max: MAX_CARD_TITLE_FONT_SIZE,
+          step: 1,
+        },
+      },
     ];
   }
 
   getControlValue(key: string): unknown {
     if (key === CARD_TAG_POSITION_KEY) {
       return this.baseBoardPlugin.getCardTagPosition();
+    }
+    if (key === CARD_TITLE_FONT_SIZE_KEY) {
+      return this.baseBoardPlugin.getCardTitleFontSize();
     }
     return undefined;
   }
@@ -42,6 +62,9 @@ export class BaseBoardSettingTab extends PluginSettingTab {
       (value === "top" || value === "bottom")
     ) {
       return this.baseBoardPlugin.setCardTagPosition(value);
+    }
+    if (key === CARD_TITLE_FONT_SIZE_KEY && typeof value === "number") {
+      return this.baseBoardPlugin.setCardTitleFontSize(value);
     }
   }
 }

@@ -518,7 +518,7 @@
 /* ---- Card title ---- */
 
 .base-board-card-title {
-  font-size: var(--font-ui-small);
+  font-size: var(--base-board-card-title-font-size, var(--font-ui-small));
   font-weight: var(--font-medium);
   line-height: 1.35;
   margin-bottom: 4px;
