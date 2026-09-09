@@ -4,7 +4,6 @@ import {
   HoverParent,
   HoverPopover,
   QueryController,
-  WorkspaceLeaf,
 } from "obsidian";
 import type BaseBoardPlugin from "./main";
 import { DragDropManager } from "./drag-drop";
@@ -18,10 +17,11 @@ import { CardMoveCoordinator } from "./card-move";
 import { BoardPreferences } from "./board-preferences";
 import { CardCreationManager } from "./card-creation";
 import { getColumnName } from "./board-grouping";
-import { getBaseFileName, isLeafAttached } from "./base-view-context";
+import { getBaseFileName } from "./base-view-context";
 import { BoardConfig } from "./board-config";
 import { BoardRenderer } from "./board-renderer";
 import { BoardUpdateCoordinator } from "./board-update-coordinator";
+import { CardNavigation } from "./card-navigation";
 
 // ---------------------------------------------------------------------------
 //  Kanban View
@@ -52,11 +52,11 @@ export class KanbanView extends BasesView implements HoverParent {
   public boardConfig: BoardConfig;
   public renderer: BoardRenderer;
   public updates: BoardUpdateCoordinator;
+  public navigation: CardNavigation;
   public cardManager: CardManager;
 
   /** Tag metadata, colors, editing, and Base-filter suppression. */
   public tags: Tags;
-  public detailLeaf: WorkspaceLeaf | null = null;
 
   constructor(
     controller: QueryController,
@@ -73,6 +73,7 @@ export class KanbanView extends BasesView implements HoverParent {
       () => this.updates.scheduleRender(),
     );
     this.renderer = new BoardRenderer(this);
+    this.navigation = new CardNavigation(this);
 
     this.tags = new Tags(this);
     this.toolbar = new BoardToolbar(this);
@@ -113,10 +114,6 @@ export class KanbanView extends BasesView implements HoverParent {
 
   public onDataUpdated(): void {
     this.updates.onDataUpdated();
-  }
-
-  public isLeafAttached(leaf: WorkspaceLeaf): boolean {
-    return isLeafAttached(this.app, leaf);
   }
 
   /** Base file name (without extension) when this view is opened directly. */

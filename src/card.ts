@@ -16,7 +16,6 @@ import {
 import { KanbanView } from "./kanban-view";
 import { ORDER_PROPERTY, sanitizeFilename } from "./constants";
 import { relativeLuminance } from "./color-utils";
-import { CardDetailModal } from "./card-detail-modal";
 
 const IMAGE_EXTENSIONS = new Set([
   "apng",
@@ -161,8 +160,8 @@ export class CardManager {
           return;
         }
 
-        const file = this.view.app.vault.getAbstractFileByPath(filePath);
-        if (!(file instanceof TFile)) return;
+        const file = this.view.navigation.resolveFile(filePath);
+        if (!file) return;
 
         // Handle standard Obsidian modifiers using Keymap.isModEvent(e)
         const mod = Keymap.isModEvent(e);
@@ -172,35 +171,15 @@ export class CardManager {
           return;
         }
 
-        const openBehavior = this.view.boardConfig.getCardOpenBehavior();
-        if (openBehavior === "split") {
-          if (
-            this.view.detailLeaf &&
-            this.view.isLeafAttached(this.view.detailLeaf)
-          ) {
-            void this.view.detailLeaf.openFile(file);
-          } else {
-            this.view.detailLeaf = this.view.app.workspace.getLeaf(
-              "split",
-              "vertical",
-            );
-            void this.view.detailLeaf.openFile(file);
-          }
-        } else if (openBehavior === "tab") {
-          void this.view.app.workspace.getLeaf("tab").openFile(file);
-        } else if (openBehavior === "active") {
-          void this.view.app.workspace.getLeaf(false).openFile(file);
-        } else {
-          new CardDetailModal(this.view.app, file, this.view).open();
-        }
+        this.view.navigation.open(file);
       });
 
       // Middle-click → always open in new tab
       cardEl.addEventListener("auxclick", (e: MouseEvent) => {
         if (e.button !== 1) return;
-        const file = this.view.app.vault.getAbstractFileByPath(filePath);
-        if (!(file instanceof TFile)) return;
-        void this.view.app.workspace.getLeaf("tab").openFile(file);
+        const file = this.view.navigation.resolveFile(filePath);
+        if (!file) return;
+        this.view.navigation.openInNewTab(file);
       });
 
       // Keyboard: Escape clears multi-selection when a card is focused
@@ -499,27 +478,7 @@ export class CardManager {
         .setTitle("Open")
         .setIcon("lucide-file-text")
         .onClick(() => {
-          const openBehavior = this.view.boardConfig.getCardOpenBehavior();
-          if (openBehavior === "split") {
-            if (
-              this.view.detailLeaf &&
-              this.view.isLeafAttached(this.view.detailLeaf)
-            ) {
-              void this.view.detailLeaf.openFile(file);
-            } else {
-              this.view.detailLeaf = this.view.app.workspace.getLeaf(
-                "split",
-                "vertical",
-              );
-              void this.view.detailLeaf.openFile(file);
-            }
-          } else if (openBehavior === "tab") {
-            void this.view.app.workspace.getLeaf("tab").openFile(file);
-          } else if (openBehavior === "active") {
-            void this.view.app.workspace.getLeaf(false).openFile(file);
-          } else {
-            new CardDetailModal(this.view.app, file, this.view).open();
-          }
+          this.view.navigation.open(file);
         });
     });
 
@@ -528,7 +487,7 @@ export class CardManager {
         .setTitle("Open in new tab")
         .setIcon("lucide-file-plus")
         .onClick(() => {
-          void this.view.app.workspace.getLeaf("tab").openFile(file);
+          this.view.navigation.openInNewTab(file);
         });
     });
 
