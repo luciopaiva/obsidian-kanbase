@@ -3,14 +3,13 @@ import type { KanbanView } from "./kanban-view";
 
 export class BoardToolbar {
   private view: KanbanView;
-  private tagFiltersVisible = true;
 
   constructor(view: KanbanView) {
     this.view = view;
   }
 
   public areTagFiltersVisible(): boolean {
-    return this.tagFiltersVisible;
+    return this.view.preferences.areTagFiltersVisible();
   }
 
   public render(container: HTMLElement): void {
@@ -19,27 +18,27 @@ export class BoardToolbar {
 
     const toolbarEl = container.createDiv({ cls: "base-board-toolbar" });
     container.insertBefore(toolbarEl, boardEl);
+    const tagFiltersVisible = this.areTagFiltersVisible();
 
     const filterButton = toolbarEl.createEl("button", {
       cls: "clickable-icon base-board-toolbar-button",
       attr: {
         type: "button",
-        "aria-label": this.tagFiltersVisible
+        "aria-label": tagFiltersVisible
           ? "Hide tag filters"
           : "Show tag filters",
-        "aria-pressed": String(this.tagFiltersVisible),
+        "aria-pressed": String(tagFiltersVisible),
       },
     });
     setIcon(filterButton, "lucide-filter");
-    filterButton.toggleClass("is-active", this.tagFiltersVisible);
+    filterButton.toggleClass("is-active", tagFiltersVisible);
     setTooltip(
       filterButton,
-      this.tagFiltersVisible ? "Hide tag filters" : "Show tag filters",
+      tagFiltersVisible ? "Hide tag filters" : "Show tag filters",
     );
 
     filterButton.addEventListener("click", () => {
-      this.tagFiltersVisible = !this.tagFiltersVisible;
-      this.view.scheduleRender();
+      this.view.preferences.setTagFiltersVisible(!tagFiltersVisible);
     });
   }
 }

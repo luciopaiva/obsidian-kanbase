@@ -2,6 +2,7 @@ import {
   CONFIG_KEY_COLLAPSED_COLUMNS,
   CONFIG_KEY_COLUMN_COLORS,
   CONFIG_KEY_COLUMNS,
+  CONFIG_KEY_TAG_FILTERS_VISIBLE,
   CONFIG_KEY_WIP_LIMITS,
   NO_VALUE_COLUMN,
 } from "./constants";
@@ -83,6 +84,15 @@ export class BoardPreferences {
       delete limits[columnName];
     }
     this.view.config?.set(CONFIG_KEY_WIP_LIMITS, limits);
+    this.view.scheduleRender();
+  }
+
+  public areTagFiltersVisible(): boolean {
+    return this.view.config?.get(CONFIG_KEY_TAG_FILTERS_VISIBLE) !== false;
+  }
+
+  public setTagFiltersVisible(visible: boolean): void {
+    this.view.config?.set(CONFIG_KEY_TAG_FILTERS_VISIBLE, visible);
     this.view.scheduleRender();
   }
 

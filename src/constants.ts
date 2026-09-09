@@ -13,6 +13,9 @@ export const CONFIG_KEY_COLLAPSED_COLUMNS = "collapsedColumns";
 /** Key used by BasesViewConfig.set/get to persist custom tag colors in the .base file. */
 export const CONFIG_KEY_TAG_COLORS = "tagColors";
 
+/** Key used by BasesViewConfig.set/get to persist tag-filter bar visibility. */
+export const CONFIG_KEY_TAG_FILTERS_VISIBLE = "tagFiltersVisible";
+
 /** Key used by BasesViewConfig.set/get to persist card click behavior in the .base file. */
 export const CONFIG_KEY_OPEN_BEHAVIOR = "cardOpenBehavior";
 

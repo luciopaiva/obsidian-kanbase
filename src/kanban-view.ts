@@ -57,7 +57,7 @@ export class KanbanView extends BasesView implements HoverParent {
   public cardSelection: CardSelectionManager;
   /** Card ordering, cross-column moves, and optimistic render state. */
   public cardMoves: CardMoveCoordinator;
-  /** Column order, appearance, limits, collapse state, and persistence. */
+  /** Board display preferences and their persistence. */
   public preferences: BoardPreferences;
   /** Inline card creation, defaults, and initial ordering. */
   public cardCreation: CardCreationManager;
