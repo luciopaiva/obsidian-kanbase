@@ -98,20 +98,19 @@ export class CardManager {
     existingCardEl?: HTMLElement | null,
   ): void {
     const filePath = entry.file?.path ?? "";
-    const cardEl =
-      existingCardEl ?? cardsEl.createDiv({ cls: "base-board-card" });
+    const cardEl = existingCardEl ?? cardsEl.createDiv({ cls: "kanbase-card" });
     const renderVersion = this.getRenderVersion(entry);
     cardEl.style.setProperty(
-      "--base-board-card-title-font-size",
+      "--kanbase-card-title-font-size",
       `${this.view.plugin.getCardTitleFontSize()}px`,
     );
 
     if (existingCardEl) {
       cardsEl.appendChild(cardEl);
       cardEl.dataset.columnName = columnName;
-      cardEl.removeClass("base-board-card--dragging");
-      cardEl.removeClass("base-board-card--drag-ghost");
-      cardEl.removeClass("base-board-card--selected");
+      cardEl.removeClass("kanbase-card--dragging");
+      cardEl.removeClass("kanbase-card--drag-ghost");
+      cardEl.removeClass("kanbase-card--selected");
       if (cardEl.dataset.renderVersion === renderVersion) return;
       cardEl.innerHTML = "";
     } else {
@@ -198,7 +197,7 @@ export class CardManager {
         if (!filePath || !this.view.plugin.isHoverPreviewEnabled()) return;
         this.view.app.workspace.trigger("hover-link", {
           event: evt,
-          source: "base-board",
+          source: "kanbase",
           hoverParent: this.view,
           targetEl: cardEl,
           linktext: filePath,
@@ -223,7 +222,7 @@ export class CardManager {
           "file-menu",
           menu,
           file,
-          "base-board-card",
+          "kanbase-card",
           this.view.app.workspace.getMostRecentLeaf(),
         );
         menu.showAtMouseEvent(e);
@@ -235,7 +234,7 @@ export class CardManager {
       this.renderCardTags(cardEl, file, tagPosition);
     }
 
-    const titleEl = cardEl.createDiv({ cls: "base-board-card-title" });
+    const titleEl = cardEl.createDiv({ cls: "kanbase-card-title" });
 
     // Respect cardTitleProperty if configured — use a frontmatter property
     // (e.g. "title") as the card heading instead of the filename.
@@ -254,7 +253,7 @@ export class CardManager {
     titleEl.createSpan({ text: cardTitle });
 
     // ---- Edit button (visible on hover) ----
-    const editBtn = cardEl.createDiv({ cls: "base-board-card-edit-btn" });
+    const editBtn = cardEl.createDiv({ cls: "kanbase-card-edit-btn" });
     setIcon(editBtn, "lucide-pencil");
     editBtn.addEventListener("click", (e: MouseEvent) => {
       e.stopPropagation(); // Don't open the note
@@ -262,7 +261,7 @@ export class CardManager {
     });
 
     // ---- Property chips ----
-    const propsEl = cardEl.createDiv({ cls: "base-board-card-props" });
+    const propsEl = cardEl.createDiv({ cls: "kanbase-card-props" });
     const groupByProp = this.view.boardConfig.getGroupByProperty();
     const visibleProps: BasesPropertyId[] = this.view.config.getOrder();
 
@@ -311,7 +310,7 @@ export class CardManager {
     for (let i = CHIP_VISIBLE; i < chips.length; i++) {
       if (!overflowEl) {
         overflowEl = propsEl.createDiv({
-          cls: "base-board-card-chips-overflow",
+          cls: "kanbase-card-chips-overflow",
         });
       }
       const { displayName, display, propId, val } = chips[i];
@@ -322,13 +321,13 @@ export class CardManager {
     if (overflowEl) {
       const overflowCount = chips.length - CHIP_VISIBLE;
       const toggleBtn = propsEl.createSpan({
-        cls: "base-board-card-chip-more",
+        cls: "kanbase-card-chip-more",
       });
       toggleBtn.setText(`+${overflowCount} more`);
       toggleBtn.addEventListener("click", (e: MouseEvent) => {
         e.stopPropagation();
         const expanded = overflowEl.classList.toggle(
-          "base-board-card-chips-overflow--expanded",
+          "kanbase-card-chips-overflow--expanded",
         );
         toggleBtn.setText(expanded ? "show less" : `+${overflowCount} more`);
       });
@@ -348,23 +347,20 @@ export class CardManager {
     if (fileTags.length === 0) return;
 
     const tagContainerEl = cardEl.createDiv({
-      cls: [
-        "base-board-tag-container",
-        `base-board-tag-container--${position}`,
-      ],
+      cls: ["kanbase-tag-container", `kanbase-tag-container--${position}`],
     });
     for (const tag of fileTags) {
       const tagEl = tagContainerEl.createSpan({
-        cls: "base-board-card-tag",
+        cls: "kanbase-card-tag",
         text: tag,
       });
       const color = this.view.tags.getColorForTag(tag);
       if (color) {
         tagEl.style.setProperty("--tag-color", color);
         if (relativeLuminance(color) === "dark") {
-          tagEl.addClass("base-board-card-tag-light");
+          tagEl.addClass("kanbase-card-tag-light");
         } else {
-          tagEl.addClass("base-board-card-tag-dark");
+          tagEl.addClass("kanbase-card-tag-dark");
         }
       }
     }
@@ -437,16 +433,16 @@ export class CardManager {
     propId?: string,
     val?: Value,
   ): HTMLElement {
-    const chip = parent.createSpan({ cls: "base-board-card-chip" });
+    const chip = parent.createSpan({ cls: "kanbase-card-chip" });
     if (propId) chip.setAttr("data-property-id", propId);
-    chip.createSpan({ text: label, cls: "base-board-chip-label" });
-    const valueEl = chip.createSpan({ cls: "base-board-chip-value" });
+    chip.createSpan({ text: label, cls: "kanbase-chip-label" });
+    const valueEl = chip.createSpan({ cls: "kanbase-chip-value" });
     // Formula properties (e.g. one using html()) resolve to a value whose
     // toString() is raw markup. Render formula output through the Bases
     // renderer so HTML is shown as rich content instead of being escaped to
     // literal text by setText().
     if (val && propId?.startsWith("formula.")) {
-      valueEl.addClass("base-board-chip-value--formula");
+      valueEl.addClass("kanbase-chip-value--formula");
       val.renderTo(valueEl, this.view.app.renderContext);
     } else {
       valueEl.setText(value);
@@ -523,7 +519,7 @@ export class CardManager {
     const input = titleEl.createEl("input");
     input.type = "text";
     input.value = file.basename;
-    input.className = "base-board-card-rename-input";
+    input.className = "kanbase-card-rename-input";
 
     titleSpan.remove();
     input.focus();
@@ -603,17 +599,17 @@ export class CardManager {
 
   private renderCardThumbnail(cardEl: HTMLElement, src: string): void {
     const thumbEl = cardEl.createDiv();
-    thumbEl.className = "base-board-card-thumbnail";
+    thumbEl.className = "kanbase-card-thumbnail";
     thumbEl
       .createEl("img", {
-        cls: "base-board-card-thumbnail-img",
+        cls: "kanbase-card-thumbnail-img",
         attr: { src, loading: "lazy" },
       })
       .addEventListener("error", () => {
         thumbEl.remove();
-        cardEl.removeClass("base-board-card--has-thumbnail");
+        cardEl.removeClass("kanbase-card--has-thumbnail");
       });
     cardEl.prepend(thumbEl);
-    cardEl.addClass("base-board-card--has-thumbnail");
+    cardEl.addClass("kanbase-card--has-thumbnail");
   }
 }

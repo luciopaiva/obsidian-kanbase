@@ -51,37 +51,37 @@ export class ColumnManager {
     );
 
     const columnEl =
-      existingColumnEl ?? boardEl.createDiv({ cls: "base-board-column" });
+      existingColumnEl ?? boardEl.createDiv({ cls: "kanbase-column" });
     const existingCardsEl =
-      columnEl.querySelector<HTMLElement>(".base-board-cards");
+      columnEl.querySelector<HTMLElement>(".kanbase-cards");
     existingCardsEl?.remove();
     columnEl.empty();
-    columnEl.className = "base-board-column";
+    columnEl.className = "kanbase-column";
     columnEl.style.removeProperty("--column-color");
     boardEl.appendChild(columnEl);
     columnEl.dataset.columnName = columnName;
     columnEl.dataset.columnIndex = String(columnIndex);
-    columnEl.classList.toggle("base-board-column--collapsed", isCollapsed);
+    columnEl.classList.toggle("kanbase-column--collapsed", isCollapsed);
 
     // ---- WIP limit check ----
     const wipLimit = this.view.preferences.getWipLimit(columnName);
     if (wipLimit !== null && entries.length > wipLimit) {
-      columnEl.addClass("base-board-column--wip-overflow");
+      columnEl.addClass("kanbase-column--wip-overflow");
     }
 
     const columnColor = this.view.preferences.getColumnColor(columnName);
     if (columnColor) {
       columnEl.style.setProperty("--column-color", columnColor);
-      const accentEl = columnEl.createDiv({ cls: "base-board-column-accent" });
+      const accentEl = columnEl.createDiv({ cls: "kanbase-column-accent" });
       accentEl.style.backgroundColor = columnColor;
     }
 
     // ---- Header ----
-    const headerEl = columnEl.createDiv({ cls: "base-board-column-header" });
+    const headerEl = columnEl.createDiv({ cls: "kanbase-column-header" });
     headerEl.setAttr("draggable", "true");
 
     const dragHandle = headerEl.createDiv({
-      cls: "base-board-column-drag-handle",
+      cls: "kanbase-column-drag-handle",
     });
     setIcon(dragHandle, "grip-vertical");
 
@@ -93,7 +93,7 @@ export class ColumnManager {
     });
 
     const collapseBtn = headerEl.createDiv({
-      cls: "base-board-column-collapse-btn",
+      cls: "kanbase-column-collapse-btn",
       attr: {
         role: "button",
         tabindex: "0",
@@ -116,10 +116,10 @@ export class ColumnManager {
     // Title + inline count badge
     const titleEl = headerEl.createSpan({
       text: columnName,
-      cls: "base-board-column-title",
+      cls: "kanbase-column-title",
     });
     if (isNoValue) {
-      titleEl.addClass("base-board-no-value-title");
+      titleEl.addClass("kanbase-no-value-title");
     }
 
     // Count badge sits right after the title, inline
@@ -130,15 +130,15 @@ export class ColumnManager {
         : String(entries.length);
     const countEl = headerEl.createSpan({
       text: countText,
-      cls: "base-board-column-count",
+      cls: "kanbase-column-count",
     });
 
     // Spacer pushes the + button to the far right
-    headerEl.createDiv({ cls: "base-board-header-spacer" });
+    headerEl.createDiv({ cls: "kanbase-header-spacer" });
 
     // ---- Add card button ----
     const addCardHeaderBtn = headerEl.createDiv({
-      cls: "base-board-column-add-card",
+      cls: "kanbase-column-add-card",
     });
     setIcon(addCardHeaderBtn, "plus");
     addCardHeaderBtn.addEventListener("click", (e: MouseEvent) => {
@@ -150,7 +150,7 @@ export class ColumnManager {
     let menuBtn: HTMLElement | null = null;
     if (!isNoValue) {
       menuBtn = headerEl.createDiv({
-        cls: "base-board-column-menu-btn",
+        cls: "kanbase-column-menu-btn",
       });
       setIcon(menuBtn, "more-horizontal");
       menuBtn.addEventListener("click", (e: MouseEvent) => {
@@ -184,7 +184,7 @@ export class ColumnManager {
 
     // ---- Cards container ----
     const cardsEl =
-      existingCardsEl ?? columnEl.createDiv({ cls: "base-board-cards" });
+      existingCardsEl ?? columnEl.createDiv({ cls: "kanbase-cards" });
     columnEl.appendChild(cardsEl);
 
     // Cards render even when collapsed (CSS hides them) so the column stays a
@@ -204,7 +204,7 @@ export class ColumnManager {
       );
     });
 
-    cardsEl.querySelectorAll<HTMLElement>(".base-board-card").forEach((el) => {
+    cardsEl.querySelectorAll<HTMLElement>(".kanbase-card").forEach((el) => {
       if (!visiblePaths.has(el.dataset.filePath ?? "")) el.remove();
     });
   }
@@ -297,7 +297,7 @@ export class ColumnManager {
   }
 
   public renderAddColumnButton(boardEl: HTMLElement): void {
-    const addBtn = boardEl.createDiv({ cls: "base-board-add-column-btn" });
+    const addBtn = boardEl.createDiv({ cls: "kanbase-add-column-btn" });
     setIcon(addBtn.createSpan(), "plus");
     addBtn.createSpan({ text: "Add column" });
     addBtn.addEventListener("click", () => this.promptAddColumn());
@@ -341,17 +341,17 @@ export class ColumnManager {
     const input = (titleEl.parentElement ?? titleEl).createEl("input");
     input.type = "text";
     input.value = oldName;
-    input.className = "base-board-column-title-input";
+    input.className = "kanbase-column-title-input";
 
     // Hide count and + during editing so the input can use the full width
-    if (countEl) countEl.classList.add("base-board-hidden");
-    if (addCardBtn) addCardBtn.classList.add("base-board-hidden");
-    if (menuBtn) menuBtn.classList.add("base-board-hidden");
+    if (countEl) countEl.classList.add("kanbase-hidden");
+    if (addCardBtn) addCardBtn.classList.add("kanbase-hidden");
+    if (menuBtn) menuBtn.classList.add("kanbase-hidden");
 
     const restoreChrome = () => {
-      if (countEl) countEl.classList.remove("base-board-hidden");
-      if (addCardBtn) addCardBtn.classList.remove("base-board-hidden");
-      if (menuBtn) menuBtn.classList.remove("base-board-hidden");
+      if (countEl) countEl.classList.remove("kanbase-hidden");
+      if (addCardBtn) addCardBtn.classList.remove("kanbase-hidden");
+      if (menuBtn) menuBtn.classList.remove("kanbase-hidden");
     };
 
     // Replace the span with the input

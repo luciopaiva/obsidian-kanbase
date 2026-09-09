@@ -14,14 +14,14 @@ export class CardDetailModal extends Modal {
 
   async onOpen() {
     const { contentEl } = this;
-    this.modalEl.addClass("base-board-card-modal");
+    this.modalEl.addClass("kanbase-card-modal");
 
     // Remove the native modal title because the Rogue Leaf has its own inline title
     this.titleEl.empty();
 
     // Actions Container at the top of the body
     const actionsEl = contentEl.createDiv({
-      cls: "base-board-card-modal-actions",
+      cls: "kanbase-card-modal-actions",
     });
 
     // Open in Tab Button
@@ -52,10 +52,10 @@ export class CardDetailModal extends Modal {
         this.view.tags.promptEditTags(this.file);
       });
 
-    contentEl.createEl("hr", { cls: "base-board-modal-separator" });
+    contentEl.createEl("hr", { cls: "kanbase-modal-separator" });
 
     // Markdown Content Container
-    const bodyEl = contentEl.createDiv({ cls: "base-board-card-modal-body" });
+    const bodyEl = contentEl.createDiv({ cls: "kanbase-card-modal-body" });
 
     // Create a truly orphaned workspace leaf instead of a tracked split/tab
     const LeafClass = WorkspaceLeaf as unknown as new (
@@ -70,7 +70,7 @@ export class CardDetailModal extends Modal {
     bodyEl.appendChild(this.leaf.view.containerEl);
 
     // Add a class so CSS can control it rather than hardcoding static styles
-    this.leaf.view.containerEl.addClass("base-board-rogue-leaf-container");
+    this.leaf.view.containerEl.addClass("kanbase-rogue-leaf-container");
   }
 
   onClose() {

@@ -7,7 +7,7 @@ export class BoardFilterButton {
   public render(container: HTMLElement): void {
     const tagFiltersVisible = this.view.preferences.areTagFiltersVisible();
     const button = container.createEl("button", {
-      cls: "clickable-icon base-board-toolbar-button",
+      cls: "clickable-icon kanbase-toolbar-button",
       attr: {
         type: "button",
         "aria-label": tagFiltersVisible

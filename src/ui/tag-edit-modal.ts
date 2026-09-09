@@ -31,13 +31,13 @@ export class TagEditModal extends Modal {
 
     // Container acts as the visual "input box"
     this.inputContainerEl = this.contentEl.createDiv({
-      cls: "base-board-tag-input-container",
+      cls: "kanbase-tag-input-container",
     });
 
     // The actual text input
     this.inputEl = this.inputContainerEl.createEl("input", {
       type: "text",
-      cls: "base-board-tag-input",
+      cls: "kanbase-tag-input",
       placeholder: "Add tag...",
     });
 
@@ -66,7 +66,7 @@ export class TagEditModal extends Modal {
     this.renderTags();
 
     const actionsContainer = this.contentEl.createDiv({
-      cls: "base-board-modal-actions-right",
+      cls: "kanbase-modal-actions-right",
     });
 
     new Setting(actionsContainer).addButton((btn) => {
@@ -89,30 +89,29 @@ export class TagEditModal extends Modal {
 
   private renderTags() {
     // Clear all existing tags (but keep the input!)
-    const existingTags = this.inputContainerEl.querySelectorAll(
-      ".base-board-tag-chip",
-    );
+    const existingTags =
+      this.inputContainerEl.querySelectorAll(".kanbase-tag-chip");
     existingTags.forEach((el) => el.remove());
 
     // Insert new tags BEFORE the input element
     this.tags.forEach((tag) => {
       const chipEl = this.inputContainerEl.createDiv({
-        cls: "base-board-tag-chip",
+        cls: "kanbase-tag-chip",
       });
-      chipEl.createSpan({ text: tag, cls: "base-board-tag-chip-text" });
+      chipEl.createSpan({ text: tag, cls: "kanbase-tag-chip-text" });
 
       const color = this.tagsManager.getColorForTag(tag);
       if (color) {
         chipEl.style.setProperty("--tag-color", color);
         if (relativeLuminance(color) === "dark") {
-          chipEl.addClass("base-board-tag-chip-light");
+          chipEl.addClass("kanbase-tag-chip-light");
         } else {
-          chipEl.addClass("base-board-tag-chip-dark");
+          chipEl.addClass("kanbase-tag-chip-dark");
         }
       }
 
       const removeBtn = chipEl.createSpan({
-        cls: "base-board-tag-chip-remove",
+        cls: "kanbase-tag-chip-remove",
       });
       setIcon(removeBtn, "lucide-x");
       removeBtn.addEventListener("click", (e) => {

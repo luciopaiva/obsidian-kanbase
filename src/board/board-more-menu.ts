@@ -6,7 +6,7 @@ export class BoardMoreMenu {
 
   public render(container: HTMLElement): void {
     const button = container.createEl("button", {
-      cls: "clickable-icon base-board-toolbar-button",
+      cls: "clickable-icon kanbase-toolbar-button",
       attr: {
         type: "button",
         "aria-label": "Configure board",

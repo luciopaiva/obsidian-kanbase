@@ -1,15 +1,15 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mderazon/obsidian-base-board/HEAD/logo-dark.svg">
-    <img alt="Base Board Logo" src="https://raw.githubusercontent.com/mderazon/obsidian-base-board/HEAD/logo-light.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mderazon/obsidian-kanbase/HEAD/logo-dark.svg">
+    <img alt="Kanbase Logo" src="https://raw.githubusercontent.com/mderazon/obsidian-kanbase/HEAD/logo-light.svg">
   </picture>
 </p>
 
-# Base Board
+# Kanbase
 
-**Base Board** is an interactive, property-driven Kanban board view for [Obsidian Bases](https://obsidian.md). It allows you to organize your notes into visual columns based on any property in your frontmatter, providing a seamless drag-and-drop experience for managing tasks and structured data.
+**Kanbase** is an interactive, property-driven Kanban board view for [Obsidian Bases](https://obsidian.md). It allows you to organize your notes into visual columns based on any property in your frontmatter, providing a seamless drag-and-drop experience for managing tasks and structured data.
 
-![Base Board demo](demo.gif)
+![Kanbase demo](demo.gif)
 
 ## Key Features
 
@@ -29,7 +29,7 @@
 
 ## Usage
 
-Open the **Command palette** (`Ctrl/Cmd + P`) and run **"Base Board: Create new board"**. Enter a name, choose a folder, and the plugin will scaffold everything for you — a `.base` file, a tasks folder, and sample task notes. The board opens automatically.
+Open the **Command palette** (`Ctrl/Cmd + P`) and run **"Kanbase: Create new board"**. Enter a name, choose a folder, and the plugin will scaffold everything for you — a `.base` file, a tasks folder, and sample task notes. The board opens automatically.
 
 ### Card Navigation & Selection
 
@@ -45,7 +45,7 @@ You can customize the default click behavior (e.g. to always open in a floating 
 
 ### Card Ordering
 
-Base Board uses manual drag order so cards remain exactly where you place them. This order is stored in each note's `kanban_order` property and overrides the native Bases **Sort by** setting.
+Kanbase uses manual drag order so cards remain exactly where you place them. This order is stored in each note's `kanban_order` property and overrides the native Bases **Sort by** setting.
 
 ### Default Card Properties (`newItemProperties`)
 
@@ -53,7 +53,7 @@ You can set board-specific default frontmatter properties for new cards created 
 
 ```yaml
 views:
-  - type: kanban
+  - type: kanbase
     name: Frontend Board
     newItemFolder: Tasks
     newItemTemplate: Templates/task.md
@@ -68,13 +68,13 @@ This ensures new cards automatically receive required frontmatter fields, keepin
 
 ### From Obsidian Community Plugins
 
-Search for **Base Board** in the Obsidian Community Plugins browser and click **Install**, or view the plugin directly on the [Obsidian Community Plugins directory](https://community.obsidian.md/plugins/base-board).
+Search for **Kanbase** in the Obsidian Community Plugins browser and click **Install**, or view the plugin directly on the [Obsidian Community Plugins directory](https://community.obsidian.md/plugins/kanbase).
 
 ### Using BRAT
 
 1. Install the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin.
 2. Go to **Settings → BRAT → Add Beta Plugin**.
-3. Enter `mderazon/obsidian-base-board` and click **Add Plugin**.
+3. Enter `mderazon/obsidian-kanbase` and click **Add Plugin**.
 
 ## Development
 

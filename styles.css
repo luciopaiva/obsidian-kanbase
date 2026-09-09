@@ -1,10 +1,10 @@
 /* ============================================================
-   Base Board — Styles
+   Kanbase — Styles
    ============================================================ */
 
 /* ---- Container / Board ---- */
 
-.base-board-container {
+.kanbase-container {
   width: 100%;
   height: 100%;
   display: flex;
@@ -14,11 +14,11 @@
 
 /* Inline embed: .bases-embed wraps the view with no defined height,
    collapsing height:100% children. Give it enough room to show columns. */
-.bases-embed .base-board-container {
+.bases-embed .kanbase-container {
   min-height: 400px;
 }
 
-.base-board-board {
+.kanbase-board {
   display: flex;
   gap: 12px;
   padding: 12px;
@@ -30,13 +30,13 @@
 }
 
 /* Utility — used to hide the + button while inline card creation input is open */
-.base-board-column-header .base-board-hidden {
+.kanbase-column-header .kanbase-hidden {
   display: none;
 }
 
 /* ---- Placeholder (no groupBy set) ---- */
 
-.base-board-placeholder {
+.kanbase-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -47,13 +47,13 @@
   font-size: var(--font-ui-small);
 }
 
-.base-board-placeholder-icon {
+.kanbase-placeholder-icon {
   opacity: 0.4;
 }
 
 /* ---- Column ---- */
 
-.base-board-column {
+.kanbase-column {
   flex: 0 0 280px;
   max-height: 100%;
   display: flex;
@@ -67,7 +67,7 @@
     transform 0.15s ease;
 }
 
-.base-board-column--collapsed {
+.kanbase-column--collapsed {
   flex: 0 0 44px;
   min-width: 44px;
   max-width: 44px;
@@ -79,14 +79,14 @@
     max-width 0.2s ease;
 }
 
-.base-board-column--collapsed:hover {
+.kanbase-column--collapsed:hover {
   background-color: var(--background-secondary-alt);
   border-color: var(--interactive-accent);
 }
 
 /* WIP overflow — red highlight */
-.base-board-column.base-board-column--wip-overflow[style*="--column-color"],
-.base-board-column.base-board-column--wip-overflow {
+.kanbase-column.kanbase-column--wip-overflow[style*="--column-color"],
+.kanbase-column.kanbase-column--wip-overflow {
   border-color: var(--text-error, #e74c3c);
   background-color: color-mix(
     in srgb,
@@ -95,9 +95,9 @@
   );
 }
 
-.base-board-column.base-board-column--wip-overflow[style*="--column-color"]
-  .base-board-column-count,
-.base-board-column.base-board-column--wip-overflow .base-board-column-count {
+.kanbase-column.kanbase-column--wip-overflow[style*="--column-color"]
+  .kanbase-column-count,
+.kanbase-column.kanbase-column--wip-overflow .kanbase-column-count {
   background-color: color-mix(
     in srgb,
     var(--text-error, #e74c3c) 18%,
@@ -110,7 +110,7 @@
   margin-left: 4px;
 }
 
-.base-board-column[style*="--column-color"] {
+.kanbase-column[style*="--column-color"] {
   background-color: color-mix(
     in srgb,
     var(--column-color) 4%,
@@ -118,7 +118,7 @@
   );
 }
 
-.base-board-column[style*="--column-color"] .base-board-column-count {
+.kanbase-column[style*="--column-color"] .kanbase-column-count {
   background-color: color-mix(
     in srgb,
     var(--column-color) 15%,
@@ -131,8 +131,8 @@
   margin-left: 4px;
 }
 
-.base-board-column--dragging,
-.base-board-column.base-board-column--dragging {
+.kanbase-column--dragging,
+.kanbase-column.kanbase-column--dragging {
   /* Collapse to zero so it doesn't occupy space alongside the placeholder.
      Can't use display:none — that cancels the browser drag event.
      Negative margin eats the parent's flex gap so no extra space remains. */
@@ -147,7 +147,7 @@
   border: none;
 }
 
-.base-board-column-accent {
+.kanbase-column-accent {
   height: 4px;
   width: 100%;
   flex-shrink: 0;
@@ -155,7 +155,7 @@
 
 /* ---- Column drag placeholder ---- */
 
-.base-board-column-placeholder {
+.kanbase-column-placeholder {
   flex: 0 0 280px;
   border: 1px dashed var(--interactive-accent);
   border-radius: var(--radius-m);
@@ -181,7 +181,7 @@
 
 /* ---- Column header ---- */
 
-.base-board-column-header {
+.kanbase-column-header {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -191,11 +191,11 @@
   cursor: grab;
 }
 
-.base-board-column-header:active {
+.kanbase-column-header:active {
   cursor: grabbing;
 }
 
-.base-board-column-collapse-btn {
+.kanbase-column-collapse-btn {
   flex-shrink: 0;
   width: 22px;
   height: 22px;
@@ -210,12 +210,12 @@
   padding: 0;
 }
 
-.base-board-column-collapse-btn:hover {
+.kanbase-column-collapse-btn:hover {
   background-color: var(--background-modifier-hover);
   color: var(--interactive-accent);
 }
 
-.base-board-column-drag-handle {
+.kanbase-column-drag-handle {
   flex-shrink: 0;
   color: var(--text-faint);
   opacity: 0.3;
@@ -227,11 +227,11 @@
   margin: -2px -4px;
 }
 
-.base-board-column-header:hover .base-board-column-drag-handle {
+.kanbase-column-header:hover .kanbase-column-drag-handle {
   opacity: 1;
 }
 
-.base-board-column-title {
+.kanbase-column-title {
   font-weight: var(--font-semibold);
   font-size: var(--font-ui-small);
   white-space: nowrap;
@@ -243,7 +243,7 @@
   max-width: 160px;
 }
 
-.base-board-column-title-input {
+.kanbase-column-title-input {
   font-weight: var(--font-semibold);
   font-size: var(--font-ui-small);
   font-family: inherit;
@@ -258,25 +258,25 @@
   min-width: 0;
 }
 
-.base-board-no-value-title {
+.kanbase-no-value-title {
   color: var(--text-muted);
   font-style: italic;
 }
 
-.base-board-column-count {
+.kanbase-column-count {
   font-size: var(--font-ui-smaller);
   color: var(--text-muted);
   flex-shrink: 0;
 }
 
 /* Pushes the + button to the far right */
-.base-board-header-spacer {
+.kanbase-header-spacer {
   flex: 1 1 auto;
 }
 
 /* ---- Column header add-card button — always visible ---- */
 
-.base-board-column-add-card {
+.kanbase-column-add-card {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -291,19 +291,19 @@
     color 0.15s ease;
 }
 
-.base-board-column-add-card svg {
+.kanbase-column-add-card svg {
   width: 14px;
   height: 14px;
 }
 
-.base-board-column-add-card:hover {
+.kanbase-column-add-card:hover {
   background-color: var(--background-modifier-hover);
   color: var(--interactive-accent);
 }
 
 /* ---- Cards container (scrollable) ---- */
 
-.base-board-cards {
+.kanbase-cards {
   flex: 1 1 auto;
   overflow-y: auto;
   padding: 8px;
@@ -314,7 +314,7 @@
   transition: background-color 0.2s ease;
 }
 
-.base-board-column--collapsed .base-board-column-header {
+.kanbase-column--collapsed .kanbase-column-header {
   flex-direction: column;
   align-items: center;
   padding: 12px 4px;
@@ -322,13 +322,13 @@
   height: 100%;
 }
 
-.base-board-column--collapsed .base-board-column-drag-handle,
-.base-board-column--collapsed .base-board-header-spacer,
-.base-board-column--collapsed .base-board-column-add-card {
+.kanbase-column--collapsed .kanbase-column-drag-handle,
+.kanbase-column--collapsed .kanbase-header-spacer,
+.kanbase-column--collapsed .kanbase-column-add-card {
   display: none;
 }
 
-.base-board-column--collapsed .base-board-column-title {
+.kanbase-column--collapsed .kanbase-column-title {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   white-space: nowrap;
@@ -340,50 +340,50 @@
   max-height: 220px;
 }
 
-.base-board-column--collapsed .base-board-column-count {
+.kanbase-column--collapsed .kanbase-column-count {
   margin: 0;
   font-size: 11px;
 }
 
-.base-board-column--collapsed > .base-board-cards {
+.kanbase-column--collapsed > .kanbase-cards {
   display: none;
 }
 
 /* Collapsed column expands while a card is dragged over it */
-.base-board-column--collapsed.base-board-column--drag-expanded {
+.kanbase-column--collapsed.kanbase-column--drag-expanded {
   flex: 0 0 280px;
   min-width: 280px;
   max-width: 280px;
   max-height: 100%;
 }
 
-.base-board-column--collapsed.base-board-column--drag-expanded .base-board-column-header {
+.kanbase-column--collapsed.kanbase-column--drag-expanded .kanbase-column-header {
   flex-direction: row;
   padding: 10px 12px;
   height: auto;
 }
 
-.base-board-column--collapsed.base-board-column--drag-expanded .base-board-column-drag-handle,
-.base-board-column--collapsed.base-board-column--drag-expanded .base-board-header-spacer,
-.base-board-column--collapsed.base-board-column--drag-expanded .base-board-column-add-card,
-.base-board-column--collapsed.base-board-column--drag-expanded .base-board-column-more-btn {
+.kanbase-column--collapsed.kanbase-column--drag-expanded .kanbase-column-drag-handle,
+.kanbase-column--collapsed.kanbase-column--drag-expanded .kanbase-header-spacer,
+.kanbase-column--collapsed.kanbase-column--drag-expanded .kanbase-column-add-card,
+.kanbase-column--collapsed.kanbase-column--drag-expanded .kanbase-column-more-btn {
   display: flex;
 }
 
-.base-board-column--collapsed.base-board-column--drag-expanded .base-board-column-title {
+.kanbase-column--collapsed.kanbase-column--drag-expanded .kanbase-column-title {
   writing-mode: horizontal-tb;
   transform: none;
   max-height: none;
 }
 
-.base-board-column--collapsed.base-board-column--drag-expanded > .base-board-cards {
+.kanbase-column--collapsed.kanbase-column--drag-expanded > .kanbase-cards {
   display: flex;
 }
 
 /* ---- Empty column drop zone ---- */
 /* Compact by default — just enough to remain visible */
 
-.base-board-cards:empty {
+.kanbase-cards:empty {
   min-height: 0;
   padding: 4px 8px;
   transition:
@@ -394,7 +394,7 @@
 }
 
 /* Expand smoothly when a card is being dragged over */
-.base-board-column--drag-over > .base-board-cards {
+.kanbase-column--drag-over > .kanbase-cards {
   background-color: color-mix(
     in srgb,
     var(--interactive-accent) 4%,
@@ -402,7 +402,7 @@
   );
 }
 
-.base-board-column--drag-over > .base-board-cards:empty {
+.kanbase-column--drag-over > .kanbase-cards:empty {
   min-height: 100px;
   padding: 8px;
   border: 2px dashed var(--interactive-accent);
@@ -416,7 +416,7 @@
 
 /* ---- Card ---- */
 
-@keyframes base-board-card-enter {
+@keyframes kanbase-card-enter {
   from {
     opacity: 0;
     transform: translateY(6px);
@@ -427,7 +427,7 @@
   }
 }
 
-.base-board-card {
+.kanbase-card {
   position: relative;
   background-color: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
@@ -442,7 +442,7 @@
   user-select: none;
 }
 
-.base-board-card-thumbnail {
+.kanbase-card-thumbnail {
   margin: -10px -12px 8px;
   height: 120px;
   overflow: hidden;
@@ -451,7 +451,7 @@
   background-color: var(--background-secondary);
 }
 
-.base-board-card-thumbnail-img {
+.kanbase-card-thumbnail-img {
   display: block;
   width: 100%;
   height: 100%;
@@ -459,25 +459,25 @@
 }
 
 /* Only animate cards on initial board mount */
-.base-board-board--animate .base-board-card {
-  animation: base-board-card-enter 0.25s ease both;
+.kanbase-board--animate .kanbase-card {
+  animation: kanbase-card-enter 0.25s ease both;
 }
 
-.base-board-card:hover {
+.kanbase-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border-color: var(--interactive-accent);
 }
 
-.base-board-card:active {
+.kanbase-card:active {
   cursor: grabbing;
 }
 
-.base-board-card--dragging {
+.kanbase-card--dragging {
   display: none;
 }
 
 /* Multi-select highlight */
-.base-board-card--selected {
+.kanbase-card--selected {
   border-color: var(--interactive-accent);
   box-shadow:
     0 0 0 2px var(--interactive-accent),
@@ -492,21 +492,21 @@
 /* Native drag-and-drop can leave :hover latched to the card that shifted into
    the source slot. During the handoff, highlight the dropped card explicitly
    and suppress only the stale, non-selected hover target. */
-.base-board-board--drop-settling
-  .base-board-card:hover:not(.base-board-card--selected):not(
-    .base-board-card--just-dropped
+.kanbase-board--drop-settling
+  .kanbase-card:hover:not(.kanbase-card--selected):not(
+    .kanbase-card--just-dropped
   ) {
   border-color: var(--background-modifier-border);
   box-shadow: none;
 }
 
-.base-board-card--just-dropped {
+.kanbase-card--just-dropped {
   border-color: var(--interactive-accent);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 /* Other selected cards dimmed during a multi-drag */
-.base-board-card--drag-ghost {
+.kanbase-card--drag-ghost {
   opacity: 0.35;
   transform: scale(0.97);
   pointer-events: none;
@@ -517,8 +517,8 @@
 
 /* ---- Card title ---- */
 
-.base-board-card-title {
-  font-size: var(--base-board-card-title-font-size, var(--font-ui-small));
+.kanbase-card-title {
+  font-size: var(--kanbase-card-title-font-size, var(--font-ui-small));
   font-weight: var(--font-medium);
   line-height: 1.35;
   margin-bottom: 4px;
@@ -527,7 +527,7 @@
 
 /* ---- Card edit button ---- */
 
-.base-board-card-edit-btn {
+.kanbase-card-edit-btn {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -545,23 +545,23 @@
   color: var(--text-muted);
 }
 
-.base-board-card-edit-btn svg {
+.kanbase-card-edit-btn svg {
   width: 14px;
   height: 14px;
 }
 
-.base-board-card:hover .base-board-card-edit-btn {
+.kanbase-card:hover .kanbase-card-edit-btn {
   opacity: 1;
 }
 
-.base-board-card-edit-btn:hover {
+.kanbase-card-edit-btn:hover {
   background-color: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
 /* ---- Card rename input ---- */
 
-.base-board-card-rename-input {
+.kanbase-card-rename-input {
   width: 100%;
   box-sizing: border-box;
   font-family: inherit;
@@ -578,13 +578,13 @@
 
 /* ---- Card property chips ---- */
 
-.base-board-card-props {
+.kanbase-card-props {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
 
-.base-board-card-chip {
+.kanbase-card-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -597,12 +597,12 @@
   overflow: hidden;
 }
 
-.base-board-chip-label {
+.kanbase-chip-label {
   opacity: 0.6;
   white-space: nowrap;
 }
 
-.base-board-chip-value {
+.kanbase-chip-value {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -610,33 +610,33 @@
 
 /* Rendered formula output (e.g. a formula using html()) renders inline. Keep
    any block-level markup the formula emits flowing on the chip's single line. */
-.base-board-chip-value--formula,
-.base-board-chip-value--formula * {
+.kanbase-chip-value--formula,
+.kanbase-chip-value--formula * {
   display: inline;
   margin: 0;
   padding: 0;
 }
 
-.base-board-chip-value--formula img,
-.base-board-chip-value--formula svg {
+.kanbase-chip-value--formula img,
+.kanbase-chip-value--formula svg {
   display: inline-block;
   max-height: 1.1em;
   vertical-align: text-bottom;
 }
 
 /* Overflow chips — hidden until expanded */
-.base-board-card-chips-overflow {
+.kanbase-card-chips-overflow {
   display: none;
 }
 
-.base-board-card-chips-overflow--expanded {
+.kanbase-card-chips-overflow--expanded {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
 
 /* "Show more" toggle button */
-.base-board-card-chip-more {
+.kanbase-card-chip-more {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -649,13 +649,13 @@
   user-select: none;
 }
 
-.base-board-card-chip-more:hover {
+.kanbase-card-chip-more:hover {
   color: var(--text-normal);
 }
 
 /* ---- Card drop placeholder ---- */
 
-@keyframes base-board-placeholder-pulse {
+@keyframes kanbase-placeholder-pulse {
   0%,
   100% {
     opacity: 0.6;
@@ -665,7 +665,7 @@
   }
 }
 
-.base-board-card-placeholder {
+.kanbase-card-placeholder {
   border: 2px dashed var(--interactive-accent);
   border-radius: var(--radius-s);
   box-sizing: border-box;
@@ -676,22 +676,22 @@
   );
   transition: height 0.15s ease;
   flex-shrink: 0;
-  animation: base-board-placeholder-pulse 1.5s ease-in-out infinite;
+  animation: kanbase-placeholder-pulse 1.5s ease-in-out infinite;
 }
 
 /* Disable transitions during drag to avoid layout/paint backlog */
-.base-board-board--is-dragging .base-board-cards,
-.base-board-board--is-dragging .base-board-cards:empty,
-.base-board-board--is-dragging .base-board-card-placeholder,
-.base-board-board--is-dragging .base-board-card--drag-ghost,
-.base-board-board--is-dragging .base-board-column-placeholder {
+.kanbase-board--is-dragging .kanbase-cards,
+.kanbase-board--is-dragging .kanbase-cards:empty,
+.kanbase-board--is-dragging .kanbase-card-placeholder,
+.kanbase-board--is-dragging .kanbase-card--drag-ghost,
+.kanbase-board--is-dragging .kanbase-column-placeholder {
   transition: none;
   animation: none;
 }
 
 /* ---- Add column button ---- */
 
-.base-board-add-column-btn {
+.kanbase-add-column-btn {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
@@ -710,7 +710,7 @@
   align-self: flex-start;
 }
 
-.base-board-add-column-btn:hover {
+.kanbase-add-column-btn:hover {
   background-color: var(--background-secondary);
   color: var(--text-normal);
   border-color: var(--interactive-accent);
@@ -718,7 +718,7 @@
 
 /* ---- Add card button ---- */
 
-.base-board-add-card-btn {
+.kanbase-add-card-btn {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -733,26 +733,26 @@
     color 0.15s ease;
 }
 
-.base-board-add-card-btn:hover {
+.kanbase-add-card-btn:hover {
   background-color: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.base-board-add-card-icon {
+.kanbase-add-card-icon {
   display: flex;
   align-items: center;
 }
 
-.base-board-add-card-icon svg {
+.kanbase-add-card-icon svg {
   width: 14px;
   height: 14px;
 }
 
-.base-board-add-card-input-wrapper {
+.kanbase-add-card-input-wrapper {
   padding: 4px 8px 8px;
 }
 
-.base-board-add-card-input {
+.kanbase-add-card-input {
   width: 100%;
   box-sizing: border-box;
   font-family: inherit;
@@ -765,13 +765,13 @@
   outline: none;
 }
 
-.base-board-add-card-input::placeholder {
+.kanbase-add-card-input::placeholder {
   color: var(--text-faint);
 }
 
 /* ---- Board Toolbar / Filter Bar ---- */
 
-.base-board-toolbar {
+.kanbase-toolbar {
   display: flex;
   align-items: center;
   flex: 0 0 auto;
@@ -782,7 +782,7 @@
   background-color: var(--background-primary);
 }
 
-.base-board-toolbar-title {
+.kanbase-toolbar-title {
   margin-right: auto;
   font-weight: var(--font-semibold);
   color: var(--text-normal);
@@ -791,7 +791,7 @@
   text-overflow: ellipsis;
 }
 
-.base-board-toolbar-button {
+.kanbase-toolbar-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -802,12 +802,12 @@
   color: var(--text-muted);
 }
 
-.base-board-toolbar-button.is-active {
+.kanbase-toolbar-button.is-active {
   color: var(--interactive-accent);
   background-color: var(--background-modifier-hover);
 }
 
-.base-board-filter-bar {
+.kanbase-filter-bar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -817,7 +817,7 @@
   background-color: var(--background-secondary);
 }
 
-.base-board-filter-pill {
+.kanbase-filter-pill {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -837,7 +837,7 @@
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
-.base-board-filter-count {
+.kanbase-filter-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -851,18 +851,18 @@
   line-height: 1.4;
 }
 
-.base-board-filter-pill:hover {
+.kanbase-filter-pill:hover {
   opacity: 0.75;
   transform: scale(1.02);
 }
 
-.base-board-filter-pill.is-active,
-.base-board-filter-pill.is-excluded {
+.kanbase-filter-pill.is-active,
+.kanbase-filter-pill.is-excluded {
   font-weight: var(--font-bold);
   opacity: 1;
 }
 
-.base-board-filter-state-icon {
+.kanbase-filter-state-icon {
   display: inline-flex;
   align-items: center;
   flex: 0 0 11px;
@@ -871,12 +871,12 @@
   margin-right: 4px;
 }
 
-.base-board-filter-state-icon svg {
+.kanbase-filter-state-icon svg {
   width: 11px;
   height: 11px;
 }
 
-.base-board-filter-clear {
+.kanbase-filter-clear {
   margin-left: auto;
   font-size: var(--font-ui-smaller);
   color: var(--text-muted);
@@ -885,26 +885,26 @@
   border-radius: var(--radius-s);
 }
 
-.base-board-filter-clear:hover {
+.kanbase-filter-clear:hover {
   color: var(--text-error);
   background-color: var(--background-modifier-hover);
 }
 
-.base-board-tag-container {
+.kanbase-tag-container {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
 
-.base-board-tag-container--top {
+.kanbase-tag-container--top {
   margin-bottom: 8px;
 }
 
-.base-board-tag-container--bottom {
+.kanbase-tag-container--bottom {
   margin-top: 8px;
 }
 
-.base-board-card-tag {
+.kanbase-card-tag {
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 4px;
@@ -914,28 +914,28 @@
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
-.base-board-filter-pill.base-board-filter-pill-light {
+.kanbase-filter-pill.kanbase-filter-pill-light {
   color: #ffffff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.base-board-filter-pill.base-board-filter-pill-dark {
+.kanbase-filter-pill.kanbase-filter-pill-dark {
   color: #1c212b;
   text-shadow: none;
 }
 
-.base-board-card-tag.base-board-card-tag-light {
+.kanbase-card-tag.kanbase-card-tag-light {
   color: #ffffff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.base-board-card-tag.base-board-card-tag-dark {
+.kanbase-card-tag.kanbase-card-tag-dark {
   color: #1c212b;
   text-shadow: none;
 }
 
 /* Card Detail Modal */
-.modal.base-board-card-modal {
+.modal.kanbase-card-modal {
   width: 800px;
   max-width: 95vw;
   height: 80vh;
@@ -943,28 +943,28 @@
   flex-direction: column;
 }
 
-.base-board-card-modal-actions {
+.kanbase-card-modal-actions {
   display: flex;
   gap: 8px;
   margin-bottom: 8px;
 }
 
-.base-board-card-modal-actions button {
+.kanbase-card-modal-actions button {
   box-shadow: none;
 }
 
-.base-board-modal-separator {
+.kanbase-modal-separator {
   margin: 16px 0;
   border-top: 1px solid var(--background-modifier-border);
 }
 
-.base-board-card-modal-body {
+.kanbase-card-modal-body {
   padding: 0;
   display: flex;
   flex-direction: column;
 }
 
-.modal.base-board-card-modal .base-board-rogue-leaf-container {
+.modal.kanbase-card-modal .kanbase-rogue-leaf-container {
   flex: 1;
   position: relative;
   height: 100%;
@@ -972,7 +972,7 @@
 }
 
 /* Tag Edit Modal */
-.base-board-tag-input-container {
+.kanbase-tag-input-container {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -985,12 +985,12 @@
   cursor: text;
 }
 
-.base-board-tag-input-container:focus-within {
+.kanbase-tag-input-container:focus-within {
   border-color: var(--interactive-accent);
   box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 }
 
-.base-board-tag-chip {
+.kanbase-tag-chip {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1000,11 +1000,11 @@
   background-color: var(--tag-color, var(--background-modifier-hover));
 }
 
-.base-board-tag-chip-text {
+.kanbase-tag-chip-text {
   font-weight: 500;
 }
 
-.base-board-tag-chip-remove {
+.kanbase-tag-chip-remove {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1015,27 +1015,27 @@
   height: 14px;
 }
 
-.base-board-tag-chip-remove:hover {
+.kanbase-tag-chip-remove:hover {
   opacity: 1;
   background-color: rgba(0, 0, 0, 0.1);
 }
 
-.base-board-tag-chip.base-board-tag-chip-light {
+.kanbase-tag-chip.kanbase-tag-chip-light {
   color: #ffffff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.base-board-tag-chip.base-board-tag-chip-light
-  .base-board-tag-chip-remove:hover {
+.kanbase-tag-chip.kanbase-tag-chip-light
+  .kanbase-tag-chip-remove:hover {
   background-color: rgba(255, 255, 255, 0.2);
 }
 
-.base-board-tag-chip.base-board-tag-chip-dark {
+.kanbase-tag-chip.kanbase-tag-chip-dark {
   color: #1c212b;
   text-shadow: none;
 }
 
-.base-board-tag-input-container .base-board-tag-input {
+.kanbase-tag-input-container .kanbase-tag-input {
   border: none;
   background: transparent;
   box-shadow: none;
@@ -1047,7 +1047,7 @@
   color: var(--text-normal);
 }
 
-.base-board-modal-actions-right {
+.kanbase-modal-actions-right {
   display: flex;
   justify-content: flex-end;
   margin-top: 16px;
@@ -1055,7 +1055,7 @@
 
 /* ---- Column header menu button ---- */
 
-.base-board-column-menu-btn {
+.kanbase-column-menu-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1070,19 +1070,19 @@
     color 0.15s ease;
 }
 
-.base-board-column-menu-btn svg {
+.kanbase-column-menu-btn svg {
   width: 14px;
   height: 14px;
 }
 
-.base-board-column-menu-btn:hover {
+.kanbase-column-menu-btn:hover {
   background-color: var(--background-modifier-hover);
   color: var(--interactive-accent);
 }
 
 /* ---- Mobile-specific style overrides ---- */
 
-.is-phone .base-board-card-edit-btn,
-.is-tablet .base-board-card-edit-btn {
+.is-phone .kanbase-card-edit-btn,
+.is-tablet .kanbase-card-edit-btn {
   opacity: 0.6;
 }

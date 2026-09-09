@@ -43,10 +43,10 @@ export class TagFilterBar {
     if (!isVisible) return;
     if (this.tagCounts.size === 0 && this.filters.size === 0) return;
 
-    const boardEl = container.querySelector(".base-board-board");
+    const boardEl = container.querySelector(".kanbase-board");
     if (!boardEl) return;
 
-    const barEl = container.createDiv({ cls: "base-board-filter-bar" });
+    const barEl = container.createDiv({ cls: "kanbase-filter-bar" });
     container.insertBefore(barEl, boardEl);
 
     const tagsArray = Array.from(this.tagCounts.keys()).sort();
@@ -60,7 +60,7 @@ export class TagFilterBar {
 
     if (this.filters.size > 0) {
       const clearButton = barEl.createSpan({
-        cls: "base-board-filter-clear",
+        cls: "kanbase-filter-clear",
         text: "Clear",
       });
       clearButton.addEventListener("click", () => {
@@ -73,14 +73,14 @@ export class TagFilterBar {
   private renderTagPill(container: HTMLElement, tag: string): void {
     const count = this.tagCounts.get(tag) ?? 0;
     const state = this.getFilterState(tag);
-    const pill = container.createSpan({ cls: "base-board-filter-pill" });
-    const iconEl = pill.createSpan({ cls: "base-board-filter-state-icon" });
+    const pill = container.createSpan({ cls: "kanbase-filter-pill" });
+    const iconEl = pill.createSpan({ cls: "kanbase-filter-state-icon" });
     iconEl.setAttr("aria-hidden", "true");
     if (state !== "none") {
       setIcon(iconEl, state === "include" ? "lucide-filter" : "lucide-eye-off");
     }
-    pill.createSpan({ cls: "base-board-filter-label", text: tag });
-    pill.createSpan({ cls: "base-board-filter-count", text: String(count) });
+    pill.createSpan({ cls: "kanbase-filter-label", text: tag });
+    pill.createSpan({ cls: "kanbase-filter-count", text: String(count) });
     pill.setAttr(
       "aria-label",
       `${tag}, ${count} ${count === 1 ? "card" : "cards"}, ${this.getStateLabel(state)}`,
@@ -89,9 +89,9 @@ export class TagFilterBar {
     const tagColor = this.tags.getColorForTag(tag);
     pill.style.setProperty("--tag-color", tagColor);
     if (relativeLuminance(tagColor) === "dark") {
-      pill.addClass("base-board-filter-pill-light");
+      pill.addClass("kanbase-filter-pill-light");
     } else {
-      pill.addClass("base-board-filter-pill-dark");
+      pill.addClass("kanbase-filter-pill-dark");
     }
 
     if (state === "include") pill.addClass("is-active");

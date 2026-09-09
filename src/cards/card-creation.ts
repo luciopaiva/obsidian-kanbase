@@ -16,17 +16,17 @@ export class CardCreationManager {
     orderedEntries: BasesEntry[],
   ): void {
     const initialOrder = this.getInitialOrder(orderedEntries);
-    const columnEl = triggerEl.closest(".base-board-column");
+    const columnEl = triggerEl.closest(".kanbase-column");
     const cardsEl =
-      (columnEl?.querySelector(".base-board-cards") as HTMLElement | null) ??
+      (columnEl?.querySelector(".kanbase-cards") as HTMLElement | null) ??
       triggerEl.parentElement!;
 
-    triggerEl.classList.add("base-board-hidden");
+    triggerEl.classList.add("kanbase-hidden");
     const inputWrapper = cardsEl.createDiv({
-      cls: "base-board-add-card-input-wrapper",
+      cls: "kanbase-add-card-input-wrapper",
     });
     const input = inputWrapper.createEl("input", {
-      cls: "base-board-add-card-input",
+      cls: "kanbase-add-card-input",
       attr: { type: "text", placeholder: "Card title…" },
     });
     input.focus();
@@ -37,7 +37,7 @@ export class CardCreationManager {
       committed = true;
       const title = input.value.trim();
       inputWrapper.remove();
-      triggerEl.classList.remove("base-board-hidden");
+      triggerEl.classList.remove("kanbase-hidden");
       if (title) {
         await this.createCard(title, columnName, initialOrder);
       }
@@ -51,7 +51,7 @@ export class CardCreationManager {
         event.preventDefault();
         committed = true;
         inputWrapper.remove();
-        triggerEl.classList.remove("base-board-hidden");
+        triggerEl.classList.remove("kanbase-hidden");
       }
     });
     input.addEventListener("blur", () => {

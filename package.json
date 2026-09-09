@@ -1,6 +1,6 @@
 {
-  "name": "obsidian-base-board",
-  "version": "2.5.1",
+  "name": "obsidian-kanbase",
+  "version": "1.0.0",
   "description": "Kanban board view for Bases with drag and drop",
   "main": "main.js",
   "scripts": {
@@ -20,8 +20,15 @@
     "bases",
     "task-management"
   ],
-  "author": "Michael DeRazon",
+  "author": "Lucio Paiva",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luciopaiva/obsidian-kanbase.git"
+  },
+  "bugs": {
+    "url": "https://github.com/luciopaiva/obsidian-kanbase/issues"
+  },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@eslint/json": "2.0.1",

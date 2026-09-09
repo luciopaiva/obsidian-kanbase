@@ -21,14 +21,14 @@ export class BoardRenderer {
     const scrollState = this.captureScrollState();
 
     this.cardElCache.clear();
-    this.view.containerEl.querySelectorAll(".base-board-card").forEach((el) => {
+    this.view.containerEl.querySelectorAll(".kanbase-card").forEach((el) => {
       const path = (el as HTMLElement).dataset.filePath;
       if (path) this.cardElCache.set(path, el as HTMLElement);
     });
 
     this.columnElCache.clear();
     this.view.containerEl
-      .querySelectorAll<HTMLElement>(".base-board-column")
+      .querySelectorAll<HTMLElement>(".kanbase-column")
       .forEach((el) => {
         const name = el.dataset.columnName;
         if (name) {
@@ -51,10 +51,10 @@ export class BoardRenderer {
 
     if (shouldShowPlaceholder) {
       const msgEl = this.view.containerEl.createDiv({
-        cls: "base-board-placeholder",
+        cls: "kanbase-placeholder",
       });
       setIcon(
-        msgEl.createSpan({ cls: "base-board-placeholder-icon" }),
+        msgEl.createSpan({ cls: "kanbase-placeholder-icon" }),
         "lucide-kanban",
       );
       msgEl.createEl("p", {
@@ -68,11 +68,11 @@ export class BoardRenderer {
     this.view.tagFilterBar.refresh();
     const columns = this.view.preferences.getColumns();
     const boardEl = this.view.containerEl.createDiv({
-      cls: "base-board-board",
+      cls: "kanbase-board",
     });
 
     if (this.isFirstRender) {
-      boardEl.addClass("base-board-board--animate");
+      boardEl.addClass("kanbase-board--animate");
       this.isFirstRender = false;
     }
 
@@ -100,14 +100,13 @@ export class BoardRenderer {
 
   private captureScrollState(): BoardScrollState {
     const boardEl =
-      this.view.containerEl.querySelector<HTMLElement>(".base-board-board");
+      this.view.containerEl.querySelector<HTMLElement>(".kanbase-board");
     const columnTops = new Map<string, number>();
     boardEl
-      ?.querySelectorAll<HTMLElement>(".base-board-column")
+      ?.querySelectorAll<HTMLElement>(".kanbase-column")
       .forEach((columnEl) => {
         const name = columnEl.dataset.columnName;
-        const cardsEl =
-          columnEl.querySelector<HTMLElement>(".base-board-cards");
+        const cardsEl = columnEl.querySelector<HTMLElement>(".kanbase-cards");
         if (name && cardsEl) columnTops.set(name, cardsEl.scrollTop);
       });
     return {
@@ -124,11 +123,10 @@ export class BoardRenderer {
     boardEl.scrollLeft = state.boardLeft;
     this.view.scrollEl.scrollTop = state.viewTop;
     boardEl
-      .querySelectorAll<HTMLElement>(".base-board-column")
+      .querySelectorAll<HTMLElement>(".kanbase-column")
       .forEach((columnEl) => {
         const name = columnEl.dataset.columnName;
-        const cardsEl =
-          columnEl.querySelector<HTMLElement>(".base-board-cards");
+        const cardsEl = columnEl.querySelector<HTMLElement>(".kanbase-cards");
         const scrollTop = name ? state.columnTops.get(name) : undefined;
         if (cardsEl && scrollTop !== undefined) cardsEl.scrollTop = scrollTop;
       });

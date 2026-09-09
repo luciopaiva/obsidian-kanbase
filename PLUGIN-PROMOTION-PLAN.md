@@ -4,52 +4,52 @@ This plan turns the current Base Board fork into a separately published Obsidian
 
 ## Decisions to make before implementation
 
-- [ ] Confirm the public author name to use in `manifest.json`, `package.json`, and the copyright notice.
-- [ ] Confirm the new GitHub repository name, preferably `obsidian-kanbase`.
-- [ ] Confirm the new plugin ID, preferably `kanbase`, and check that it is not already in use.
-- [ ] Decide how existing `.base` files using `type: kanban` will be migrated to the new view type.
-- [ ] Decide whether to preserve the existing `project/base-board` tag for compatibility, support both old and new tags, or introduce a migration.
-- [ ] Decide whether global Base Board settings need to be migrated from the old plugin data directory.
+- [x] Confirm the public author name to use in `manifest.json`, `package.json`, and the copyright notice: **Lucio Paiva**.
+- [x] Confirm the new GitHub repository name, preferably `obsidian-kanbase`: **luciopaiva/obsidian-kanbase**.
+- [x] Confirm the new plugin ID, preferably `kanbase`, and check that it is not already in use.
+- [x] Decide how existing `.base` files using `type: kanban` will be migrated to the new view type: create a new `kanbase` view only when the user creates one in that `.base` file; never convert the old view in place.
+- [x] Decide whether to preserve the existing `project/base-board` tag for compatibility, support both old and new tags, or introduce a migration: no changes or migration; this tag is out of scope.
+- [x] Decide whether global Base Board settings need to be migrated from the old plugin data directory: no migration; legacy global settings are out of scope.
 
 ## Phase 1: Create the new plugin identity
 
-- [ ] Rename the GitHub repository to `obsidian-kanbase` or the chosen alternative.
-- [ ] Update the local `origin` remote to the renamed repository.
-- [ ] Change `manifest.json`:
-  - [ ] Set `id` to `kanbase`.
-  - [ ] Set `name` to `Kanbase`.
-  - [ ] Set `version` to `1.0.0`.
-  - [ ] Rewrite the description for Kanbase.
-  - [ ] Set the chosen author name.
-  - [ ] Add `authorUrl` and `fundingUrl` only if desired.
-  - [ ] Keep `minAppVersion` at `1.13.0` unless compatibility testing justifies lowering it.
-- [ ] Change `package.json` to the new package name, version, author, repository, and issue URLs.
-- [ ] Synchronize the root metadata in `package-lock.json`.
-- [ ] Reset `versions.json` to the new plugin history, beginning with the `1.0.0` compatibility entry.
-- [ ] Search the repository for stale Base Board branding and old repository URLs.
+- [x] Rename the GitHub repository to `obsidian-kanbase` or the chosen alternative.
+- [x] Update the local `origin` remote to the renamed repository.
+- [x] Change `manifest.json`:
+  - [x] Set `id` to `kanbase`.
+  - [x] Set `name` to `Kanbase`.
+  - [x] Set `version` to `1.0.0`.
+  - [x] Rewrite the description for Kanbase.
+  - [x] Set the chosen author name: **Lucio Paiva**.
+  - [x] Add `authorUrl` and `fundingUrl` only if desired.
+  - [x] Keep `minAppVersion` at `1.13.0` unless compatibility testing justifies lowering it.
+- [x] Change `package.json` to the new package name, version, author, repository, and issue URLs.
+- [x] Synchronize the root metadata in `package-lock.json`.
+- [x] Reset `versions.json` to the new plugin history, beginning with the `1.0.0` compatibility entry.
+- [x] Search the repository for stale Base Board branding and old repository URLs.
 
 ## Phase 2: Prevent identity and styling collisions
 
-- [ ] Change the custom Bases view type from `kanban` to a unique Kanbase type such as `kanbase`.
-- [ ] Update `KanbanView.type`, `registerBasesView`, generated `.base` configurations, examples, and documentation.
-- [ ] Decide and document how users migrate existing Base Board `.base` files.
-- [ ] Rename `base-board-*` CSS classes and selectors to `kanbase-*`.
-- [ ] Update corresponding class names in TypeScript and `styles.css`.
-- [ ] Change hover-link source IDs and other plugin-specific string identifiers to Kanbase equivalents.
-- [ ] Rename internal classes such as `BaseBoardPlugin` and `BaseBoardSettingTab` where appropriate.
-- [ ] Update user-facing commands, notices, settings labels, and error messages.
-- [ ] Keep persisted configuration keys and `kanban_order` unchanged unless a migration is intentionally implemented.
+- [x] Change the custom Bases view type from `kanban` to a unique Kanbase type such as `kanbase`.
+- [x] Update `KanbanView.type`, `registerBasesView`, generated `.base` configurations, examples, and documentation.
+- [x] Decide and document how users migrate existing Base Board `.base` files.
+- [x] Rename `base-board-*` CSS classes and selectors to `kanbase-*`.
+- [x] Update corresponding class names in TypeScript and `styles.css`.
+- [x] Change hover-link source IDs and other plugin-specific string identifiers to Kanbase equivalents.
+- [x] Rename internal classes such as `BaseBoardPlugin` and `BaseBoardSettingTab` where appropriate.
+- [x] Update user-facing commands, notices, settings labels, and error messages.
+- [x] Keep persisted configuration keys and `kanban_order` unchanged unless a migration is intentionally implemented.
 
 ## Phase 3: Preserve or explicitly migrate user data
 
-- [ ] Verify which settings are stored in `.base` files and which are stored in plugin data.
-- [ ] Preserve existing configuration property names where possible.
+- [x] Verify which settings are stored in `.base` files and which are stored in plugin data.
+- [x] Preserve existing configuration property names where possible.
 - [ ] Decide whether the new plugin should read or migrate data from `.obsidian/plugins/base-board`.
 - [ ] If migration is needed, implement it explicitly and safely without silently rewriting user files.
 
 ### Per-base Base Board view migration
 
-When a `.base` file contains an old Base Board view and the user creates a new Kanbase view in the same file, automatically copy the old view's Kanbase-compatible settings into the new view.
+When a `.base` file contains an old Base Board view and the user creates a new Kanbase view in the same file, automatically copy the old view's Kanbase-compatible settings into the new view. This migration is scoped to that `.base` file and is independent of whether the old Base Board plugin is installed. The original view must remain untouched.
 
 - [ ] Detect when the active Kanbase view has no Kanbase-specific settings yet.
 - [ ] Locate the containing `.base` file.
@@ -71,27 +71,28 @@ When a `.base` file contains an old Base Board view and the user creates a new K
 - [ ] Do not copy the old view's type, name, filters, grouping, sorting, or visible-property configuration.
 - [ ] Never overwrite settings that are already present in the Kanbase view.
 - [ ] Record that the migration was completed, or otherwise make the detection idempotent.
-- [ ] Leave the original Base Board view and its settings untouched.
-- [ ] Do not prompt the user or add a separate migration command.
+- [x] Leave the original Base Board view and its settings untouched.
+- [x] Do not prompt the user or add a separate migration command.
 - [ ] Test the migration with one old view, multiple old views, renamed views, and no matching view.
 
-### Per-base view-type migration
+### Per-base view creation migration
 
-- [ ] Automatically migrate existing `type: kanban` views to `type: kanbase` when Kanbase takes over the view.
-- [ ] Modify only the view type and preserve all other `.base` content.
-- [ ] Report which files were changed and which could not be migrated.
+- [x] Never convert an existing `type: kanban` view in place.
+- [ ] When a new Kanbase view is created in a `.base` file containing a `type: kanban` view, create the new view with `type: kanbase` and copy the selected compatible fields.
+- [ ] Leave the old view and all unrelated `.base` content unchanged.
+- [ ] Report which `.base` files could not be migrated without modifying them.
 
 - [ ] Test existing boards, filters, grouping, card ordering, and custom display settings.
 - [ ] Add migration instructions or a migration command if the view type changes make it necessary.
 
 ## Phase 4: Documentation and attribution
 
-- [ ] Rebrand `README.md` as Kanbase documentation.
-- [ ] Replace old logo, repository, release, issue, and BRAT URLs.
-- [ ] Update command names, screenshots, examples, and installation instructions.
+- [x] Rebrand `README.md` as Kanbase documentation.
+- [x] Replace old logo, repository, release, issue, and BRAT URLs.
+- [x] Update command names, screenshots, examples, and installation instructions.
 - [ ] Add a migration section for Base Board users.
 - [ ] Add an attribution section linking to Base Board and Michael DeRazon.
-- [ ] Update `AI-INSTRUCTIONS-TEMPLATE.md` or clearly mark any remaining Base Board references.
+- [x] Update `AI-INSTRUCTIONS-TEMPLATE.md` or clearly mark any remaining Base Board references.
 - [ ] Review whether sample tags and examples should retain old names for compatibility.
 - [ ] Update `LICENSE` while preserving the original copyright notice, for example:
 
@@ -102,10 +103,10 @@ When a `.base` file contains an old Base Board view and the user creates a new K
 
 ## Phase 5: Validate the plugin
 
-- [ ] Run `npm run lint`.
-- [ ] Run `npm test`.
-- [ ] Build the production bundle.
-- [ ] Run `git diff --check`.
+- [x] Run `npm run lint`.
+- [x] Run `npm test`.
+- [x] Build the production bundle.
+- [x] Run `git diff --check`.
 - [ ] Run `bash scripts/install-to-test-vault.sh`.
 - [ ] In the test vault, verify plugin loading and the Kanbase view.
 - [ ] Test creation of a new board.

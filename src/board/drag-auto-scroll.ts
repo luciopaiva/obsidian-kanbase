@@ -20,7 +20,7 @@ export class DragAutoScroller {
       ? this.getEdgeSpeed(clientX, boardEl.getBoundingClientRect(), "x")
       : 0;
 
-    const cardsEl = target.closest<HTMLElement>(".base-board-cards");
+    const cardsEl = target.closest<HTMLElement>(".kanbase-cards");
     this.verticalEl = cardsEl;
     this.verticalSpeed = cardsEl
       ? this.getEdgeSpeed(clientY, cardsEl.getBoundingClientRect(), "y")

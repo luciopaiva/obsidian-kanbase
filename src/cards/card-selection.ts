@@ -45,8 +45,8 @@ export class CardSelectionManager {
   public clear(): void {
     this.selectedPaths.clear();
     this.view.containerEl
-      .querySelectorAll<HTMLElement>(".base-board-card--selected")
-      .forEach((element) => element.removeClass("base-board-card--selected"));
+      .querySelectorAll<HTMLElement>(".kanbase-card--selected")
+      .forEach((element) => element.removeClass("kanbase-card--selected"));
   }
 
   public showMoveMenu(event: MouseEvent): void {
@@ -81,7 +81,7 @@ export class CardSelectionManager {
     }
 
     const paths = Array.from(
-      columnEl.querySelectorAll<HTMLElement>(".base-board-card"),
+      columnEl.querySelectorAll<HTMLElement>(".kanbase-card"),
     ).map((element) => element.dataset.filePath ?? "");
     const clickedIndex = paths.indexOf(filePath);
     const lastSelectedIndex = paths.reduceRight((found, path, index) => {
@@ -103,10 +103,10 @@ export class CardSelectionManager {
 
   private syncCardClasses(): void {
     this.view.containerEl
-      .querySelectorAll<HTMLElement>(".base-board-card")
+      .querySelectorAll<HTMLElement>(".kanbase-card")
       .forEach((element) => {
         element.toggleClass(
-          "base-board-card--selected",
+          "kanbase-card--selected",
           this.selectedPaths.has(element.dataset.filePath ?? ""),
         );
       });

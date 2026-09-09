@@ -6,7 +6,7 @@ import {
   HoverPopover,
   QueryController,
 } from "obsidian";
-import type BaseBoardPlugin from "./main";
+import type KanbasePlugin from "./main";
 import { DragDropManager } from "./board/drag-drop";
 import { ColumnManager } from "./board/column";
 import { CardManager } from "./cards/card";
@@ -34,7 +34,7 @@ export class KanbanView extends BasesView implements HoverParent {
   hoverPopover: HoverPopover | null = null;
   scrollEl: HTMLElement;
   containerEl: HTMLElement;
-  plugin: BaseBoardPlugin;
+  plugin: KanbasePlugin;
 
   public dragDropManager: DragDropManager;
   public columnManager: ColumnManager;
@@ -62,12 +62,12 @@ export class KanbanView extends BasesView implements HoverParent {
   constructor(
     controller: QueryController,
     scrollEl: HTMLElement,
-    plugin: BaseBoardPlugin,
+    plugin: KanbasePlugin,
   ) {
     super(controller);
     this.scrollEl = scrollEl;
     this.plugin = plugin;
-    this.containerEl = scrollEl.createDiv({ cls: "base-board-container" });
+    this.containerEl = scrollEl.createDiv({ cls: "kanbase-container" });
     this.boardConfig = new BoardConfig(
       // Obsidian replaces the config object after updates, so resolve it lazily.
       () => this.config,

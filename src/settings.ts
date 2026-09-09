@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, SettingDefinitionItem } from "obsidian";
-import type BaseBoardPlugin from "./main";
+import type KanbasePlugin from "./main";
 
 const CARD_TAG_POSITION_KEY = "cardTagPosition";
 const CARD_TITLE_FONT_SIZE_KEY = "cardTitleFontSize";
@@ -10,12 +10,12 @@ export const DEFAULT_CARD_TITLE_FONT_SIZE = 13;
 export const MIN_CARD_TITLE_FONT_SIZE = 10;
 export const MAX_CARD_TITLE_FONT_SIZE = 24;
 
-export class BaseBoardSettingTab extends PluginSettingTab {
+export class KanbaseSettingTab extends PluginSettingTab {
   constructor(
     app: App,
-    private readonly baseBoardPlugin: BaseBoardPlugin,
+    private readonly kanbasePlugin: KanbasePlugin,
   ) {
-    super(app, baseBoardPlugin);
+    super(app, kanbasePlugin);
   }
 
   getSettingDefinitions(): SettingDefinitionItem[] {
@@ -68,16 +68,16 @@ export class BaseBoardSettingTab extends PluginSettingTab {
 
   getControlValue(key: string): unknown {
     if (key === CARD_TAG_POSITION_KEY) {
-      return this.baseBoardPlugin.getCardTagPosition();
+      return this.kanbasePlugin.getCardTagPosition();
     }
     if (key === CARD_TITLE_FONT_SIZE_KEY) {
-      return this.baseBoardPlugin.getCardTitleFontSize();
+      return this.kanbasePlugin.getCardTitleFontSize();
     }
     if (key === HIDE_BASE_FILTER_TAGS_KEY) {
-      return this.baseBoardPlugin.shouldHideBaseFilterTags();
+      return this.kanbasePlugin.shouldHideBaseFilterTags();
     }
     if (key === HOVER_PREVIEW_ENABLED_KEY) {
-      return this.baseBoardPlugin.isHoverPreviewEnabled();
+      return this.kanbasePlugin.isHoverPreviewEnabled();
     }
     return undefined;
   }
@@ -87,16 +87,16 @@ export class BaseBoardSettingTab extends PluginSettingTab {
       key === CARD_TAG_POSITION_KEY &&
       (value === "top" || value === "bottom")
     ) {
-      return this.baseBoardPlugin.setCardTagPosition(value);
+      return this.kanbasePlugin.setCardTagPosition(value);
     }
     if (key === CARD_TITLE_FONT_SIZE_KEY && typeof value === "number") {
-      return this.baseBoardPlugin.setCardTitleFontSize(value);
+      return this.kanbasePlugin.setCardTitleFontSize(value);
     }
     if (key === HIDE_BASE_FILTER_TAGS_KEY && typeof value === "boolean") {
-      return this.baseBoardPlugin.setHideBaseFilterTags(value);
+      return this.kanbasePlugin.setHideBaseFilterTags(value);
     }
     if (key === HOVER_PREVIEW_ENABLED_KEY && typeof value === "boolean") {
-      return this.baseBoardPlugin.setHoverPreviewEnabled(value);
+      return this.kanbasePlugin.setHoverPreviewEnabled(value);
     }
   }
 }

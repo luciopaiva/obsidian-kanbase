@@ -36,7 +36,7 @@ export class BoardScaffolder {
       `  and:`,
       `    - file.inFolder("${tasksFolder}")`,
       `views:`,
-      `  - type: kanban`,
+      `  - type: kanbase`,
       `    name: ${name}`,
       `    groupBy:`,
       `      property: note.${groupBy}`,

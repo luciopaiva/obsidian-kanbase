@@ -18,15 +18,15 @@ export class BoardToolbar {
   }
 
   public render(container: HTMLElement): void {
-    const boardEl = container.querySelector(".base-board-board");
+    const boardEl = container.querySelector(".kanbase-board");
     if (!boardEl) return;
 
-    const toolbarEl = container.createDiv({ cls: "base-board-toolbar" });
+    const toolbarEl = container.createDiv({ cls: "kanbase-toolbar" });
     container.insertBefore(toolbarEl, boardEl);
 
     const baseName = this.view.getBaseFileName();
     toolbarEl.createDiv({
-      cls: "base-board-toolbar-title",
+      cls: "kanbase-toolbar-title",
       text: baseName ? `${baseName} kanban` : "Kanban",
     });
 

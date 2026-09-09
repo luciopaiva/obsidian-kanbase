@@ -4,7 +4,7 @@ import { CreateBoardModal } from "./ui/modals";
 import { updateBaseFolderReferences } from "./support/folder-rename";
 import { BoardScaffolder } from "./board/board-scaffolder";
 import {
-  BaseBoardSettingTab,
+  KanbaseSettingTab,
   DEFAULT_CARD_TITLE_FONT_SIZE,
   MAX_CARD_TITLE_FONT_SIZE,
   MIN_CARD_TITLE_FONT_SIZE,
@@ -37,7 +37,7 @@ const DEFAULT_DATA: PluginData = {
 //  Plugin
 // ---------------------------------------------------------------------------
 
-export default class BaseBoardPlugin extends Plugin {
+export default class KanbasePlugin extends Plugin {
   settings: PluginData = DEFAULT_DATA;
   private boardViews = new Set<KanbanView>();
 
@@ -50,14 +50,14 @@ export default class BaseBoardPlugin extends Plugin {
   async onload() {
     await this.loadPluginData();
     const boardScaffolder = new BoardScaffolder(this.app);
-    this.addSettingTab(new BaseBoardSettingTab(this.app, this));
-    this.registerHoverLinkSource("base-board", {
-      display: "Base Board",
+    this.addSettingTab(new KanbaseSettingTab(this.app, this));
+    this.registerHoverLinkSource("kanbase", {
+      display: "Kanbase",
       defaultMod: false,
     });
 
-    this.registerBasesView("kanban", {
-      name: "Kanban",
+    this.registerBasesView("kanbase", {
+      name: "Kanbase",
       icon: "lucide-kanban",
       factory: (controller: QueryController, containerEl: HTMLElement) => {
         const view = new KanbanView(controller, containerEl, this);
@@ -150,7 +150,7 @@ export default class BaseBoardPlugin extends Plugin {
         }
       } catch (err) {
         console.error(
-          `Base Board: failed to update folder references in "${baseFile.path}"`,
+          `Kanbase: failed to update folder references in "${baseFile.path}"`,
           err,
         );
       }
