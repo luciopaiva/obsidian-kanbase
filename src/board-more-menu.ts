@@ -23,7 +23,7 @@ export class BoardMoreMenu {
     const menu = new Menu();
     menu.addItem((item) => item.setIsLabel(true).setTitle("Display"));
 
-    const openBehavior = this.view.getCardOpenBehavior();
+    const openBehavior = this.view.boardConfig.getCardOpenBehavior();
     const openOptions: Array<{
       value: "active" | "modal" | "split" | "tab";
       label: string;
@@ -38,7 +38,9 @@ export class BoardMoreMenu {
         item
           .setTitle(option.label)
           .setChecked(openBehavior === option.value)
-          .onClick(() => this.view.setCardOpenBehavior(option.value)),
+          .onClick(() =>
+            this.view.boardConfig.setCardOpenBehavior(option.value),
+          ),
       );
     }
 
@@ -47,16 +49,18 @@ export class BoardMoreMenu {
       item.setTitle("Set cover property…").onClick(() => {
         new CoverPropertyModal(
           this.view,
-          this.view.getCardCoverProperty() ?? "",
+          this.view.boardConfig.getCardCoverProperty() ?? "",
         ).open();
       }),
     );
     menu.addItem((item) =>
       item
         .setTitle("Add new cards to top")
-        .setChecked(this.view.shouldAddNewCardsToTop())
+        .setChecked(this.view.boardConfig.shouldAddNewCardsToTop())
         .onClick(() =>
-          this.view.setAddNewCardsToTop(!this.view.shouldAddNewCardsToTop()),
+          this.view.boardConfig.setAddNewCardsToTop(
+            !this.view.boardConfig.shouldAddNewCardsToTop(),
+          ),
         ),
     );
 
@@ -97,7 +101,7 @@ class CoverPropertyModal extends Modal {
           .setButtonText("Save")
           .setCta()
           .onClick(() => {
-            this.view.setCardCoverProperty(this.property.trim());
+            this.view.boardConfig.setCardCoverProperty(this.property.trim());
             this.close();
           }),
       )

@@ -150,7 +150,7 @@ export class BoardPreferences {
   /** Build the legacy plugin-data key used by existing board installations. */
   private getBoardId(): string {
     const viewName = this.view.config?.name ?? "";
-    const groupBy = this.view.getGroupByProperty() ?? "";
+    const groupBy = this.view.boardConfig.getGroupByProperty() ?? "";
     let basePath = "";
     const firstPath = this.view.data?.data?.[0]?.file?.path ?? "";
     const lastSlash = firstPath.lastIndexOf("/");

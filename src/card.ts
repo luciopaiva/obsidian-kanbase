@@ -123,7 +123,7 @@ export class CardManager {
     cardEl.dataset.renderVersion = renderVersion;
 
     const file = this.view.app.vault.getAbstractFileByPath(filePath);
-    const coverProp = this.view.getCardCoverProperty();
+    const coverProp = this.view.boardConfig.getCardCoverProperty();
     if (file instanceof TFile && coverProp) {
       const src = this.getCardCoverSrc(file, coverProp);
       if (src) {
@@ -172,7 +172,7 @@ export class CardManager {
           return;
         }
 
-        const openBehavior = this.view.getCardOpenBehavior();
+        const openBehavior = this.view.boardConfig.getCardOpenBehavior();
         if (openBehavior === "split") {
           if (
             this.view.detailLeaf &&
@@ -284,7 +284,7 @@ export class CardManager {
 
     // ---- Property chips ----
     const propsEl = cardEl.createDiv({ cls: "base-board-card-props" });
-    const groupByProp = this.view.getGroupByProperty();
+    const groupByProp = this.view.boardConfig.getGroupByProperty();
     const visibleProps: BasesPropertyId[] = this.view.config.getOrder();
 
     // Collect eligible chip descriptors in one pass so filtering logic lives
@@ -393,7 +393,7 @@ export class CardManager {
 
   private getRenderVersion(entry: BasesEntry): string {
     const file = entry.file;
-    const groupByProp = this.view.getGroupByProperty();
+    const groupByProp = this.view.boardConfig.getGroupByProperty();
     const visibleProperties = this.view.config
       .getOrder()
       .filter((propId) => {
@@ -417,7 +417,7 @@ export class CardManager {
       resolvedFile instanceof TFile
         ? this.view.tags.getTagsForCardDisplay(resolvedFile)
         : [];
-    const coverProperty = this.view.getCardCoverProperty();
+    const coverProperty = this.view.boardConfig.getCardCoverProperty();
     const cover =
       resolvedFile instanceof TFile && coverProperty
         ? this.getCardCoverSrc(resolvedFile, coverProperty)
@@ -499,7 +499,7 @@ export class CardManager {
         .setTitle("Open")
         .setIcon("lucide-file-text")
         .onClick(() => {
-          const openBehavior = this.view.getCardOpenBehavior();
+          const openBehavior = this.view.boardConfig.getCardOpenBehavior();
           if (openBehavior === "split") {
             if (
               this.view.detailLeaf &&

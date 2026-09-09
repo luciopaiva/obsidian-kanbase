@@ -400,7 +400,7 @@ export class ColumnManager {
       return;
     }
 
-    const groupByProp = this.view.getGroupByProperty();
+    const groupByProp = this.view.boardConfig.getGroupByProperty();
 
     await this.view.applyBatchUpdate(async () => {
       // 1. Update column config
@@ -418,7 +418,7 @@ export class ColumnManager {
           return this.view.app.fileManager.processFrontMatter(
             file,
             (fm: Record<string, unknown>) => {
-              this.view.applyGroupByValue(fm, groupByProp, newName);
+              this.view.boardConfig.applyGroupByValue(fm, groupByProp, newName);
             },
           );
         });

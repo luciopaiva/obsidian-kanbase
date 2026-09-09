@@ -51,7 +51,7 @@ export class CardSelectionManager {
 
   public showMoveMenu(event: MouseEvent): void {
     const selectedPaths = Array.from(this.selectedPaths);
-    const groupByProperty = this.view.getGroupByProperty();
+    const groupByProperty = this.view.boardConfig.getGroupByProperty();
     if (!groupByProperty) return;
 
     const menu = new Menu();

@@ -75,7 +75,7 @@ export class CardMoveCoordinator {
     targetColumnName: string,
     orderedPaths: string[],
   ): Promise<void> {
-    const groupByProperty = this.view.getGroupByProperty();
+    const groupByProperty = this.view.boardConfig.getGroupByProperty();
     if (!groupByProperty) {
       throw new Error("Cannot move a card without a group by property");
     }
@@ -114,7 +114,7 @@ export class CardMoveCoordinator {
           return this.view.app.fileManager.processFrontMatter(
             file,
             (frontmatter: Record<string, unknown>) => {
-              this.view.applyGroupByValue(
+              this.view.boardConfig.applyGroupByValue(
                 frontmatter,
                 groupByProperty,
                 targetColumnName,
@@ -150,7 +150,7 @@ export class CardMoveCoordinator {
         return this.view.app.fileManager.processFrontMatter(
           file,
           (frontmatter: Record<string, unknown>) => {
-            this.view.applyGroupByValue(
+            this.view.boardConfig.applyGroupByValue(
               frontmatter,
               groupByProperty,
               targetColumn,

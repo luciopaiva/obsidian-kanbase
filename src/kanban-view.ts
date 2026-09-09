@@ -19,18 +19,9 @@ import { CardSelectionManager } from "./card-selection";
 import { CardMoveCoordinator } from "./card-move";
 import { BoardPreferences } from "./board-preferences";
 import { CardCreationManager } from "./card-creation";
-import {
-  applyGroupByValue,
-  getColumnName,
-  getGroupByValueType,
-  getGroupForColumn,
-} from "./board-grouping";
+import { getColumnName, getGroupForColumn } from "./board-grouping";
 import { getBaseFileName, isLeafAttached } from "./base-view-context";
-import {
-  CONFIG_KEY_OPEN_BEHAVIOR,
-  CONFIG_KEY_COVER_PROPERTY,
-  CONFIG_KEY_ADD_TO_TOP,
-} from "./constants";
+import { BoardConfig } from "./board-config";
 
 interface BoardScrollState {
   boardLeft: number;
@@ -64,6 +55,7 @@ export class KanbanView extends BasesView implements HoverParent {
   /** Inline card creation, defaults, and initial ordering. */
   public cardCreation: CardCreationManager;
   public currentGroups: BasesEntryGroup[] = [];
+  public boardConfig: BoardConfig;
   public cardManager: CardManager;
 
   /** Prevent re-renders while we batch-update frontmatter. */
@@ -87,6 +79,11 @@ export class KanbanView extends BasesView implements HoverParent {
     this.scrollEl = scrollEl;
     this.plugin = plugin;
     this.containerEl = scrollEl.createDiv({ cls: "base-board-container" });
+    this.boardConfig = new BoardConfig(
+      this.config,
+      () => this.currentGroups,
+      () => this.scheduleRender(),
+    );
 
     this.tags = new Tags(this);
     this.toolbar = new BoardToolbar(this);
@@ -153,81 +150,6 @@ export class KanbanView extends BasesView implements HoverParent {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  //  Helpers
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Return the frontmatter property name used for groupBy (e.g. "status").
-   *
-   * The Bases engine stores this in the view config as a BasesPropertyId
-   * like "note.status".  We strip the "note." prefix so the result is
-   * directly usable as a frontmatter key.
-   *
-   * Note: `BasesViewConfig.get()` only retrieves custom options registered
-   * via `BasesViewRegistration.options`.  The `groupBy` setting is a
-   * built-in structural property on the config object, so we access it
-   * directly from the config's internal representation.
-   */
-  public getGroupByProperty(): string | null {
-    const cfg = this.config as {
-      groupBy?: { property?: string };
-      get?: (key: string) => unknown;
-    };
-
-    // 1. Direct access to the built-in groupBy config property
-    const groupBy = cfg?.groupBy;
-    if (groupBy?.property) {
-      const raw: string = groupBy.property;
-      return raw.startsWith("note.") ? raw.slice(5) : raw;
-    }
-
-    // 2. Fallback: try the custom-options API in case future Obsidian
-    //    versions surface groupBy through get()
-    const fromGet = cfg?.get?.("groupBy") as { property?: string } | undefined;
-    if (fromGet?.property) {
-      const raw: string = fromGet.property;
-      return raw.startsWith("note.") ? raw.slice(5) : raw;
-    }
-
-    return null;
-  }
-
-  public getCardOpenBehavior(): "active" | "modal" | "split" | "tab" {
-    const val = this.config?.get(CONFIG_KEY_OPEN_BEHAVIOR);
-    if (val === "modal" || val === "split" || val === "tab") return val;
-    return "active";
-  }
-
-  public setCardOpenBehavior(
-    behavior: "active" | "modal" | "split" | "tab",
-  ): void {
-    this.config?.set(CONFIG_KEY_OPEN_BEHAVIOR, behavior);
-    this.scheduleRender();
-  }
-
-  public getCardCoverProperty(): string | null {
-    const val = this.config?.get(CONFIG_KEY_COVER_PROPERTY);
-    if (val === undefined || val === null) {
-      return "cover";
-    }
-    return typeof val === "string" && val.trim() !== "" ? val.trim() : null;
-  }
-
-  public setCardCoverProperty(property: string): void {
-    this.config?.set(CONFIG_KEY_COVER_PROPERTY, property);
-    this.scheduleRender();
-  }
-
-  public shouldAddNewCardsToTop(): boolean {
-    return this.config?.get(CONFIG_KEY_ADD_TO_TOP) === true;
-  }
-
-  public setAddNewCardsToTop(value: boolean): void {
-    this.config?.set(CONFIG_KEY_ADD_TO_TOP, value);
-    this.scheduleRender();
-  }
-
   public isLeafAttached(leaf: WorkspaceLeaf): boolean {
     return isLeafAttached(this.app, leaf);
   }
@@ -241,33 +163,6 @@ export class KanbanView extends BasesView implements HoverParent {
     return getColumnName(key);
   }
 
-  /**
-   * Infer the JS type of the groupBy property from the group keys that Bases
-   * actually produced. Bases exposes group keys as typed Value objects, so a
-   * checkbox-grouped board yields BooleanValue keys and a numeric one yields
-   * NumberValue keys. Booleans win outright so a mix of real checkboxes and
-   * already-corrupted "false" strings still resolves to "boolean".
-   */
-  /**
-   * Write the groupBy property for a card into `fm`, preserving its real type.
-   *
-   * The "(No value)" column removes the property entirely; every other column
-   * stores a correctly-typed value so a checkbox `false` is never turned into
-   * the string "false" (which is truthy and breaks grouping).
-   */
-  public applyGroupByValue(
-    fm: Record<string, unknown>,
-    groupByProp: string,
-    columnName: string,
-  ): void {
-    applyGroupByValue(
-      fm,
-      groupByProp,
-      columnName,
-      getGroupByValueType(this.currentGroups),
-    );
-  }
-
   // ---------------------------------------------------------------------------
   //  Rendering
   // ---------------------------------------------------------------------------
@@ -276,23 +171,11 @@ export class KanbanView extends BasesView implements HoverParent {
    * Ensure `file.name` is present in the view's property `order:` configuration.
    * This guarantees that Obsidian's database engine indexes card titles for search.
    */
-  private ensureFileNameInOrder(): void {
-    if (!this.config) return;
-    const currentOrder =
-      (this.config.get("order") as string[] | undefined) ?? [];
-    if (
-      !currentOrder.includes("file.name") &&
-      !currentOrder.includes("file.file")
-    ) {
-      this.config.set("order", ["file.name", ...currentOrder]);
-    }
-  }
-
   public cardElCache = new Map<string, HTMLElement>();
   public columnElCache = new Map<string, HTMLElement>();
 
   public render(): void {
-    this.ensureFileNameInOrder();
+    this.boardConfig.ensureFileNameInOrder();
     this.cardSelection.clear();
     const scrollState = this.captureScrollState();
 

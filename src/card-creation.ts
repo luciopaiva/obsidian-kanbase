@@ -87,7 +87,7 @@ export class CardCreationManager {
     columnName: string,
     order: OrderValue,
   ): Promise<void> {
-    const groupByProperty = this.view.getGroupByProperty();
+    const groupByProperty = this.view.boardConfig.getGroupByProperty();
     if (!groupByProperty) {
       new Notice("Cannot create card: no group by property configured.");
       return;
@@ -103,7 +103,11 @@ export class CardCreationManager {
           }
         }
       }
-      this.view.applyGroupByValue(frontmatter, groupByProperty, columnName);
+      this.view.boardConfig.applyGroupByValue(
+        frontmatter,
+        groupByProperty,
+        columnName,
+      );
       frontmatter[ORDER_PROPERTY] = order;
     };
 
