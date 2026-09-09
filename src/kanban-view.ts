@@ -19,6 +19,7 @@ import { ColumnManager } from "./column";
 import { CardManager } from "./card";
 import { Tags } from "./tags";
 import { BoardToolbar } from "./toolbar";
+import { TagFilterBar } from "./tag-filter-bar";
 import {
   compareOrderValues,
   generateOrderKeys,
@@ -60,6 +61,8 @@ export class KanbanView extends BasesView implements HoverParent {
   private dragDropManager: DragDropManager;
   private columnManager: ColumnManager;
   private toolbar: BoardToolbar;
+  /** Tag filter state, matching, counts, and filter-bar rendering. */
+  public tagFilterBar: TagFilterBar;
   public currentGroups: BasesEntryGroup[] = [];
   public cardManager: CardManager;
 
@@ -74,7 +77,7 @@ export class KanbanView extends BasesView implements HoverParent {
   /** Local drop intent retained until Bases publishes the matching groups. */
   private optimisticMoves = new Map<string, string>();
   private optimisticColumnOrders = new Map<string, string[]>();
-  /** Label Manager for tags and filters */
+  /** Tag metadata, colors, editing, and Base-filter suppression. */
   public tags: Tags;
   /** Currently selected card file paths (for batch operations) */
   public selectedCards: Set<string> = new Set();
@@ -92,6 +95,7 @@ export class KanbanView extends BasesView implements HoverParent {
 
     this.tags = new Tags(this);
     this.toolbar = new BoardToolbar(this);
+    this.tagFilterBar = new TagFilterBar(this, this.tags);
     this.cardManager = new CardManager(this);
     this.columnManager = new ColumnManager(this);
 
@@ -626,7 +630,8 @@ export class KanbanView extends BasesView implements HoverParent {
     }
 
     this.currentGroups = groupedData;
-    this.tags.refreshTagStats();
+    this.tags.refreshBaseFilterTags();
+    this.tagFilterBar.refresh();
     const columns = this.getColumns();
     const boardEl = this.containerEl.createDiv({ cls: "base-board-board" });
 
@@ -637,7 +642,7 @@ export class KanbanView extends BasesView implements HoverParent {
     }
 
     this.toolbar.render(this.containerEl);
-    this.tags.renderFilterBar(
+    this.tagFilterBar.render(
       this.containerEl,
       this.toolbar.areTagFiltersVisible(),
     );

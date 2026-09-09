@@ -1,9 +1,7 @@
-import { KanbanView } from "./kanban-view";
+import type { KanbanView } from "./kanban-view";
 import { CONFIG_KEY_TAG_COLORS } from "./constants";
-import { App, Modal, TFile, setTooltip, Setting } from "obsidian";
+import { App, Modal, TFile, Setting } from "obsidian";
 import { TagEditModal } from "./tag-edit-modal";
-import { relativeLuminance } from "./color-utils";
-import { countTagsByCard } from "./tag-counts";
 import { getTagsRequiredByFilters } from "./base-filter-tags";
 import type { BasesConfigFileFilter } from "obsidian";
 
@@ -13,9 +11,7 @@ interface SerializableBasesFilter {
 
 export class Tags {
   private view: KanbanView;
-  private tagCounts = new Map<string, number>();
   private tagsRequiredByBaseFilters = new Set<string>();
-  public activeFilters: Set<string> = new Set();
 
   constructor(view: KanbanView) {
     this.view = view;
@@ -102,18 +98,8 @@ export class Tags {
     }).open();
   }
 
-  /** Refresh tag data from the entries already filtered by the Bases query. */
-  public refreshTagStats(): void {
-    const tagsByCard: string[][] = [];
-    for (const group of this.view.currentGroups) {
-      for (const entry of group.entries) {
-        if (entry.file instanceof TFile) {
-          tagsByCard.push(this.extractTagsFromFile(entry.file));
-        }
-      }
-    }
-
-    this.tagCounts = countTagsByCard(tagsByCard);
+  /** Refresh the tags made redundant by the current Bases filters. */
+  public refreshBaseFilterTags(): void {
     this.tagsRequiredByBaseFilters = getTagsRequiredByFilters(
       this.getSerializedBaseFilters(),
     );
@@ -148,85 +134,6 @@ export class Tags {
     }
 
     return serialized;
-  }
-
-  public renderFilterBar(container: HTMLElement, isVisible: boolean): void {
-    if (!isVisible) return;
-
-    if (this.tagCounts.size === 0 && this.activeFilters.size === 0) {
-      return;
-    }
-
-    // Insert before the board
-    const boardEl = container.querySelector(".base-board-board");
-    if (!boardEl) return;
-
-    const barEl = container.createDiv({ cls: "base-board-filter-bar" });
-    container.insertBefore(barEl, boardEl);
-
-    const tagsArray = Array.from(this.tagCounts.keys()).sort();
-
-    // Also include any active filters that might not be in the current cards
-    for (const activeTag of this.activeFilters) {
-      if (!this.tagCounts.has(activeTag)) tagsArray.push(activeTag);
-    }
-
-    for (const tag of tagsArray) {
-      const pill = barEl.createSpan({ cls: "base-board-filter-pill" });
-      const count = this.tagCounts.get(tag) ?? 0;
-      pill.createSpan({ cls: "base-board-filter-label", text: tag });
-      pill.createSpan({ cls: "base-board-filter-count", text: String(count) });
-      pill.setAttr(
-        "aria-label",
-        `${tag}, ${count} ${count === 1 ? "card" : "cards"}`,
-      );
-
-      const tagColor = this.getColorForTag(tag);
-      if (tagColor) {
-        pill.style.setProperty("--tag-color", tagColor);
-        if (relativeLuminance(tagColor) === "dark") {
-          pill.addClass("base-board-filter-pill-light");
-        } else {
-          pill.addClass("base-board-filter-pill-dark");
-        }
-      }
-
-      if (this.activeFilters.has(tag)) {
-        pill.addClass("is-active");
-      }
-
-      setTooltip(
-        pill,
-        `${count} ${count === 1 ? "card" : "cards"} · Click to filter · Right-click to change color`,
-      );
-
-      pill.addEventListener("contextmenu", (e) => {
-        e.preventDefault();
-        new ColorPickerModal(this.view.app, tag, tagColor, (color) =>
-          this.setColor(tag, color),
-        ).open();
-      });
-
-      pill.addEventListener("click", () => {
-        if (this.activeFilters.has(tag)) {
-          this.activeFilters.delete(tag);
-        } else {
-          this.activeFilters.add(tag);
-        }
-        this.view.scheduleRender();
-      });
-    }
-
-    if (this.activeFilters.size > 0) {
-      const clearBtn = barEl.createSpan({
-        cls: "base-board-filter-clear",
-        text: "Clear",
-      });
-      clearBtn.addEventListener("click", () => {
-        this.activeFilters.clear();
-        this.view.scheduleRender();
-      });
-    }
   }
 }
 
