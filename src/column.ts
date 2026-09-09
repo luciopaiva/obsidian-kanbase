@@ -12,7 +12,6 @@ import { InputModal } from "./modals";
 import { NO_VALUE_COLUMN } from "./constants";
 import { ColorPickerModal } from "./color-picker-modal";
 import { WipLimitModal } from "./modals";
-import { generateOrderKey, isOrderKey, OrderValue } from "./order";
 
 export class ColumnManager {
   private view: KanbanView;
@@ -145,32 +144,7 @@ export class ColumnManager {
     setIcon(addCardHeaderBtn, "plus");
     addCardHeaderBtn.addEventListener("click", (e: MouseEvent) => {
       e.stopPropagation();
-      const addToTop = this.view.isAddNewCardsToTop();
-      let targetOrder: OrderValue = generateOrderKey(null, null);
-      if (sorted.length > 0) {
-        const orders = sorted.map((entry) =>
-          entry.file?.path
-            ? this.view.cardMoves.getFileOrder(entry.file.path)
-            : null,
-        );
-        if (orders.every(isOrderKey)) {
-          targetOrder = addToTop
-            ? generateOrderKey(null, orders[0])
-            : generateOrderKey(orders[orders.length - 1], null);
-        } else {
-          const numericOrders = orders.filter(
-            (order): order is number => typeof order === "number",
-          );
-          targetOrder = addToTop
-            ? Math.min(...numericOrders, 0) - 1000
-            : Math.max(...numericOrders, -1000) + 1000;
-        }
-      }
-      this.view.cardManager.startInlineCardCreation(
-        addCardHeaderBtn,
-        columnName,
-        targetOrder,
-      );
+      this.view.cardCreation.startInline(addCardHeaderBtn, columnName, sorted);
     });
 
     // ---- Column menu button ----

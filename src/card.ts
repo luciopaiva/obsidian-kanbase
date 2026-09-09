@@ -16,7 +16,6 @@ import {
 import { KanbanView } from "./kanban-view";
 import { ORDER_PROPERTY, sanitizeFilename } from "./constants";
 import { relativeLuminance } from "./color-utils";
-import type { OrderValue } from "./order";
 import { CardDetailModal } from "./card-detail-modal";
 
 const IMAGE_EXTENSIONS = new Set([
@@ -582,90 +581,6 @@ export class CardManager {
     input.addEventListener("blur", () => {
       void commit();
     });
-  }
-
-  public startInlineCardCreation(
-    btnEl: HTMLElement,
-    columnName: string,
-    targetOrder: OrderValue,
-  ): void {
-    // Find the cards list for this column.
-    // The trigger button may be in the header OR in the footer, so we walk
-    // up to the column element and then down into .base-board-cards.
-    const columnEl = btnEl.closest(".base-board-column");
-    const cardsEl =
-      (columnEl?.querySelector(".base-board-cards") as HTMLElement | null) ??
-      btnEl.parentElement!;
-
-    btnEl.classList.add("base-board-hidden");
-
-    const inputWrapper = cardsEl.createDiv({
-      cls: "base-board-add-card-input-wrapper",
-    });
-    const input = inputWrapper.createEl("input", {
-      cls: "base-board-add-card-input",
-      attr: { type: "text", placeholder: "Card title…" },
-    });
-    input.focus();
-
-    let committed = false;
-    const commit = async () => {
-      if (committed) return;
-      committed = true;
-      const name = input.value.trim();
-      inputWrapper.remove();
-      btnEl.classList.remove("base-board-hidden");
-      if (name) {
-        await this.createNewCard(name, columnName, targetOrder);
-      }
-    };
-
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        void commit();
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        committed = true;
-        inputWrapper.remove();
-        btnEl.classList.remove("base-board-hidden");
-      }
-    });
-    input.addEventListener("blur", () => {
-      void commit();
-    });
-  }
-
-  private async createNewCard(
-    title: string,
-    columnName: string,
-    targetOrder: OrderValue,
-  ): Promise<void> {
-    const groupByProp = this.view.getGroupByProperty();
-    if (!groupByProp) {
-      new Notice("Cannot create card: no group by property configured.");
-      return;
-    }
-
-    const overrides = (fm: Record<string, unknown>) => {
-      const newItemProps = this.view.config?.get("newItemProperties");
-      if (newItemProps && typeof newItemProps === "object") {
-        const props = newItemProps as Record<string, unknown>;
-        for (const k of Object.keys(props)) {
-          if (k !== "__proto__" && k !== "constructor") {
-            fm[k] = props[k];
-          }
-        }
-      }
-      this.view.applyGroupByValue(fm, groupByProp, columnName);
-      fm[ORDER_PROPERTY] = targetOrder;
-    };
-
-    try {
-      await this.view.createFileForView(title, overrides);
-    } catch (err) {
-      new Notice(`Failed to create card: ${String(err)}`);
-    }
   }
 
   private getCardCoverSrc(file: TFile, coverPropName: string): string | null {

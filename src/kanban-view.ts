@@ -21,6 +21,7 @@ import { TagFilterBar } from "./tag-filter-bar";
 import { CardSelectionManager } from "./card-selection";
 import { CardMoveCoordinator } from "./card-move";
 import { BoardPreferences } from "./board-preferences";
+import { CardCreationManager } from "./card-creation";
 import { coerceColumnValue, GroupByValueType } from "./value-utils";
 import {
   NO_VALUE_COLUMN,
@@ -58,6 +59,8 @@ export class KanbanView extends BasesView implements HoverParent {
   public cardMoves: CardMoveCoordinator;
   /** Column order, appearance, limits, collapse state, and persistence. */
   public preferences: BoardPreferences;
+  /** Inline card creation, defaults, and initial ordering. */
+  public cardCreation: CardCreationManager;
   public currentGroups: BasesEntryGroup[] = [];
   public cardManager: CardManager;
 
@@ -89,6 +92,7 @@ export class KanbanView extends BasesView implements HoverParent {
     this.cardSelection = new CardSelectionManager(this);
     this.cardMoves = new CardMoveCoordinator(this);
     this.preferences = new BoardPreferences(this);
+    this.cardCreation = new CardCreationManager(this);
     this.cardManager = new CardManager(this);
     this.columnManager = new ColumnManager(this);
 
@@ -181,10 +185,6 @@ export class KanbanView extends BasesView implements HoverParent {
         ],
       },
     ];
-  }
-
-  public isAddNewCardsToTop(): boolean {
-    return !!this.config?.get(CONFIG_KEY_ADD_TO_TOP);
   }
 
   // ---------------------------------------------------------------------------
