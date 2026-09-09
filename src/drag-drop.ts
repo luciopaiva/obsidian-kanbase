@@ -14,7 +14,7 @@ export interface DragDropCallbacks {
   /** Column header was dragged to a new position. */
   onColumnReorder: (orderedColumnNames: string[]) => void;
   /** Returns the set of currently selected card file paths. */
-  getSelectedCards: () => Set<string>;
+  getSelectedCards: () => ReadonlySet<string>;
 }
 
 export class DragDropManager {

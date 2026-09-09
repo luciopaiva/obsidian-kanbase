@@ -144,7 +144,7 @@ export class CardManager {
 
         if ((isAlt || isShift) && !isMod) {
           e.preventDefault();
-          this.handleCardSelect(
+          this.view.cardSelection.select(
             filePath,
             cardEl.dataset.columnName ?? columnName,
             isShift,
@@ -153,8 +153,8 @@ export class CardManager {
         }
 
         // If there are selected cards, clear them on a plain click instead of opening
-        if (this.view.selectedCards.size > 0) {
-          this.clearSelection();
+        if (this.view.cardSelection.hasSelection()) {
+          this.view.cardSelection.clear();
           return;
         }
 
@@ -203,9 +203,9 @@ export class CardManager {
       // Keyboard: Escape clears multi-selection when a card is focused
       cardEl.setAttribute("tabindex", "-1");
       cardEl.addEventListener("keydown", (e: KeyboardEvent) => {
-        if (e.key === "Escape" && this.view.selectedCards.size > 0) {
+        if (e.key === "Escape" && this.view.cardSelection.hasSelection()) {
           e.preventDefault();
-          this.clearSelection();
+          this.view.cardSelection.clear();
         }
       });
 
@@ -231,11 +231,8 @@ export class CardManager {
         if (!(file instanceof TFile)) return;
 
         // If this card is part of a multi-selection, show the batch move menu
-        if (
-          this.view.selectedCards.size > 1 &&
-          this.view.selectedCards.has(filePath)
-        ) {
-          this.showBatchMoveMenu(e);
+        if (this.view.cardSelection.isMultiSelectionContaining(filePath)) {
+          this.view.cardSelection.showMoveMenu(e);
           return;
         }
 
@@ -669,140 +666,6 @@ export class CardManager {
     } catch (err) {
       new Notice(`Failed to create card: ${String(err)}`);
     }
-  }
-
-  // ---------------------------------------------------------------------------
-  //  Multi-select helpers
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Toggle or range-select a card.
-   *
-   * - Cmd/Ctrl+click  → toggle this card in/out of the selection
-   * - Shift+click     → select a contiguous range from the last-selected card
-   *                     to this one (within the same column's DOM order)
-   */
-  public handleCardSelect(
-    filePath: string,
-    columnName: string,
-    isShift: boolean,
-  ): void {
-    const sel = this.view.selectedCards;
-
-    if (isShift && sel.size > 0) {
-      // Build DOM order for the column
-      const columnEl = this.view.containerEl.querySelector(
-        `[data-column-name="${CSS.escape(columnName)}"]`,
-      );
-      if (columnEl) {
-        const cardEls = Array.from(
-          columnEl.querySelectorAll<HTMLElement>(".base-board-card"),
-        );
-        const paths = cardEls.map((el) => el.dataset.filePath ?? "");
-        const clickedIdx = paths.indexOf(filePath);
-        // Find the last card in the current selection that exists in this column
-        const lastIdx = paths.reduceRight((found, p, i) => {
-          if (found !== -1) return found;
-          return sel.has(p) ? i : -1;
-        }, -1);
-        if (clickedIdx !== -1 && lastIdx !== -1) {
-          const [from, to] = [
-            Math.min(clickedIdx, lastIdx),
-            Math.max(clickedIdx, lastIdx),
-          ];
-          for (let i = from; i <= to; i++) {
-            if (paths[i]) sel.add(paths[i]);
-          }
-        } else {
-          sel.add(filePath); // fallback: just add
-        }
-      }
-    } else {
-      // Cmd/Ctrl+click: toggle
-      if (sel.has(filePath)) {
-        sel.delete(filePath);
-      } else {
-        sel.add(filePath);
-      }
-    }
-
-    // Sync visual state on all card elements
-    this.view.containerEl
-      .querySelectorAll<HTMLElement>(".base-board-card")
-      .forEach((el) => {
-        if (sel.has(el.dataset.filePath ?? "")) {
-          el.addClass("base-board-card--selected");
-        } else {
-          el.removeClass("base-board-card--selected");
-        }
-      });
-  }
-
-  public clearSelection(): void {
-    this.view.selectedCards.clear();
-    this.view.containerEl
-      .querySelectorAll<HTMLElement>(".base-board-card--selected")
-      .forEach((el) => el.removeClass("base-board-card--selected"));
-  }
-
-  /**
-   * Show a "Move to…" context menu for the current multi-selection.
-   * Uses the same `applyBatchUpdate` + `processFrontMatter` pattern as
-   * the single-card drag/drop to stay consistent.
-   */
-  public showBatchMoveMenu(e: MouseEvent): void {
-    const selectedPaths = Array.from(this.view.selectedCards);
-    const groupByProp = this.view.getGroupByProperty();
-    if (!groupByProp) return;
-
-    const columns = this.view.getColumns();
-    const menu = new Menu();
-
-    menu.addItem((item) => {
-      item.setTitle(`Move ${selectedPaths.length} cards to…`).setDisabled(true);
-    });
-    menu.addSeparator();
-
-    for (const col of columns) {
-      menu.addItem((item) => {
-        item.setTitle(col).onClick(() => {
-          void this.moveBatchToColumn(selectedPaths, col, groupByProp);
-        });
-      });
-    }
-
-    menu.showAtMouseEvent(e);
-  }
-
-  private async moveBatchToColumn(
-    filePaths: string[],
-    targetColumn: string,
-    groupByProp: string,
-  ): Promise<void> {
-    const selected = new Set(filePaths);
-    const orderedPaths = this.view
-      .getOrderedPathsForColumn(targetColumn)
-      .filter((path) => !selected.has(path));
-    orderedPaths.push(...filePaths);
-
-    await this.view.applyBatchUpdate(async () => {
-      const updates = filePaths.map((fp) => {
-        const file = this.view.app.vault.getAbstractFileByPath(fp);
-        if (!file || !(file instanceof TFile)) return Promise.resolve();
-        return this.view.app.fileManager.processFrontMatter(
-          file,
-          (fm: Record<string, unknown>) => {
-            this.view.applyGroupByValue(fm, groupByProp, targetColumn);
-          },
-        );
-      });
-      await Promise.all(updates);
-      await this.view.writeCardOrder(orderedPaths, filePaths);
-    });
-    this.clearSelection();
-    new Notice(
-      `Moved ${filePaths.length} card${filePaths.length > 1 ? "s" : ""} to "${targetColumn}"`,
-    );
   }
 
   private getCardCoverSrc(file: TFile, coverPropName: string): string | null {

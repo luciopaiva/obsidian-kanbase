@@ -20,6 +20,7 @@ import { CardManager } from "./card";
 import { Tags } from "./tags";
 import { BoardToolbar } from "./toolbar";
 import { TagFilterBar } from "./tag-filter-bar";
+import { CardSelectionManager } from "./card-selection";
 import {
   compareOrderValues,
   generateOrderKeys,
@@ -63,6 +64,8 @@ export class KanbanView extends BasesView implements HoverParent {
   private toolbar: BoardToolbar;
   /** Tag filter state, matching, counts, and filter-bar rendering. */
   public tagFilterBar: TagFilterBar;
+  /** Card selection state, range selection, and batch actions. */
+  public cardSelection: CardSelectionManager;
   public currentGroups: BasesEntryGroup[] = [];
   public cardManager: CardManager;
 
@@ -79,8 +82,6 @@ export class KanbanView extends BasesView implements HoverParent {
   private optimisticColumnOrders = new Map<string, string[]>();
   /** Tag metadata, colors, editing, and Base-filter suppression. */
   public tags: Tags;
-  /** Currently selected card file paths (for batch operations) */
-  public selectedCards: Set<string> = new Set();
   public detailLeaf: WorkspaceLeaf | null = null;
 
   constructor(
@@ -96,6 +97,7 @@ export class KanbanView extends BasesView implements HoverParent {
     this.tags = new Tags(this);
     this.toolbar = new BoardToolbar(this);
     this.tagFilterBar = new TagFilterBar(this, this.tags);
+    this.cardSelection = new CardSelectionManager(this);
     this.cardManager = new CardManager(this);
     this.columnManager = new ColumnManager(this);
 
@@ -107,7 +109,7 @@ export class KanbanView extends BasesView implements HoverParent {
       ) => this.handleCardDrop(filePath, targetColumn, orderedPaths),
       onColumnReorder: (orderedNames: string[]) =>
         this.handleColumnReorder(orderedNames),
-      getSelectedCards: () => this.selectedCards,
+      getSelectedCards: () => this.cardSelection.getSelectedPaths(),
     });
   }
 
@@ -570,7 +572,7 @@ export class KanbanView extends BasesView implements HoverParent {
 
   public render(): void {
     this.ensureFileNameInOrder();
-    this.selectedCards.clear();
+    this.cardSelection.clear();
     const scrollState = this.captureScrollState();
 
     // Index stable DOM nodes before rebuilding the lightweight board shell.
@@ -763,7 +765,7 @@ export class KanbanView extends BasesView implements HoverParent {
     }
 
     // Snapshot the selection NOW, before any async work or re-render can clear it
-    const selectedSnapshot = new Set(this.selectedCards);
+    const selectedSnapshot = this.cardSelection.snapshot();
     const isMultiDrag =
       selectedSnapshot.size > 1 && selectedSnapshot.has(filePath);
 
