@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mderazon/obsidian-kanbase/HEAD/logo-dark.svg">
-    <img alt="Kanbase Logo" src="https://raw.githubusercontent.com/mderazon/obsidian-kanbase/HEAD/logo-light.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="logo-dark.svg">
+    <img alt="Kanbase Logo" src="logo-light.svg">
   </picture>
 </p>
 
