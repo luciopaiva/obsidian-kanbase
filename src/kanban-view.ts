@@ -6,7 +6,6 @@ import {
   NullValue,
   QueryController,
   setIcon,
-  TFile,
   WorkspaceLeaf,
 } from "obsidian";
 import type BaseBoardPlugin from "./main";
@@ -26,6 +25,7 @@ import {
   getGroupByValueType,
   getGroupForColumn,
 } from "./board-grouping";
+import { getBaseFileName, isLeafAttached } from "./base-view-context";
 import {
   CONFIG_KEY_OPEN_BEHAVIOR,
   CONFIG_KEY_COVER_PROPERTY,
@@ -229,34 +229,12 @@ export class KanbanView extends BasesView implements HoverParent {
   }
 
   public isLeafAttached(leaf: WorkspaceLeaf): boolean {
-    let found = false;
-    this.app.workspace.iterateAllLeaves((l) => {
-      if (l === leaf) found = true;
-    });
-    return found;
+    return isLeafAttached(this.app, leaf);
   }
 
-  /**
-   * Base file name (without extension) when this view is opened directly.
-   *
-   * This is a workaround: the official Bases API does not expose the source
-   * .base file for a custom view, so we have to infer it from the containing
-   * workspace leaf and its DOM hierarchy.
-   */
+  /** Base file name (without extension) when this view is opened directly. */
   public getBaseFileName(): string | null {
-    let name: string | null = null;
-    this.app.workspace.iterateAllLeaves((leaf) => {
-      const view = leaf.view as { containerEl?: HTMLElement; file?: TFile };
-      // Embedded Bases inherit the embedding note as `view.file`, so only use
-      // it when the containing leaf is itself displaying a .base file.
-      if (
-        view?.containerEl?.contains(this.scrollEl) &&
-        view.file?.extension === "base"
-      ) {
-        name = view.file.basename;
-      }
-    });
-    return name;
+    return getBaseFileName(this.app, this.scrollEl);
   }
 
   public getColumnName(key: unknown): string {
