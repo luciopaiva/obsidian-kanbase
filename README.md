@@ -70,17 +70,15 @@ This ensures new cards automatically receive required frontmatter fields, keepin
 
 Search for **Kanbase** in the Obsidian Community Plugins browser and click **Install**, or view the plugin directly on the [Obsidian Community Plugins directory](https://community.obsidian.md/plugins/kanbase).
 
-### Using BRAT
-
-1. Install the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin.
-2. Go to **Settings → BRAT → Add Beta Plugin**.
-3. Enter `mderazon/obsidian-kanbase` and click **Add Plugin**.
-
 ## Development
 
 1. Clone this repo.
 2. Run `npm install`.
 3. Run `npm run dev` to start the build process in watch mode.
+
+## Attribution
+
+Kanbase is derived from [Base Board](https://github.com/mderazon/obsidian-base-board), originally created by [Michael DeRazon](https://github.com/mderazon).
 
 ## License
 

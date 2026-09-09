@@ -90,15 +90,15 @@ When a `.base` file contains an old Base Board view and the user creates a new K
 - [x] Rebrand `README.md` as Kanbase documentation.
 - [x] Replace old logo, repository, release, issue, and BRAT URLs.
 - [x] Update command names, screenshots, examples, and installation instructions.
-- [ ] Add a migration section for Base Board users.
-- [ ] Add an attribution section linking to Base Board and Michael DeRazon.
+- [x] Add a migration section for Base Board users: not required; existing boards will work without user-facing migration instructions.
+- [x] Add an attribution section linking to Base Board and Michael DeRazon.
 - [x] Update `AI-INSTRUCTIONS-TEMPLATE.md` or clearly mark any remaining Base Board references.
-- [ ] Review whether sample tags and examples should retain old names for compatibility.
-- [ ] Update `LICENSE` while preserving the original copyright notice, for example:
+- [x] Review whether sample tags and examples should retain old names for compatibility: no tag changes; `project/base-board` remains out of scope.
+- [x] Update `LICENSE` while preserving the original copyright notice:
 
   ```text
   Copyright (c) 2026 Michael DeRazon
-  Copyright (c) 2026 <chosen author name>
+  Copyright (c) 2026 Lucio Paiva
   ```
 
 ## Phase 5: Validate the plugin
