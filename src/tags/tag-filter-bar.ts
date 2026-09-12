@@ -5,6 +5,7 @@ import { ColorPickerModal } from "../ui/color-picker-modal";
 import type { KanbanView } from "../kanban-view";
 import type { Tags } from "./tags";
 import {
+  getDesktopTagFilterState,
   getNextTagFilterState,
   matchesTagFilters,
   type ActiveTagFilterState,
@@ -84,9 +85,13 @@ export class TagFilterBar {
     }
     pill.createSpan({ cls: "kanbase-filter-label", text: tag });
     pill.createSpan({ cls: "kanbase-filter-count", text: String(count) });
+    const cardCount = `${count} ${count === 1 ? "card" : "cards"}`;
+    const clickAction = this.getClickAction(state);
+    const shiftClickAction = this.getShiftClickAction(state);
+    const tapAction = this.getTapAction(state);
     pill.setAttr(
       "aria-label",
-      `${tag}, ${count} ${count === 1 ? "card" : "cards"}, ${this.getStateLabel(state)}`,
+      `${tag}, ${cardCount}, ${this.getStateLabel(state)}. ${clickAction}. ${shiftClickAction}. ${tapAction}.`,
     );
 
     const tagColor = this.tags.getColorForTag(tag);
@@ -100,20 +105,34 @@ export class TagFilterBar {
     if (state === "include") pill.addClass("is-active");
     if (state === "exclude") pill.addClass("is-excluded");
 
+    let pointerType: string | null = null;
+    pill.addEventListener("pointerdown", (event) => {
+      pointerType = event.pointerType;
+    });
+    pill.addEventListener("pointercancel", () => {
+      pointerType = null;
+    });
+
     setTooltip(
       pill,
-      `${count} ${count === 1 ? "card" : "cards"} · ${this.getClickAction(state)} · Right-click to change color`,
+      `${cardCount} · ${clickAction} · ${shiftClickAction} · Right-click to change color`,
     );
 
     pill.addEventListener("contextmenu", (event) => {
+      pointerType = null;
       event.preventDefault();
       new ColorPickerModal(this.view.app, tag, tagColor, (color) =>
         this.tags.setColor(tag, color),
       ).open();
     });
 
-    pill.addEventListener("click", () => {
-      const nextState = getNextTagFilterState(this.getFilterState(tag));
+    pill.addEventListener("click", (event) => {
+      const currentState = this.getFilterState(tag);
+      const isTouchInput = pointerType === "touch" || pointerType === "pen";
+      pointerType = null;
+      const nextState = isTouchInput
+        ? getNextTagFilterState(currentState)
+        : getDesktopTagFilterState(currentState, event.shiftKey);
       if (nextState === "none") {
         this.filters.delete(tag);
       } else {
@@ -134,8 +153,18 @@ export class TagFilterBar {
   }
 
   private getClickAction(state: TagFilterState): string {
-    if (state === "include") return "Click to filter out";
-    if (state === "exclude") return "Click to clear filter";
-    return "Click to filter in";
+    return state === "none" ? "Click to filter in" : "Click to clear filter";
+  }
+
+  private getShiftClickAction(state: TagFilterState): string {
+    return state === "exclude"
+      ? "Shift-click to clear filter"
+      : "Shift-click to filter out";
+  }
+
+  private getTapAction(state: TagFilterState): string {
+    if (state === "include") return "Tap to filter out";
+    if (state === "exclude") return "Tap to clear filter";
+    return "Tap to filter in";
   }
 }

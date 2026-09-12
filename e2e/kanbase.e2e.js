@@ -64,8 +64,48 @@ describe("Kanbase in Obsidian", function () {
     await planningFilter().click();
     await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(1);
     await planningFilter().click();
+    await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(5);
+
+    const shiftClickPlanningFilter = async () => {
+      await browser.execute(
+        (element) => {
+          element.dispatchEvent(
+            new MouseEvent("click", { bubbles: true, shiftKey: true }),
+          );
+        },
+        await planningFilter(),
+      );
+    };
+    await shiftClickPlanningFilter();
     await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(4);
     await planningFilter().click();
+    await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(5);
+    await planningFilter().click();
+    await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(1);
+    await shiftClickPlanningFilter();
+    await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(4);
+    await shiftClickPlanningFilter();
+    await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(5);
+
+    const tapPlanningFilter = async () => {
+      await browser.execute(
+        (element) => {
+          element.dispatchEvent(
+            new PointerEvent("pointerdown", {
+              bubbles: true,
+              pointerType: "touch",
+            }),
+          );
+          element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        },
+        await planningFilter(),
+      );
+    };
+    await tapPlanningFilter();
+    await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(1);
+    await tapPlanningFilter();
+    await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(4);
+    await tapPlanningFilter();
     await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(5);
 
     const columns = await browser.$$(".kanbase-column");

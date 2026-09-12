@@ -7,6 +7,14 @@ export function getNextTagFilterState(state: TagFilterState): TagFilterState {
   return "none";
 }
 
+export function getDesktopTagFilterState(
+  state: TagFilterState,
+  shiftKey: boolean,
+): TagFilterState {
+  if (shiftKey) return state === "exclude" ? "none" : "exclude";
+  return state === "none" ? "include" : "none";
+}
+
 export function matchesTagFilters(
   fileTags: readonly string[],
   filters: ReadonlyMap<string, ActiveTagFilterState>,
