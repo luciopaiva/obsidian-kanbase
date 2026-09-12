@@ -7,7 +7,9 @@
 
 # Kanbase
 
-**Kanbase** is an interactive, property-driven Kanban board view for [Obsidian Bases](https://obsidian.md). It allows you to organize your notes into visual columns based on any property in your frontmatter, providing a seamless drag-and-drop experience for managing tasks and structured data.
+**Kanbase** is yet another Kanban board view for [Obsidian Bases](https://obsidian.md). It lets you organize your notes into visual columns based on any property in their frontmatter, providing a seamless drag-and-drop experience for managing tasks and structured data.
+
+Kanbase is a fork of Michael DeRazon's [original plugin](https://github.com/mderazon/obsidian-base-board). It has since diverged considerably from Michael's version, enough to justify creating a separate plugin.
 
 ![Kanbase demo](demo.gif)
 
