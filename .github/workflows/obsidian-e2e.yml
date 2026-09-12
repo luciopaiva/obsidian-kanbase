@@ -1,0 +1,61 @@
+name: Obsidian E2E
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 3 * * 2"
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Obsidian smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DISPLAY: ":99"
+      OBSIDIAN_VERSIONS: "1.13.7/1.13.7"
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build and validate plugin
+        run: npm run ci
+
+      - name: Cache Obsidian downloads
+        uses: actions/cache@v4
+        with:
+          path: .obsidian-cache
+          key: obsidian-${{ env.OBSIDIAN_VERSIONS }}-${{ runner.os }}
+
+      - name: Start virtual desktop
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -q herbstluftwm dzen2 x11-xserver-utils
+          Xvfb "$DISPLAY" -screen 0 1280x1024x24 +extension GLX -noreset &
+          herbstluftwm &
+
+      - name: Run real-Obsidian smoke tests
+        run: |
+          mkdir -p e2e-artifacts
+          set -o pipefail
+          npm run test:e2e 2>&1 | tee e2e-artifacts/runner.log
+
+      - name: Upload E2E failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: obsidian-e2e-failure
+          path: e2e-artifacts/
+          if-no-files-found: warn
+          retention-days: 14
