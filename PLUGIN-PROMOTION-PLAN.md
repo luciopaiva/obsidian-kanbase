@@ -7,7 +7,7 @@ This plan turns the current Base Board fork into a separately published Obsidian
 - [x] Confirm the public author name to use in `manifest.json`, `package.json`, and the copyright notice: **Lucio Paiva**.
 - [x] Confirm the new GitHub repository name, preferably `obsidian-kanbase`: **luciopaiva/obsidian-kanbase**.
 - [x] Confirm the new plugin ID, preferably `kanbase`, and check that it is not already in use.
-- [x] Decide how existing `.base` files using `type: kanban` will be migrated to the new view type: create a new `kanbase` view only when the user creates one in that `.base` file; never convert the old view in place.
+- [x] Decide how existing `.base` files using `type: kanban` will be handled: do not migrate them automatically; users can create and configure a separate `kanbase` view while the old view remains untouched.
 - [x] Decide whether to preserve the existing `project/base-board` tag for compatibility, support both old and new tags, or introduce a migration: no changes or migration; this tag is out of scope.
 - [x] Decide whether global Base Board settings need to be migrated from the old plugin data directory: no migration; legacy global settings are out of scope.
 
@@ -32,7 +32,7 @@ This plan turns the current Base Board fork into a separately published Obsidian
 
 - [x] Change the custom Bases view type from `kanban` to a unique Kanbase type such as `kanbase`.
 - [x] Update `KanbanView.type`, `registerBasesView`, generated `.base` configurations, examples, and documentation.
-- [x] Decide and document how users migrate existing Base Board `.base` files.
+- [x] Decide and document that existing Base Board `.base` views are not migrated automatically.
 - [x] Rename `base-board-*` CSS classes and selectors to `kanbase-*`.
 - [x] Update corresponding class names in TypeScript and `styles.css`.
 - [x] Change hover-link source IDs and other plugin-specific string identifiers to Kanbase equivalents.
@@ -40,57 +40,22 @@ This plan turns the current Base Board fork into a separately published Obsidian
 - [x] Update user-facing commands, notices, settings labels, and error messages.
 - [x] Keep persisted configuration keys and `kanban_order` unchanged unless a migration is intentionally implemented.
 
-## Phase 3: Preserve or explicitly migrate user data
+## Phase 3: Preserve user data and plugin isolation
 
 - [x] Verify which settings are stored in `.base` files and which are stored in plugin data.
 - [x] Preserve existing configuration property names where possible.
-- [x] Decide whether the new plugin should read or migrate data from `.obsidian/plugins/base-board`.
-- [x] If migration is needed, implement it explicitly and safely without silently rewriting user files.
-
-### Per-base Base Board view migration
-
-When a `.base` file contains an old Base Board view and the user creates a new Kanbase view in the same file, automatically copy the old view's Kanbase-compatible settings into the new view. This migration is scoped to that `.base` file and is independent of whether the old Base Board plugin is installed. The original view must remain untouched.
-
-- [x] Detect when the active Kanbase view has no Kanbase-specific settings yet.
-- [x] Locate the containing `.base` file.
-- [x] Read and parse the file's `views` section.
-- [x] Find candidate old views with `type: kanban`.
-- [x] Match candidates by view name when possible.
-- [x] If there is only one candidate, use it as the default source.
-- [x] If multiple candidates remain, use the best name match and otherwise skip ambiguous migration safely.
-- [x] Copy only Kanbase-specific settings:
-  - [x] `cardOpenBehavior`
-  - [x] `cardCoverProperty`
-  - [x] `newCardsToTop`
-  - [x] `boardColumns`
-  - [x] `columnColors`
-  - [x] `wipLimits`
-  - [x] `collapsedColumns`
-  - [x] `tagFiltersVisible`
-  - [x] `tagColors`
-- [x] Do not copy the old view's type, name, filters, grouping, sorting, or visible-property configuration.
-- [x] Never overwrite settings that are already present in the Kanbase view.
-- [x] Make the detection idempotent by checking for existing Kanbase settings.
-- [x] Leave the original Base Board view and its settings untouched.
-- [x] Do not prompt the user or add a separate migration command.
-- [x] Test the migration with one old view, multiple old views, renamed views, and no matching view.
-
-### Per-base view creation migration
-
+- [x] Do not read or migrate data from `.obsidian/plugins/base-board`.
+- [x] Do not inspect or copy settings from legacy `type: kanban` views.
 - [x] Never convert an existing `type: kanban` view in place.
-- [x] When a new Kanbase view is created in a `.base` file containing a `type: kanban` view, create the new view with `type: kanbase` and copy the selected compatible fields.
-- [x] Leave the old view and all unrelated `.base` content unchanged.
-- [x] Silently skip malformed or unavailable migrations without modifying the source `.base` file.
-
-- [x] Test preservation of existing board settings and exclusion of filters, grouping, sorting, and display metadata from migration.
-- [x] No migration instructions or command required; existing boards continue to work without user action.
+- [x] Keep Kanbase views independent: a newly created `type: kanbase` view starts with its own defaults and configuration.
+- [x] Test coexistence with Base Board and verify that opening a Kanbase view does not rewrite the `.base` file.
 
 ## Phase 4: Documentation and attribution
 
 - [x] Rebrand `README.md` as Kanbase documentation.
 - [x] Replace old logo, repository, release, issue, and BRAT URLs.
 - [x] Update command names, screenshots, examples, and installation instructions.
-- [x] Add a migration section for Base Board users: not required; existing boards will work without user-facing migration instructions.
+- [x] Do not add an automatic migration flow; Base Board views remain separate and users configure new Kanbase views manually.
 - [x] Add an attribution section linking to Base Board and Michael DeRazon.
 - [x] Update `AI-INSTRUCTIONS-TEMPLATE.md` or clearly mark any remaining Base Board references.
 - [x] Review whether sample tags and examples should retain old names for compatibility: no tag changes; `project/base-board` remains out of scope.
