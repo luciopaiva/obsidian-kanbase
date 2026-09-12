@@ -34,10 +34,7 @@ describe("getTagsRequiredByFilter", () => {
             ],
           },
           {
-            and: [
-              'file.tags.contains("project")',
-              'file.tags.contains("bug")',
-            ],
+            and: ['file.tags.contains("project")', 'file.tags.contains("bug")'],
           },
         ],
       }),

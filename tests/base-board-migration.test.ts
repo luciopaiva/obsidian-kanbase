@@ -16,7 +16,9 @@ describe("Base Board migration", () => {
     const matching = { type: "kanban", name: "Project board" };
     const other = { type: "kanban", name: "Personal board" };
 
-    expect(selectLegacyView([other, matching], " project board ")).toBe(matching);
+    expect(selectLegacyView([other, matching], " project board ")).toBe(
+      matching,
+    );
   });
 
   it("skips ambiguous or missing legacy views", () => {
@@ -57,7 +59,11 @@ describe("Base Board migration", () => {
   it("treats false and empty collections as configured", () => {
     const config = {
       get: (key: string) =>
-        key === "newCardsToTop" ? false : key === "boardColumns" ? [] : undefined,
+        key === "newCardsToTop"
+          ? false
+          : key === "boardColumns"
+            ? []
+            : undefined,
     };
 
     expect(hasConfiguredKanbaseSettings(config)).toBe(true);

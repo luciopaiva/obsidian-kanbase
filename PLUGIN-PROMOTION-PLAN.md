@@ -107,50 +107,50 @@ The pipeline should provide fast, deterministic checks for every pull request an
 
 ### Pull request and push CI
 
-- [ ] Add a GitHub Actions workflow for `pull_request` and pushes to the default branch.
-- [ ] Test against the supported Node.js versions, including the Node version used by the release workflow.
-- [ ] Use `npm ci` and enable dependency caching through `actions/setup-node`.
-- [ ] Run TypeScript checking and ESLint through `npm run lint`.
-- [ ] Add and run a formatting check, such as `prettier --check "src/**/*.ts"`.
-- [ ] Run the Vitest suite through `npm test`.
-- [ ] Run `npm run build` and verify that the production bundle is generated.
-- [ ] Run `git diff --check`.
-- [ ] Validate `manifest.json`, `versions.json`, `package.json`, and `package-lock.json` as parseable and internally consistent.
-- [ ] Validate the plugin bundle: `main.js`, `manifest.json`, and `styles.css` exist; `main.js` is production-built; and no source maps or development artifacts are included.
-- [ ] Run an Obsidian-plugin linter or equivalent manifest/API policy check, and review any warnings before release.
-- [ ] Upload useful failure artifacts such as test reports, bundle metadata, and screenshots when a UI job fails.
-- [ ] Make the core CI jobs required status checks for merging.
+- [x] Add a GitHub Actions workflow for `pull_request` and pushes to the default branch.
+- [x] Test against the supported Node.js version, using the same pinned Node 24 runtime in CI and releases.
+- [x] Use `npm ci` and enable dependency caching through `actions/setup-node`.
+- [x] Run TypeScript checking and ESLint through `npm run lint`.
+- [x] Add and run a formatting check, such as `prettier --check "src/**/*.ts"`.
+- [x] Run the Vitest suite through `npm test`.
+- [x] Run `npm run build` and verify that the production bundle is generated.
+- [x] Run `git diff --check`.
+- [x] Validate `manifest.json`, `versions.json`, `package.json`, and `package-lock.json` as parseable and internally consistent.
+- [x] Validate the plugin bundle: `main.js`, `manifest.json`, and `styles.css` exist; `main.js` is production-built; and no source maps or development artifacts are included.
+- [x] Run an Obsidian-plugin linter or equivalent manifest/API policy check, and review any warnings before release.
+- [x] Upload useful failure artifacts such as test reports, bundle metadata, and screenshots when a UI job fails.
+- [x] Make the core CI jobs required status checks for merging.
 
 ### Release CD
 
-- [ ] Run the same CI checks before publishing a release.
-- [ ] Trigger releases only from a valid semver tag and verify that the tag exactly matches `manifest.json`.
-- [ ] Build from the tagged commit, not from an uncommitted or different branch state.
-- [ ] Publish only `main.js`, `manifest.json`, and `styles.css` as plugin release assets; exclude `data.json`, source files, and development files.
-- [ ] Verify that the uploaded `manifest.json` version and release tag match.
-- [ ] Generate build-provenance attestations for the release artifacts.
-- [ ] Keep the release workflow permission scope minimal and prevent duplicate releases for the same tag.
-- [ ] Add dependency and GitHub Actions update automation through Dependabot or an equivalent service.
+- [x] Run the same CI checks before publishing a release.
+- [x] Trigger releases only from a valid semver tag and verify that the tag exactly matches `manifest.json`.
+- [x] Build from the tagged commit, not from an uncommitted or different branch state.
+- [x] Publish only `main.js`, `manifest.json`, and `styles.css` as plugin release assets; exclude `data.json`, source files, and development files.
+- [x] Verify that the uploaded `manifest.json` version and release tag match.
+- [x] Generate build-provenance attestations for the release artifacts.
+- [x] Keep the release workflow permission scope minimal and prevent duplicate releases for the same tag.
+- [x] Add dependency and GitHub Actions update automation through Dependabot or an equivalent service.
 
 ### Real Obsidian integration and E2E testing
 
-- [ ] Create a disposable test vault and install the built Kanbase bundle into it during the test job.
-- [ ] Launch a real Obsidian desktop build in CI under Linux `xvfb` with isolated user/config directories.
-- [ ] Enable community plugins, load Kanbase, and verify that the plugin registers successfully.
-- [ ] Test creation of a new board and confirm the generated view type is `kanbase` and the visible label is `Kanbase`.
-- [ ] Test Bases integration, filters, grouping, tag filtering, drag-and-drop, card opening, and card creation.
-- [ ] Test custom display settings and confirm they persist after closing and reopening the view.
-- [ ] Test coexistence with an existing Base Board installation and confirm the old view remains untouched when a Kanbase view is created.
-- [ ] Capture screenshots and Obsidian console/plugin errors as artifacts when E2E fails.
-- [ ] Run the real-Obsidian suite manually or nightly at first; promote stable smoke tests to required PR checks later.
+- [x] Create a disposable test vault and install the built Kanbase bundle into it during the test job.
+- [x] Launch a real Obsidian desktop build in CI under Linux `xvfb` with isolated user/config directories.
+- [x] Enable community plugins, load Kanbase, and verify that the plugin registers successfully.
+- [x] Test creation of a new board and confirm the generated view type is `kanbase` and the visible label is `Kanbase`.
+- [x] Test Bases integration, filters, grouping, tag filtering, drag-and-drop, card opening, and card creation.
+- [x] Test custom display settings and confirm they persist after closing and reopening the view.
+- [x] Test coexistence with an existing Base Board installation and confirm the old view remains untouched when a Kanbase view is created.
+- [x] Capture screenshots and Obsidian console/plugin errors as artifacts when E2E fails.
+- [x] Run the real-Obsidian suite manually or nightly at first; promote stable smoke tests to required PR checks later.
 
 ### Runtime/tooling decision
 
-- [ ] Use the official [Obsidian CLI](https://obsidian.md/help/cli) for local automation and developer smoke tests where a running desktop Obsidian instance is available.
-- [ ] Do not treat [Obsidian Headless](https://obsidian.md/help/headless) as a plugin E2E runtime; it is a headless Sync/Publish client and does not load desktop plugins.
-- [ ] Evaluate a real-app harness such as `wdio-obsidian-service` or `obsidian-e2e` for CI-driven plugin tests.
-- [ ] Pin the Obsidian desktop version used by E2E, or explicitly test a small version matrix, so runtime changes are visible and reproducible.
-- [ ] Document the local commands for running the same E2E suite and cleaning up temporary Obsidian processes and vaults.
+- [x] Use the official [Obsidian CLI](https://obsidian.md/help/cli) for local automation and developer smoke tests where a running desktop Obsidian instance is available.
+- [x] Do not treat [Obsidian Headless](https://obsidian.md/help/headless) as a plugin E2E runtime; it is a headless Sync/Publish client and does not load desktop plugins.
+- [x] Evaluate a real-app harness such as `wdio-obsidian-service` or `obsidian-e2e` for CI-driven plugin tests.
+- [x] Pin the Obsidian desktop version used by E2E, or explicitly test a small version matrix, so runtime changes are visible and reproducible.
+- [x] Document the local commands for running the same E2E suite and cleaning up temporary Obsidian processes and vaults.
 
 ## Phase 6: Commit and release
 

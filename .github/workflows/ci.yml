@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    name: Core CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Check whitespace errors
+        run: git diff --check
+
+      - name: Run deterministic checks
+        run: npm run ci
+
+      - name: Upload diagnostic artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: core-ci-diagnostics
+          path: artifacts/
+          if-no-files-found: ignore
+          retention-days: 14

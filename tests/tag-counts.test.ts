@@ -18,10 +18,7 @@ describe("countTagsByCard", () => {
   });
 
   it("counts a duplicate tag only once per card", () => {
-    const counts = countTagsByCard([
-      ["testing", "testing"],
-      ["testing"],
-    ]);
+    const counts = countTagsByCard([["testing", "testing"], ["testing"]]);
 
     expect(counts.get("testing")).toBe(2);
   });

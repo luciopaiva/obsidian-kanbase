@@ -74,9 +74,8 @@ Search for **Kanbase** in the Obsidian Community Plugins browser and click **Ins
 
 ## Development
 
-1. Clone this repo.
-2. Run `npm install`.
-3. Run `npm run dev` to start the build process in watch mode.
+See the [development guide](DEVELOPMENT.md) for setup, validation, and E2E test
+instructions.
 
 ## Attribution
 
