@@ -1,10 +1,3 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/luciopaiva/obsidian-kanbase/HEAD/logo-dark.svg">
-    <img alt="Kanbase Logo" src="https://raw.githubusercontent.com/luciopaiva/obsidian-kanbase/HEAD/logo-light.svg">
-  </picture>
-</p>
-
 # Kanbase
 
 **Kanbase** is yet another Kanban board view for [Obsidian Bases](https://obsidian.md). It lets you organize your notes into visual columns based on any property in their frontmatter, providing a seamless drag-and-drop experience for managing tasks and structured data.
