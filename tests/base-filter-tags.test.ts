@@ -7,8 +7,8 @@ import {
 describe("getTagsRequiredByFilter", () => {
   it("extracts a positive tag containment filter", () => {
     expect(
-      getTagsRequiredByFilter('file.tags.contains("project/base-board")'),
-    ).toEqual(new Set(["project/base-board"]));
+      getTagsRequiredByFilter('file.tags.contains("project/kanbase")'),
+    ).toEqual(new Set(["project/kanbase"]));
   });
 
   it("combines requirements in an AND group", () => {

@@ -17,8 +17,8 @@ production release bundle.
 `npm run test:e2e` builds and launches a disposable copy of the vault in
 `e2e/vault` through `wdio-obsidian-service`. The harness downloads and caches
 the public Obsidian app and installer selected by `OBSIDIAN_VERSIONS`, installs
-the built Kanbase bundle, enables the plugin alongside a checksum-verified Base
-Board 2.5.1 bundle, and terminates its temporary Obsidian process after the run.
+the built Kanbase bundle, enables the plugin, and terminates its temporary
+Obsidian process after the run.
 
 Use the `<app-version>/<installer-version>` format and pin both components:
 
