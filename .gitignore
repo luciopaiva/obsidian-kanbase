@@ -6,6 +6,10 @@ node_modules/
 
 # Build output
 main.js
+artifacts/
+e2e-artifacts/
+.obsidian-cache/
+.e2e-plugins/
 
 # IDE
 .idea/

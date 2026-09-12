@@ -7,12 +7,10 @@ import {
   Menu,
   Platform,
 } from "obsidian";
-import { KanbanView } from "./kanban-view";
-import { InputModal } from "./modals";
-import { NO_VALUE_COLUMN } from "./constants";
-import { ColorPickerModal } from "./tags";
-import { WipLimitModal } from "./modals";
-import { generateOrderKey, isOrderKey, OrderValue } from "./order";
+import { KanbanView } from "../kanban-view";
+import { InputModal, WipLimitModal } from "../ui/modals";
+import { NO_VALUE_COLUMN } from "../support/constants";
+import { ColorPickerModal } from "../ui/color-picker-modal";
 
 export class ColumnManager {
   private view: KanbanView;
@@ -29,14 +27,14 @@ export class ColumnManager {
     existingColumnEl?: HTMLElement,
   ): void {
     const isNoValue = columnName === NO_VALUE_COLUMN;
-    const entries = this.view.getEntriesForColumn(columnName, group);
-    const isCollapsed = this.view.isColumnCollapsed(columnName);
+    const entries = this.view.cardMoves.getEntriesForColumn(columnName, group);
+    const isCollapsed = this.view.preferences.isColumnCollapsed(columnName);
 
     // Sort entries up-front using a stable fallback
     const sorted = [...entries].sort((a: BasesEntry, b: BasesEntry) => {
       const pathA = a.file?.path ?? "";
       const pathB = b.file?.path ?? "";
-      const orderComparison = this.view.compareCardOrder(
+      const orderComparison = this.view.cardMoves.compareCardOrder(
         columnName,
         pathA,
         pathB,
@@ -48,63 +46,54 @@ export class ColumnManager {
       return pathA.localeCompare(pathB);
     });
 
-    const activeFilters = this.view.tags.activeFilters;
-    const visibleCards =
-      activeFilters.size > 0
-        ? sorted.filter((entry) => {
-            const file = entry.file;
-            if (!(file instanceof TFile)) return false;
-            const fileTags = this.view.tags.extractTagsFromFile(file);
-            return Array.from(activeFilters).some((filter) =>
-              fileTags.includes(filter),
-            );
-          })
-        : sorted;
+    const visibleCards = sorted.filter((entry) =>
+      this.view.tagFilterBar.matches(entry.file),
+    );
 
     const columnEl =
-      existingColumnEl ?? boardEl.createDiv({ cls: "base-board-column" });
+      existingColumnEl ?? boardEl.createDiv({ cls: "kanbase-column" });
     const existingCardsEl =
-      columnEl.querySelector<HTMLElement>(".base-board-cards");
+      columnEl.querySelector<HTMLElement>(".kanbase-cards");
     existingCardsEl?.remove();
     columnEl.empty();
-    columnEl.className = "base-board-column";
+    columnEl.className = "kanbase-column";
     columnEl.style.removeProperty("--column-color");
     boardEl.appendChild(columnEl);
     columnEl.dataset.columnName = columnName;
     columnEl.dataset.columnIndex = String(columnIndex);
-    columnEl.classList.toggle("base-board-column--collapsed", isCollapsed);
+    columnEl.classList.toggle("kanbase-column--collapsed", isCollapsed);
 
     // ---- WIP limit check ----
-    const wipLimit = this.view.getWipLimit(columnName);
+    const wipLimit = this.view.preferences.getWipLimit(columnName);
     if (wipLimit !== null && entries.length > wipLimit) {
-      columnEl.addClass("base-board-column--wip-overflow");
+      columnEl.addClass("kanbase-column--wip-overflow");
     }
 
-    const columnColor = this.view.getColumnColor(columnName);
+    const columnColor = this.view.preferences.getColumnColor(columnName);
     if (columnColor) {
       columnEl.style.setProperty("--column-color", columnColor);
-      const accentEl = columnEl.createDiv({ cls: "base-board-column-accent" });
+      const accentEl = columnEl.createDiv({ cls: "kanbase-column-accent" });
       accentEl.style.backgroundColor = columnColor;
     }
 
     // ---- Header ----
-    const headerEl = columnEl.createDiv({ cls: "base-board-column-header" });
+    const headerEl = columnEl.createDiv({ cls: "kanbase-column-header" });
     headerEl.setAttr("draggable", "true");
 
     const dragHandle = headerEl.createDiv({
-      cls: "base-board-column-drag-handle",
+      cls: "kanbase-column-drag-handle",
     });
     setIcon(dragHandle, "grip-vertical");
 
     headerEl.addEventListener("click", (e: MouseEvent) => {
       if (isCollapsed) {
         e.stopPropagation();
-        this.view.toggleColumnCollapsed(columnName);
+        this.view.preferences.toggleColumnCollapsed(columnName);
       }
     });
 
     const collapseBtn = headerEl.createDiv({
-      cls: "base-board-column-collapse-btn",
+      cls: "kanbase-column-collapse-btn",
       attr: {
         role: "button",
         tabindex: "0",
@@ -114,23 +103,23 @@ export class ColumnManager {
     setIcon(collapseBtn, isCollapsed ? "chevron-right" : "chevron-down");
     collapseBtn.addEventListener("click", (e: MouseEvent) => {
       e.stopPropagation();
-      this.view.toggleColumnCollapsed(columnName);
+      this.view.preferences.toggleColumnCollapsed(columnName);
     });
     collapseBtn.addEventListener("keydown", (e: KeyboardEvent) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         e.stopPropagation();
-        this.view.toggleColumnCollapsed(columnName);
+        this.view.preferences.toggleColumnCollapsed(columnName);
       }
     });
 
     // Title + inline count badge
     const titleEl = headerEl.createSpan({
       text: columnName,
-      cls: "base-board-column-title",
+      cls: "kanbase-column-title",
     });
     if (isNoValue) {
-      titleEl.addClass("base-board-no-value-title");
+      titleEl.addClass("kanbase-no-value-title");
     }
 
     // Count badge sits right after the title, inline
@@ -141,50 +130,27 @@ export class ColumnManager {
         : String(entries.length);
     const countEl = headerEl.createSpan({
       text: countText,
-      cls: "base-board-column-count",
+      cls: "kanbase-column-count",
     });
 
     // Spacer pushes the + button to the far right
-    headerEl.createDiv({ cls: "base-board-header-spacer" });
+    headerEl.createDiv({ cls: "kanbase-header-spacer" });
 
     // ---- Add card button ----
     const addCardHeaderBtn = headerEl.createDiv({
-      cls: "base-board-column-add-card",
+      cls: "kanbase-column-add-card",
     });
     setIcon(addCardHeaderBtn, "plus");
     addCardHeaderBtn.addEventListener("click", (e: MouseEvent) => {
       e.stopPropagation();
-      const addToTop = this.view.isAddNewCardsToTop();
-      let targetOrder: OrderValue = generateOrderKey(null, null);
-      if (sorted.length > 0) {
-        const orders = sorted.map((entry) =>
-          entry.file?.path ? this.view.getFileOrder(entry.file.path) : null,
-        );
-        if (orders.every(isOrderKey)) {
-          targetOrder = addToTop
-            ? generateOrderKey(null, orders[0])
-            : generateOrderKey(orders[orders.length - 1], null);
-        } else {
-          const numericOrders = orders.filter(
-            (order): order is number => typeof order === "number",
-          );
-          targetOrder = addToTop
-            ? Math.min(...numericOrders, 0) - 1000
-            : Math.max(...numericOrders, -1000) + 1000;
-        }
-      }
-      this.view.cardManager.startInlineCardCreation(
-        addCardHeaderBtn,
-        columnName,
-        targetOrder,
-      );
+      this.view.cardCreation.startInline(addCardHeaderBtn, columnName, sorted);
     });
 
     // ---- Column menu button ----
     let menuBtn: HTMLElement | null = null;
     if (!isNoValue) {
       menuBtn = headerEl.createDiv({
-        cls: "base-board-column-menu-btn",
+        cls: "kanbase-column-menu-btn",
       });
       setIcon(menuBtn, "more-horizontal");
       menuBtn.addEventListener("click", (e: MouseEvent) => {
@@ -218,7 +184,7 @@ export class ColumnManager {
 
     // ---- Cards container ----
     const cardsEl =
-      existingCardsEl ?? columnEl.createDiv({ cls: "base-board-cards" });
+      existingCardsEl ?? columnEl.createDiv({ cls: "kanbase-cards" });
     columnEl.appendChild(cardsEl);
 
     // Cards render even when collapsed (CSS hides them) so the column stays a
@@ -229,7 +195,7 @@ export class ColumnManager {
 
     visibleCards.forEach((entry) => {
       const filePath = entry.file?.path ?? "";
-      const cachedCardEl = this.view.cardElCache.get(filePath);
+      const cachedCardEl = this.view.renderer.cardElCache.get(filePath);
       this.view.cardManager.renderCard(
         cardsEl,
         entry,
@@ -238,7 +204,7 @@ export class ColumnManager {
       );
     });
 
-    cardsEl.querySelectorAll<HTMLElement>(".base-board-card").forEach((el) => {
+    cardsEl.querySelectorAll<HTMLElement>(".kanbase-card").forEach((el) => {
       if (!visiblePaths.has(el.dataset.filePath ?? "")) el.remove();
     });
   }
@@ -274,7 +240,7 @@ export class ColumnManager {
       menu.addSeparator();
     }
 
-    const currentColor = this.view.getColumnColor(columnName) ?? "";
+    const currentColor = this.view.preferences.getColumnColor(columnName) ?? "";
     menu.addItem((item) => {
       item
         .setTitle("Change color")
@@ -285,13 +251,13 @@ export class ColumnManager {
             columnName,
             currentColor,
             (color) => {
-              this.view.setColumnColor(columnName, color);
+              this.view.preferences.setColumnColor(columnName, color);
             },
           ).open();
         });
     });
 
-    const currentWipLimit = this.view.getWipLimit(columnName);
+    const currentWipLimit = this.view.preferences.getWipLimit(columnName);
     menu.addItem((item) => {
       item
         .setTitle(
@@ -306,7 +272,7 @@ export class ColumnManager {
             columnName,
             currentWipLimit,
             (limit) => {
-              this.view.setWipLimit(columnName, limit);
+              this.view.preferences.setWipLimit(columnName, limit);
             },
           ).open();
         });
@@ -331,7 +297,7 @@ export class ColumnManager {
   }
 
   public renderAddColumnButton(boardEl: HTMLElement): void {
-    const addBtn = boardEl.createDiv({ cls: "base-board-add-column-btn" });
+    const addBtn = boardEl.createDiv({ cls: "kanbase-add-column-btn" });
     setIcon(addBtn.createSpan(), "plus");
     addBtn.createSpan({ text: "Add column" });
     addBtn.addEventListener("click", () => this.promptAddColumn());
@@ -343,22 +309,24 @@ export class ColumnManager {
       "Add column",
       "Column name…",
       (name: string) => {
-        const columns = this.view.getColumns();
+        const columns = this.view.preferences.getColumns();
         if (columns.includes(name)) {
           new Notice(`Column "${name}" already exists.`);
           return;
         }
         columns.push(name);
-        this.view.saveColumns(columns);
+        this.view.preferences.saveColumns(columns);
         this.view.render();
       },
     ).open();
   }
 
   public handleDeleteColumn(columnName: string): void {
-    const columns = this.view.getColumns().filter((c) => c !== columnName);
-    this.view.saveColumns(columns);
-    this.view.removeColumnPreferences(columnName);
+    const columns = this.view.preferences
+      .getColumns()
+      .filter((column) => column !== columnName);
+    this.view.preferences.saveColumns(columns);
+    this.view.preferences.removeColumnState(columnName);
     this.view.render();
   }
 
@@ -373,17 +341,17 @@ export class ColumnManager {
     const input = (titleEl.parentElement ?? titleEl).createEl("input");
     input.type = "text";
     input.value = oldName;
-    input.className = "base-board-column-title-input";
+    input.className = "kanbase-column-title-input";
 
     // Hide count and + during editing so the input can use the full width
-    if (countEl) countEl.classList.add("base-board-hidden");
-    if (addCardBtn) addCardBtn.classList.add("base-board-hidden");
-    if (menuBtn) menuBtn.classList.add("base-board-hidden");
+    if (countEl) countEl.classList.add("kanbase-hidden");
+    if (addCardBtn) addCardBtn.classList.add("kanbase-hidden");
+    if (menuBtn) menuBtn.classList.add("kanbase-hidden");
 
     const restoreChrome = () => {
-      if (countEl) countEl.classList.remove("base-board-hidden");
-      if (addCardBtn) addCardBtn.classList.remove("base-board-hidden");
-      if (menuBtn) menuBtn.classList.remove("base-board-hidden");
+      if (countEl) countEl.classList.remove("kanbase-hidden");
+      if (addCardBtn) addCardBtn.classList.remove("kanbase-hidden");
+      if (menuBtn) menuBtn.classList.remove("kanbase-hidden");
     };
 
     // Replace the span with the input
@@ -424,20 +392,20 @@ export class ColumnManager {
     newName: string,
     entries: BasesEntry[],
   ): Promise<void> {
-    const columns = this.view.getColumns();
+    const columns = this.view.preferences.getColumns();
     if (columns.includes(newName)) {
       new Notice(`Column "${newName}" already exists.`);
       this.view.render();
       return;
     }
 
-    const groupByProp = this.view.getGroupByProperty();
+    const groupByProp = this.view.boardConfig.getGroupByProperty();
 
-    await this.view.applyBatchUpdate(async () => {
+    await this.view.updates.applyBatchUpdate(async () => {
       // 1. Update column config
       const updatedColumns = columns.map((c) => (c === oldName ? newName : c));
-      this.view.saveColumns(updatedColumns);
-      this.view.updateColumnPreferences(oldName, newName);
+      this.view.preferences.saveColumns(updatedColumns);
+      this.view.preferences.renameColumnState(oldName, newName);
 
       // 2. Update frontmatter for all cards in this column
       if (groupByProp) {
@@ -449,7 +417,7 @@ export class ColumnManager {
           return this.view.app.fileManager.processFrontMatter(
             file,
             (fm: Record<string, unknown>) => {
-              this.view.applyGroupByValue(fm, groupByProp, newName);
+              this.view.boardConfig.applyGroupByValue(fm, groupByProp, newName);
             },
           );
         });

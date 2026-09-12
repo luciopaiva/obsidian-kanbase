@@ -1,15 +1,16 @@
-import {
-  Plugin,
-  Notice,
-  QueryController,
-  TFile,
-  TFolder,
-  TAbstractFile,
-} from "obsidian";
+import { Plugin, QueryController, TFolder, TAbstractFile } from "obsidian";
 import { KanbanView } from "./kanban-view";
-import { sanitizeFilename } from "./constants";
-import { CreateBoardModal, BoardConfig } from "./modals";
-import { updateBaseFolderReferences } from "./folder-rename";
+import { CreateBoardModal } from "./ui/modals";
+import { updateBaseFolderReferences } from "./support/folder-rename";
+import { BoardScaffolder } from "./board/board-scaffolder";
+import {
+  KanbaseSettingTab,
+  DEFAULT_CARD_TITLE_FONT_SIZE,
+  MAX_CARD_TITLE_FONT_SIZE,
+  MIN_CARD_TITLE_FONT_SIZE,
+} from "./settings";
+
+export type CardTagPosition = "top" | "bottom";
 
 /** Per-base column configuration */
 export interface ColumnConfig {
@@ -18,18 +19,27 @@ export interface ColumnConfig {
 
 export interface PluginData {
   columnConfigs: Record<string, ColumnConfig>;
+  cardTagPosition: CardTagPosition;
+  cardTitleFontSize: number;
+  hideBaseFilterTags: boolean;
+  hoverPreviewEnabled: boolean;
 }
 
 const DEFAULT_DATA: PluginData = {
   columnConfigs: {},
+  cardTagPosition: "top",
+  cardTitleFontSize: DEFAULT_CARD_TITLE_FONT_SIZE,
+  hideBaseFilterTags: true,
+  hoverPreviewEnabled: false,
 };
 
 // ---------------------------------------------------------------------------
 //  Plugin
 // ---------------------------------------------------------------------------
 
-export default class BaseBoardPlugin extends Plugin {
-  data_: PluginData = DEFAULT_DATA;
+export default class KanbasePlugin extends Plugin {
+  settings: PluginData = DEFAULT_DATA;
+  private boardViews = new Set<KanbanView>();
 
   /** Folder rename mappings collected during one rename burst, pending flush. */
   private pendingFolderRenames: Array<{ oldPath: string; newPath: string }> =
@@ -39,12 +49,22 @@ export default class BaseBoardPlugin extends Plugin {
 
   async onload() {
     await this.loadPluginData();
+    const boardScaffolder = new BoardScaffolder(this.app);
+    this.addSettingTab(new KanbaseSettingTab(this.app, this));
+    this.registerHoverLinkSource("kanbase", {
+      display: "Kanbase",
+      defaultMod: false,
+    });
 
-    this.registerBasesView("kanban", {
-      name: "Kanban",
+    this.registerBasesView("kanbase", {
+      name: "Kanbase",
       icon: "lucide-kanban",
-      factory: (controller: QueryController, containerEl: HTMLElement) =>
-        new KanbanView(controller, containerEl, this),
+      factory: (controller: QueryController, containerEl: HTMLElement) => {
+        const view = new KanbanView(controller, containerEl, this);
+        this.boardViews.add(view);
+        view.register(() => this.boardViews.delete(view));
+        return view;
+      },
       options: () => KanbanView.getViewOptions(),
     });
 
@@ -54,7 +74,7 @@ export default class BaseBoardPlugin extends Plugin {
       name: "Create new board",
       callback: () => {
         new CreateBoardModal(this.app, (config) => {
-          void this.createBoard(config);
+          void boardScaffolder.create(config);
         }).open();
       },
     });
@@ -130,130 +150,60 @@ export default class BaseBoardPlugin extends Plugin {
         }
       } catch (err) {
         console.error(
-          `Base Board: failed to update folder references in "${baseFile.path}"`,
+          `Kanbase: failed to update folder references in "${baseFile.path}"`,
           err,
         );
       }
     }
   }
 
-  // -- Board scaffolding ------------------------------------------------------
-
-  private async createBoard(config: BoardConfig): Promise<void> {
-    const { name, folder, groupBy } = config;
-    const vault = this.app.vault;
-
-    // Sanitize folder path
-    const safeFolder = folder.replace(/[\\:*?"<>|]/g, "");
-    const tasksFolder = `${safeFolder}/Tasks`;
-
-    // 1. Create folder structure
-    if (!vault.getAbstractFileByPath(safeFolder)) {
-      await vault.createFolder(safeFolder);
-    }
-    if (!vault.getAbstractFileByPath(tasksFolder)) {
-      await vault.createFolder(tasksFolder);
-    }
-
-    // 2. Create the .base file
-    const basePath = `${safeFolder}/${name}.base`;
-    if (vault.getAbstractFileByPath(basePath)) {
-      new Notice(`A board already exists at "${basePath}".`);
-      return;
-    }
-
-    const baseContent = [
-      `filters:`,
-      `  and:`,
-      `    - file.inFolder("${tasksFolder}")`,
-      `views:`,
-      `  - type: kanban`,
-      `    name: ${name}`,
-      `    groupBy:`,
-      `      property: note.${groupBy}`,
-      `      direction: DESC`,
-      `    order:`,
-      `      - file.name`,
-      `      - note.${groupBy}`,
-      ``,
-    ].join("\n");
-
-    await vault.create(basePath, baseContent);
-
-    // 3. Create sample task files so the board isn't empty on first open
-    const sampleTasks = [
-      {
-        title: "Plan project",
-        value: "To Do",
-        order: 0,
-        tags: ["planning"],
-      },
-      {
-        title: "Research and discovery",
-        value: "To Do",
-        order: 1,
-        tags: ["research"],
-      },
-      {
-        title: "Build first feature",
-        value: "In Progress",
-        order: 0,
-        tags: ["feature"],
-      },
-      {
-        title: "Fix onboarding bug",
-        value: "In Progress",
-        order: 1,
-        tags: ["bug"],
-      },
-      {
-        title: "Write documentation",
-        value: "Done",
-        order: 0,
-        tags: ["docs"],
-      },
-    ];
-
-    for (const task of sampleTasks) {
-      const safeName = sanitizeFilename(task.title);
-      const taskPath = `${tasksFolder}/${safeName}.md`;
-      if (!vault.getAbstractFileByPath(taskPath)) {
-        const tagsLine =
-          task.tags.length > 0
-            ? `tags:\n${task.tags.map((t) => `  - ${t}`).join("\n")}`
-            : "";
-        const content = [
-          "---",
-          `${groupBy}: ${task.value}`,
-          `kanban_order: ${task.order}`,
-          tagsLine,
-          "---",
-          "",
-          `# ${task.title}`,
-          "",
-        ]
-          .filter((line) => line !== "")
-          .join("\n");
-        await vault.create(taskPath, content);
-      }
-    }
-
-    // 4. Open the board
-    const file = vault.getAbstractFileByPath(basePath);
-    if (file instanceof TFile) {
-      void this.app.workspace.getLeaf(false).openFile(file);
-      new Notice(`Board "${name}" created!`);
-    }
-  }
-
   // -- Column config helpers --------------------------------------------------
 
   getColumnConfig(baseId: string): ColumnConfig | null {
-    return this.data_.columnConfigs[baseId] ?? null;
+    return this.settings.columnConfigs[baseId] ?? null;
   }
 
   async saveColumnConfig(baseId: string, config: ColumnConfig): Promise<void> {
-    this.data_.columnConfigs[baseId] = config;
+    this.settings.columnConfigs[baseId] = config;
+    await this.savePluginData();
+  }
+
+  getCardTagPosition(): CardTagPosition {
+    return this.settings.cardTagPosition;
+  }
+
+  async setCardTagPosition(position: CardTagPosition): Promise<void> {
+    this.settings.cardTagPosition = position;
+    await this.savePluginData();
+    for (const view of this.boardViews) view.updates.scheduleRender();
+  }
+
+  getCardTitleFontSize(): number {
+    return this.settings.cardTitleFontSize;
+  }
+
+  async setCardTitleFontSize(size: number): Promise<void> {
+    this.settings.cardTitleFontSize = this.normalizeCardTitleFontSize(size);
+    await this.savePluginData();
+    for (const view of this.boardViews) view.updates.scheduleRender();
+  }
+
+  shouldHideBaseFilterTags(): boolean {
+    return this.settings.hideBaseFilterTags;
+  }
+
+  async setHideBaseFilterTags(hidden: boolean): Promise<void> {
+    this.settings.hideBaseFilterTags = hidden;
+    await this.savePluginData();
+    for (const view of this.boardViews) view.updates.scheduleRender();
+  }
+
+  isHoverPreviewEnabled(): boolean {
+    return this.settings.hoverPreviewEnabled;
+  }
+
+  async setHoverPreviewEnabled(enabled: boolean): Promise<void> {
+    this.settings.hoverPreviewEnabled = enabled;
     await this.savePluginData();
   }
 
@@ -261,11 +211,36 @@ export default class BaseBoardPlugin extends Plugin {
 
   async loadPluginData(): Promise<void> {
     const saved = (await this.loadData()) as PluginData | null | undefined;
-    this.data_ = Object.assign({}, DEFAULT_DATA, saved ?? {});
-    if (!this.data_.columnConfigs) this.data_.columnConfigs = {};
+    this.settings = Object.assign({}, DEFAULT_DATA, saved ?? {});
+    if (!this.settings.columnConfigs) this.settings.columnConfigs = {};
+    if (
+      this.settings.cardTagPosition !== "top" &&
+      this.settings.cardTagPosition !== "bottom"
+    ) {
+      this.settings.cardTagPosition = DEFAULT_DATA.cardTagPosition;
+    }
+    this.settings.cardTitleFontSize = this.normalizeCardTitleFontSize(
+      this.settings.cardTitleFontSize,
+    );
+    if (typeof this.settings.hideBaseFilterTags !== "boolean") {
+      this.settings.hideBaseFilterTags = DEFAULT_DATA.hideBaseFilterTags;
+    }
+    if (typeof this.settings.hoverPreviewEnabled !== "boolean") {
+      this.settings.hoverPreviewEnabled = DEFAULT_DATA.hoverPreviewEnabled;
+    }
   }
 
   async savePluginData(): Promise<void> {
-    await this.saveData(this.data_);
+    await this.saveData(this.settings);
+  }
+
+  private normalizeCardTitleFontSize(size: unknown): number {
+    if (typeof size !== "number" || !Number.isFinite(size)) {
+      return DEFAULT_CARD_TITLE_FONT_SIZE;
+    }
+    return Math.min(
+      MAX_CARD_TITLE_FONT_SIZE,
+      Math.max(MIN_CARD_TITLE_FONT_SIZE, Math.round(size)),
+    );
   }
 }

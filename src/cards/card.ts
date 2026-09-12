@@ -13,11 +13,9 @@ import {
   Keymap,
   Platform,
 } from "obsidian";
-import { KanbanView } from "./kanban-view";
-import { ORDER_PROPERTY, sanitizeFilename } from "./constants";
-import { relativeLuminance } from "./color-utils";
-import type { OrderValue } from "./order";
-import { CardDetailModal } from "./card-detail-modal";
+import { KanbanView } from "../kanban-view";
+import { ORDER_PROPERTY, sanitizeFilename } from "../support/constants";
+import { relativeLuminance } from "../support/color-utils";
 
 const IMAGE_EXTENSIONS = new Set([
   "apng",
@@ -100,16 +98,19 @@ export class CardManager {
     existingCardEl?: HTMLElement | null,
   ): void {
     const filePath = entry.file?.path ?? "";
-    const cardEl =
-      existingCardEl ?? cardsEl.createDiv({ cls: "base-board-card" });
+    const cardEl = existingCardEl ?? cardsEl.createDiv({ cls: "kanbase-card" });
     const renderVersion = this.getRenderVersion(entry);
+    cardEl.style.setProperty(
+      "--kanbase-card-title-font-size",
+      `${this.view.plugin.getCardTitleFontSize()}px`,
+    );
 
     if (existingCardEl) {
       cardsEl.appendChild(cardEl);
       cardEl.dataset.columnName = columnName;
-      cardEl.removeClass("base-board-card--dragging");
-      cardEl.removeClass("base-board-card--drag-ghost");
-      cardEl.removeClass("base-board-card--selected");
+      cardEl.removeClass("kanbase-card--dragging");
+      cardEl.removeClass("kanbase-card--drag-ghost");
+      cardEl.removeClass("kanbase-card--selected");
       if (cardEl.dataset.renderVersion === renderVersion) return;
       cardEl.innerHTML = "";
     } else {
@@ -120,7 +121,7 @@ export class CardManager {
     cardEl.dataset.renderVersion = renderVersion;
 
     const file = this.view.app.vault.getAbstractFileByPath(filePath);
-    const coverProp = this.view.getCardCoverProperty();
+    const coverProp = this.view.boardConfig.getCardCoverProperty();
     if (file instanceof TFile && coverProp) {
       const src = this.getCardCoverSrc(file, coverProp);
       if (src) {
@@ -144,7 +145,7 @@ export class CardManager {
 
         if ((isAlt || isShift) && !isMod) {
           e.preventDefault();
-          this.handleCardSelect(
+          this.view.cardSelection.select(
             filePath,
             cardEl.dataset.columnName ?? columnName,
             isShift,
@@ -153,13 +154,13 @@ export class CardManager {
         }
 
         // If there are selected cards, clear them on a plain click instead of opening
-        if (this.view.selectedCards.size > 0) {
-          this.clearSelection();
+        if (this.view.cardSelection.hasSelection()) {
+          this.view.cardSelection.clear();
           return;
         }
 
-        const file = this.view.app.vault.getAbstractFileByPath(filePath);
-        if (!(file instanceof TFile)) return;
+        const file = this.view.navigation.resolveFile(filePath);
+        if (!file) return;
 
         // Handle standard Obsidian modifiers using Keymap.isModEvent(e)
         const mod = Keymap.isModEvent(e);
@@ -169,43 +170,23 @@ export class CardManager {
           return;
         }
 
-        const openBehavior = this.view.getCardOpenBehavior();
-        if (openBehavior === "split") {
-          if (
-            this.view.detailLeaf &&
-            this.view.isLeafAttached(this.view.detailLeaf)
-          ) {
-            void this.view.detailLeaf.openFile(file);
-          } else {
-            this.view.detailLeaf = this.view.app.workspace.getLeaf(
-              "split",
-              "vertical",
-            );
-            void this.view.detailLeaf.openFile(file);
-          }
-        } else if (openBehavior === "tab") {
-          void this.view.app.workspace.getLeaf("tab").openFile(file);
-        } else if (openBehavior === "active") {
-          void this.view.app.workspace.getLeaf(false).openFile(file);
-        } else {
-          new CardDetailModal(this.view.app, file, this.view).open();
-        }
+        this.view.navigation.open(file);
       });
 
       // Middle-click → always open in new tab
       cardEl.addEventListener("auxclick", (e: MouseEvent) => {
         if (e.button !== 1) return;
-        const file = this.view.app.vault.getAbstractFileByPath(filePath);
-        if (!(file instanceof TFile)) return;
-        void this.view.app.workspace.getLeaf("tab").openFile(file);
+        const file = this.view.navigation.resolveFile(filePath);
+        if (!file) return;
+        this.view.navigation.openInNewTab(file);
       });
 
       // Keyboard: Escape clears multi-selection when a card is focused
       cardEl.setAttribute("tabindex", "-1");
       cardEl.addEventListener("keydown", (e: KeyboardEvent) => {
-        if (e.key === "Escape" && this.view.selectedCards.size > 0) {
+        if (e.key === "Escape" && this.view.cardSelection.hasSelection()) {
           e.preventDefault();
-          this.clearSelection();
+          this.view.cardSelection.clear();
         }
       });
 
@@ -213,10 +194,10 @@ export class CardManager {
       // Use mouseenter (not mouseover) — mouseover bubbles from every child element
       // and would re-trigger the preview on each chip/tag/title crossing.
       cardEl.addEventListener("mouseenter", (evt: MouseEvent) => {
-        if (!filePath) return;
+        if (!filePath || !this.view.plugin.isHoverPreviewEnabled()) return;
         this.view.app.workspace.trigger("hover-link", {
           event: evt,
-          source: "base-board",
+          source: "kanbase",
           hoverParent: this.view,
           targetEl: cardEl,
           linktext: filePath,
@@ -231,11 +212,8 @@ export class CardManager {
         if (!(file instanceof TFile)) return;
 
         // If this card is part of a multi-selection, show the batch move menu
-        if (
-          this.view.selectedCards.size > 1 &&
-          this.view.selectedCards.has(filePath)
-        ) {
-          this.showBatchMoveMenu(e);
+        if (this.view.cardSelection.isMultiSelectionContaining(filePath)) {
+          this.view.cardSelection.showMoveMenu(e);
           return;
         }
 
@@ -244,36 +222,19 @@ export class CardManager {
           "file-menu",
           menu,
           file,
-          "base-board-card",
+          "kanbase-card",
           this.view.app.workspace.getMostRecentLeaf(),
         );
         menu.showAtMouseEvent(e);
       });
     }
 
-    const tagContainerEl = cardEl.createDiv({
-      cls: "base-board-tag-container",
-    });
-    if (file instanceof TFile) {
-      const fileTags = this.view.tags.extractTagsFromFile(file);
-      for (const tag of fileTags) {
-        const tagEl = tagContainerEl.createSpan({
-          cls: "base-board-card-tag",
-          text: tag,
-        });
-        const color = this.view.tags.getColorForTag(tag);
-        if (color) {
-          tagEl.style.setProperty("--tag-color", color);
-          if (relativeLuminance(color) === "dark") {
-            tagEl.addClass("base-board-card-tag-light");
-          } else {
-            tagEl.addClass("base-board-card-tag-dark");
-          }
-        }
-      }
+    const tagPosition = this.view.plugin.getCardTagPosition();
+    if (file instanceof TFile && tagPosition === "top") {
+      this.renderCardTags(cardEl, file, tagPosition);
     }
 
-    const titleEl = cardEl.createDiv({ cls: "base-board-card-title" });
+    const titleEl = cardEl.createDiv({ cls: "kanbase-card-title" });
 
     // Respect cardTitleProperty if configured — use a frontmatter property
     // (e.g. "title") as the card heading instead of the filename.
@@ -292,7 +253,7 @@ export class CardManager {
     titleEl.createSpan({ text: cardTitle });
 
     // ---- Edit button (visible on hover) ----
-    const editBtn = cardEl.createDiv({ cls: "base-board-card-edit-btn" });
+    const editBtn = cardEl.createDiv({ cls: "kanbase-card-edit-btn" });
     setIcon(editBtn, "lucide-pencil");
     editBtn.addEventListener("click", (e: MouseEvent) => {
       e.stopPropagation(); // Don't open the note
@@ -300,8 +261,8 @@ export class CardManager {
     });
 
     // ---- Property chips ----
-    const propsEl = cardEl.createDiv({ cls: "base-board-card-props" });
-    const groupByProp = this.view.getGroupByProperty();
+    const propsEl = cardEl.createDiv({ cls: "kanbase-card-props" });
+    const groupByProp = this.view.boardConfig.getGroupByProperty();
     const visibleProps: BasesPropertyId[] = this.view.config.getOrder();
 
     // Collect eligible chip descriptors in one pass so filtering logic lives
@@ -349,7 +310,7 @@ export class CardManager {
     for (let i = CHIP_VISIBLE; i < chips.length; i++) {
       if (!overflowEl) {
         overflowEl = propsEl.createDiv({
-          cls: "base-board-card-chips-overflow",
+          cls: "kanbase-card-chips-overflow",
         });
       }
       const { displayName, display, propId, val } = chips[i];
@@ -360,22 +321,54 @@ export class CardManager {
     if (overflowEl) {
       const overflowCount = chips.length - CHIP_VISIBLE;
       const toggleBtn = propsEl.createSpan({
-        cls: "base-board-card-chip-more",
+        cls: "kanbase-card-chip-more",
       });
       toggleBtn.setText(`+${overflowCount} more`);
       toggleBtn.addEventListener("click", (e: MouseEvent) => {
         e.stopPropagation();
         const expanded = overflowEl.classList.toggle(
-          "base-board-card-chips-overflow--expanded",
+          "kanbase-card-chips-overflow--expanded",
         );
         toggleBtn.setText(expanded ? "show less" : `+${overflowCount} more`);
       });
+    }
+
+    if (file instanceof TFile && tagPosition === "bottom") {
+      this.renderCardTags(cardEl, file, tagPosition);
+    }
+  }
+
+  private renderCardTags(
+    cardEl: HTMLElement,
+    file: TFile,
+    position: "top" | "bottom",
+  ): void {
+    const fileTags = this.view.tags.getTagsForCardDisplay(file);
+    if (fileTags.length === 0) return;
+
+    const tagContainerEl = cardEl.createDiv({
+      cls: ["kanbase-tag-container", `kanbase-tag-container--${position}`],
+    });
+    for (const tag of fileTags) {
+      const tagEl = tagContainerEl.createSpan({
+        cls: "kanbase-card-tag",
+        text: tag,
+      });
+      const color = this.view.tags.getColorForTag(tag);
+      if (color) {
+        tagEl.style.setProperty("--tag-color", color);
+        if (relativeLuminance(color) === "dark") {
+          tagEl.addClass("kanbase-card-tag-light");
+        } else {
+          tagEl.addClass("kanbase-card-tag-dark");
+        }
+      }
     }
   }
 
   private getRenderVersion(entry: BasesEntry): string {
     const file = entry.file;
-    const groupByProp = this.view.getGroupByProperty();
+    const groupByProp = this.view.boardConfig.getGroupByProperty();
     const visibleProperties = this.view.config
       .getOrder()
       .filter((propId) => {
@@ -397,9 +390,9 @@ export class CardManager {
       : null;
     const tags =
       resolvedFile instanceof TFile
-        ? this.view.tags.extractTagsFromFile(resolvedFile)
+        ? this.view.tags.getTagsForCardDisplay(resolvedFile)
         : [];
-    const coverProperty = this.view.getCardCoverProperty();
+    const coverProperty = this.view.boardConfig.getCardCoverProperty();
     const cover =
       resolvedFile instanceof TFile && coverProperty
         ? this.getCardCoverSrc(resolvedFile, coverProperty)
@@ -427,6 +420,8 @@ export class CardManager {
       visibleProperties,
       tags,
       tagColors: this.view.tags.getColors(),
+      tagPosition: this.view.plugin.getCardTagPosition(),
+      titleFontSize: this.view.plugin.getCardTitleFontSize(),
     });
   }
 
@@ -438,16 +433,16 @@ export class CardManager {
     propId?: string,
     val?: Value,
   ): HTMLElement {
-    const chip = parent.createSpan({ cls: "base-board-card-chip" });
+    const chip = parent.createSpan({ cls: "kanbase-card-chip" });
     if (propId) chip.setAttr("data-property-id", propId);
-    chip.createSpan({ text: label, cls: "base-board-chip-label" });
-    const valueEl = chip.createSpan({ cls: "base-board-chip-value" });
+    chip.createSpan({ text: label, cls: "kanbase-chip-label" });
+    const valueEl = chip.createSpan({ cls: "kanbase-chip-value" });
     // Formula properties (e.g. one using html()) resolve to a value whose
     // toString() is raw markup. Render formula output through the Bases
     // renderer so HTML is shown as rich content instead of being escaped to
     // literal text by setText().
     if (val && propId?.startsWith("formula.")) {
-      valueEl.addClass("base-board-chip-value--formula");
+      valueEl.addClass("kanbase-chip-value--formula");
       val.renderTo(valueEl, this.view.app.renderContext);
     } else {
       valueEl.setText(value);
@@ -479,27 +474,7 @@ export class CardManager {
         .setTitle("Open")
         .setIcon("lucide-file-text")
         .onClick(() => {
-          const openBehavior = this.view.getCardOpenBehavior();
-          if (openBehavior === "split") {
-            if (
-              this.view.detailLeaf &&
-              this.view.isLeafAttached(this.view.detailLeaf)
-            ) {
-              void this.view.detailLeaf.openFile(file);
-            } else {
-              this.view.detailLeaf = this.view.app.workspace.getLeaf(
-                "split",
-                "vertical",
-              );
-              void this.view.detailLeaf.openFile(file);
-            }
-          } else if (openBehavior === "tab") {
-            void this.view.app.workspace.getLeaf("tab").openFile(file);
-          } else if (openBehavior === "active") {
-            void this.view.app.workspace.getLeaf(false).openFile(file);
-          } else {
-            new CardDetailModal(this.view.app, file, this.view).open();
-          }
+          this.view.navigation.open(file);
         });
     });
 
@@ -508,7 +483,7 @@ export class CardManager {
         .setTitle("Open in new tab")
         .setIcon("lucide-file-plus")
         .onClick(() => {
-          void this.view.app.workspace.getLeaf("tab").openFile(file);
+          this.view.navigation.openInNewTab(file);
         });
     });
 
@@ -544,7 +519,7 @@ export class CardManager {
     const input = titleEl.createEl("input");
     input.type = "text";
     input.value = file.basename;
-    input.className = "base-board-card-rename-input";
+    input.className = "kanbase-card-rename-input";
 
     titleSpan.remove();
     input.focus();
@@ -567,7 +542,7 @@ export class CardManager {
         }
       }
       // Re-render will pick up the new name via onDataUpdated
-      this.view.scheduleRender();
+      this.view.updates.scheduleRender();
     };
 
     input.addEventListener("keydown", (e) => {
@@ -577,230 +552,12 @@ export class CardManager {
       } else if (e.key === "Escape") {
         e.preventDefault();
         committed = true;
-        this.view.scheduleRender();
+        this.view.updates.scheduleRender();
       }
     });
     input.addEventListener("blur", () => {
       void commit();
     });
-  }
-
-  public startInlineCardCreation(
-    btnEl: HTMLElement,
-    columnName: string,
-    targetOrder: OrderValue,
-  ): void {
-    // Find the cards list for this column.
-    // The trigger button may be in the header OR in the footer, so we walk
-    // up to the column element and then down into .base-board-cards.
-    const columnEl = btnEl.closest(".base-board-column");
-    const cardsEl =
-      (columnEl?.querySelector(".base-board-cards") as HTMLElement | null) ??
-      btnEl.parentElement!;
-
-    btnEl.classList.add("base-board-hidden");
-
-    const inputWrapper = cardsEl.createDiv({
-      cls: "base-board-add-card-input-wrapper",
-    });
-    const input = inputWrapper.createEl("input", {
-      cls: "base-board-add-card-input",
-      attr: { type: "text", placeholder: "Card title…" },
-    });
-    input.focus();
-
-    let committed = false;
-    const commit = async () => {
-      if (committed) return;
-      committed = true;
-      const name = input.value.trim();
-      inputWrapper.remove();
-      btnEl.classList.remove("base-board-hidden");
-      if (name) {
-        await this.createNewCard(name, columnName, targetOrder);
-      }
-    };
-
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        void commit();
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        committed = true;
-        inputWrapper.remove();
-        btnEl.classList.remove("base-board-hidden");
-      }
-    });
-    input.addEventListener("blur", () => {
-      void commit();
-    });
-  }
-
-  private async createNewCard(
-    title: string,
-    columnName: string,
-    targetOrder: OrderValue,
-  ): Promise<void> {
-    const groupByProp = this.view.getGroupByProperty();
-    if (!groupByProp) {
-      new Notice("Cannot create card: no group by property configured.");
-      return;
-    }
-
-    const overrides = (fm: Record<string, unknown>) => {
-      const newItemProps = this.view.config?.get("newItemProperties");
-      if (newItemProps && typeof newItemProps === "object") {
-        const props = newItemProps as Record<string, unknown>;
-        for (const k of Object.keys(props)) {
-          if (k !== "__proto__" && k !== "constructor") {
-            fm[k] = props[k];
-          }
-        }
-      }
-      this.view.applyGroupByValue(fm, groupByProp, columnName);
-      fm[ORDER_PROPERTY] = targetOrder;
-    };
-
-    try {
-      await this.view.createFileForView(title, overrides);
-    } catch (err) {
-      new Notice(`Failed to create card: ${String(err)}`);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  //  Multi-select helpers
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Toggle or range-select a card.
-   *
-   * - Cmd/Ctrl+click  → toggle this card in/out of the selection
-   * - Shift+click     → select a contiguous range from the last-selected card
-   *                     to this one (within the same column's DOM order)
-   */
-  public handleCardSelect(
-    filePath: string,
-    columnName: string,
-    isShift: boolean,
-  ): void {
-    const sel = this.view.selectedCards;
-
-    if (isShift && sel.size > 0) {
-      // Build DOM order for the column
-      const columnEl = this.view.containerEl.querySelector(
-        `[data-column-name="${CSS.escape(columnName)}"]`,
-      );
-      if (columnEl) {
-        const cardEls = Array.from(
-          columnEl.querySelectorAll<HTMLElement>(".base-board-card"),
-        );
-        const paths = cardEls.map((el) => el.dataset.filePath ?? "");
-        const clickedIdx = paths.indexOf(filePath);
-        // Find the last card in the current selection that exists in this column
-        const lastIdx = paths.reduceRight((found, p, i) => {
-          if (found !== -1) return found;
-          return sel.has(p) ? i : -1;
-        }, -1);
-        if (clickedIdx !== -1 && lastIdx !== -1) {
-          const [from, to] = [
-            Math.min(clickedIdx, lastIdx),
-            Math.max(clickedIdx, lastIdx),
-          ];
-          for (let i = from; i <= to; i++) {
-            if (paths[i]) sel.add(paths[i]);
-          }
-        } else {
-          sel.add(filePath); // fallback: just add
-        }
-      }
-    } else {
-      // Cmd/Ctrl+click: toggle
-      if (sel.has(filePath)) {
-        sel.delete(filePath);
-      } else {
-        sel.add(filePath);
-      }
-    }
-
-    // Sync visual state on all card elements
-    this.view.containerEl
-      .querySelectorAll<HTMLElement>(".base-board-card")
-      .forEach((el) => {
-        if (sel.has(el.dataset.filePath ?? "")) {
-          el.addClass("base-board-card--selected");
-        } else {
-          el.removeClass("base-board-card--selected");
-        }
-      });
-  }
-
-  public clearSelection(): void {
-    this.view.selectedCards.clear();
-    this.view.containerEl
-      .querySelectorAll<HTMLElement>(".base-board-card--selected")
-      .forEach((el) => el.removeClass("base-board-card--selected"));
-  }
-
-  /**
-   * Show a "Move to…" context menu for the current multi-selection.
-   * Uses the same `applyBatchUpdate` + `processFrontMatter` pattern as
-   * the single-card drag/drop to stay consistent.
-   */
-  public showBatchMoveMenu(e: MouseEvent): void {
-    const selectedPaths = Array.from(this.view.selectedCards);
-    const groupByProp = this.view.getGroupByProperty();
-    if (!groupByProp) return;
-
-    const columns = this.view.getColumns();
-    const menu = new Menu();
-
-    menu.addItem((item) => {
-      item.setTitle(`Move ${selectedPaths.length} cards to…`).setDisabled(true);
-    });
-    menu.addSeparator();
-
-    for (const col of columns) {
-      menu.addItem((item) => {
-        item.setTitle(col).onClick(() => {
-          void this.moveBatchToColumn(selectedPaths, col, groupByProp);
-        });
-      });
-    }
-
-    menu.showAtMouseEvent(e);
-  }
-
-  private async moveBatchToColumn(
-    filePaths: string[],
-    targetColumn: string,
-    groupByProp: string,
-  ): Promise<void> {
-    const selected = new Set(filePaths);
-    const orderedPaths = this.view
-      .getOrderedPathsForColumn(targetColumn)
-      .filter((path) => !selected.has(path));
-    orderedPaths.push(...filePaths);
-
-    await this.view.applyBatchUpdate(async () => {
-      const updates = filePaths.map((fp) => {
-        const file = this.view.app.vault.getAbstractFileByPath(fp);
-        if (!file || !(file instanceof TFile)) return Promise.resolve();
-        return this.view.app.fileManager.processFrontMatter(
-          file,
-          (fm: Record<string, unknown>) => {
-            this.view.applyGroupByValue(fm, groupByProp, targetColumn);
-          },
-        );
-      });
-      await Promise.all(updates);
-      await this.view.writeCardOrder(orderedPaths, filePaths);
-    });
-    this.clearSelection();
-    new Notice(
-      `Moved ${filePaths.length} card${filePaths.length > 1 ? "s" : ""} to "${targetColumn}"`,
-    );
   }
 
   private getCardCoverSrc(file: TFile, coverPropName: string): string | null {
@@ -842,17 +599,17 @@ export class CardManager {
 
   private renderCardThumbnail(cardEl: HTMLElement, src: string): void {
     const thumbEl = cardEl.createDiv();
-    thumbEl.className = "base-board-card-thumbnail";
+    thumbEl.className = "kanbase-card-thumbnail";
     thumbEl
       .createEl("img", {
-        cls: "base-board-card-thumbnail-img",
+        cls: "kanbase-card-thumbnail-img",
         attr: { src, loading: "lazy" },
       })
       .addEventListener("error", () => {
         thumbEl.remove();
-        cardEl.removeClass("base-board-card--has-thumbnail");
+        cardEl.removeClass("kanbase-card--has-thumbnail");
       });
     cardEl.prepend(thumbEl);
-    cardEl.addClass("base-board-card--has-thumbnail");
+    cardEl.addClass("kanbase-card--has-thumbnail");
   }
 }

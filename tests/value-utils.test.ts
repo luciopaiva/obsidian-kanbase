@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coerceColumnValue } from "../src/value-utils";
+import { coerceColumnValue } from "../src/support/value-utils";
 
 describe("coerceColumnValue", () => {
   it("keeps a real boolean type for checkbox columns", () => {

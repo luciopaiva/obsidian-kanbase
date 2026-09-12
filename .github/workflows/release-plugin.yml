@@ -5,8 +5,15 @@ on:
     tags:
       - "*"
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -14,36 +21,51 @@ jobs:
       attestations: write
 
     steps:
-      - name: Checkout repository
+      - name: Checkout tagged source
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version-file: .nvmrc
+          cache: npm
 
-      - name: Install dependencies
+      - name: Install locked dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
+      - name: Validate tag and source tree
+        run: |
+          npm run validate:release -- "$GITHUB_REF_NAME"
+          git diff --check
 
-      - name: Build plugin
-        run: npm run build
+      - name: Run release checks and production build
+        run: npm run ci
 
-      - name: Attest build provenance
+      - name: Stage exact release assets
+        run: |
+          mkdir release
+          cp main.js manifest.json styles.css release/
+          npm run validate:bundle -- release
+          test "$(find release -maxdepth 1 -type f | wc -l)" -eq 3
+
+      - name: Reject duplicate release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: '! gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY"'
+
+      - name: Attest release assets
         uses: actions/attest@v4
         with:
-          subject-path: |
-            main.js
-            styles.css
+          subject-path: release/*
 
-      - name: Create Release and Upload Assets
-        uses: softprops/action-gh-release@v2
+      - name: Publish release assets
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: |
-            main.js
-            manifest.json
-            styles.css
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            release/main.js release/manifest.json release/styles.css
