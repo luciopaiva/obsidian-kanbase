@@ -2,7 +2,10 @@
 export const NO_VALUE_COLUMN = "(No value)";
 
 /** Frontmatter property that controls card ordering within a column. */
-export const ORDER_PROPERTY = "kanban_order";
+export const ORDER_PROPERTY = "kanbase_order";
+
+/** Previous Base Board order property, read only when adopting existing cards. */
+export const LEGACY_ORDER_PROPERTY = "kanban_order";
 
 /** Key used by BasesViewConfig.set/get to persist column order in the .base file. */
 export const CONFIG_KEY_COLUMNS = "boardColumns";

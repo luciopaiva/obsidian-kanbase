@@ -1,10 +1,12 @@
 import { BasesEntry, BasesEntryGroup, TFile } from "obsidian";
-import { ORDER_PROPERTY } from "../support/constants";
+import { LEGACY_ORDER_PROPERTY, ORDER_PROPERTY } from "../support/constants";
 import {
   compareOrderValues,
+  copyLegacyOrderIfMissing,
   generateOrderKeys,
   isOrderKey,
   OrderValue,
+  readFrontmatterOrder,
   readOrderValue,
 } from "../support/order";
 import type { KanbanView } from "../kanban-view";
@@ -22,7 +24,7 @@ export class CardMoveCoordinator {
     const file = this.view.app.vault.getAbstractFileByPath(filePath);
     if (!(file instanceof TFile)) return null;
     const cache = this.view.app.metadataCache.getFileCache(file);
-    return readOrderValue(cache?.frontmatter?.[ORDER_PROPERTY]);
+    return readFrontmatterOrder(cache?.frontmatter);
   }
 
   public compareCardOrder(
@@ -218,6 +220,14 @@ export class CardMoveCoordinator {
       (path) => !isOrderKey(this.getFileOrder(path)),
     );
     const pathsToWrite = hasLegacyOrder ? orderedPaths : pathsToAssign;
+    const pathsToAdopt = orderedPaths.filter(
+      (path) =>
+        this.getFileOrderForProperty(path, ORDER_PROPERTY) === null &&
+        this.getFileOrderForProperty(path, LEGACY_ORDER_PROPERTY) !== null,
+    );
+    const pathsToPersist = Array.from(
+      new Set([...pathsToWrite, ...pathsToAdopt]),
+    );
     const previousOrder = previousPath ? this.getFileOrder(previousPath) : null;
     const followingOrder = nextPath ? this.getFileOrder(nextPath) : null;
     const newOrders = hasLegacyOrder
@@ -229,20 +239,37 @@ export class CardMoveCoordinator {
         );
 
     await Promise.all(
-      pathsToWrite.map((cardPath, index) => {
+      pathsToPersist.map((cardPath) => {
         const file = this.view.app.vault.getAbstractFileByPath(cardPath);
         if (!(file instanceof TFile)) return Promise.resolve();
-        const orderValue = hasLegacyOrder
-          ? newOrders[index]
-          : newOrders[pathsToAssign.indexOf(cardPath)];
+        const writeIndex = pathsToWrite.indexOf(cardPath);
+        const orderValue =
+          writeIndex === -1
+            ? null
+            : hasLegacyOrder
+              ? newOrders[orderedPaths.indexOf(cardPath)]
+              : newOrders[pathsToAssign.indexOf(cardPath)];
         return this.view.app.fileManager.processFrontMatter(
           file,
           (frontmatter: Record<string, unknown>) => {
-            frontmatter[ORDER_PROPERTY] = orderValue;
+            copyLegacyOrderIfMissing(frontmatter);
+            if (orderValue !== null) {
+              frontmatter[ORDER_PROPERTY] = orderValue;
+            }
           },
         );
       }),
     );
+  }
+
+  private getFileOrderForProperty(
+    filePath: string,
+    property: string,
+  ): OrderValue {
+    const file = this.view.app.vault.getAbstractFileByPath(filePath);
+    if (!(file instanceof TFile)) return null;
+    const cache = this.view.app.metadataCache.getFileCache(file);
+    return readOrderValue(cache?.frontmatter?.[property]);
   }
 
   private getCardSourceColumn(filePath: string): string | null {

@@ -17,7 +17,7 @@
 - **Drag, Drop & Bulk Move**: Reorder cards, move them between columns, or select and move multiple cards together.
 - **Column Management**: Add, rename, reorder, color, collapse, and remove columns directly from the board, with optional work-in-progress limits.
 - **Rich, Customizable Cards**: Display selected properties, cover images, configurable titles, adjustable title size, and tags above or below the title.
-- **Advanced Tag Filtering**: See per-tag card counts and cycle tags between included, excluded, and inactive states. The filter bar can be hidden per board.
+- **Advanced Tag Filtering**: See per-tag card counts and filter directly with clicks on desktop, or cycle between included, excluded, and inactive states on touch. The filter bar can be hidden per board.
 - **Base-Aware Tag Display**: Optionally hide tags already required by the underlying Base filters.
 - **Flexible Card Opening**: Open notes in the active pane, a new tab, a split, or a floating editing modal.
 - **Optional Hover Previews**: Enable native Obsidian previews for cards using the **Page preview** core plugin.
@@ -40,6 +40,10 @@ By default, card interaction respects native Obsidian conventions:
 - **Shift + Click:** Select a range of cards.
 
 You can customize the default click behavior (e.g. to always open in a floating modal, split pane, or new tab) via the board toolbar under the view options menu.
+
+### Tag Filtering
+
+On desktop, click an inactive tag to include it and click an active tag to clear it. Shift-click includes the tag in the exclusion filter instead, or clears it when it is already excluded. On touch devices, tap a tag repeatedly to cycle through included, excluded, and inactive states.
 
 ### Card Ordering
 

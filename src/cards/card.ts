@@ -14,7 +14,11 @@ import {
   Platform,
 } from "obsidian";
 import { KanbanView } from "../kanban-view";
-import { ORDER_PROPERTY, sanitizeFilename } from "../support/constants";
+import {
+  LEGACY_ORDER_PROPERTY,
+  ORDER_PROPERTY,
+  sanitizeFilename,
+} from "../support/constants";
 import { relativeLuminance } from "../support/color-utils";
 
 const IMAGE_EXTENSIONS = new Set([
@@ -83,6 +87,7 @@ const FILE_PROPS_TO_SKIP = new Set([
   "embeds",
   "tags",
 ]);
+const ORDER_PROPS_TO_SKIP = new Set([ORDER_PROPERTY, LEGACY_ORDER_PROPERTY]);
 
 export class CardManager {
   private view: KanbanView;
@@ -282,7 +287,7 @@ export class CardManager {
       }
       const propName = propId.startsWith("note.") ? propId.slice(5) : propId;
       if (groupByProp && propName === groupByProp) continue;
-      if (propName === ORDER_PROPERTY) continue;
+      if (ORDER_PROPS_TO_SKIP.has(propName)) continue;
 
       const val = entry.getValue(propId);
       if (!val || val instanceof NullValue || !val.isTruthy()) continue;
@@ -373,7 +378,7 @@ export class CardManager {
       .getOrder()
       .filter((propId) => {
         const propName = propId.startsWith("note.") ? propId.slice(5) : propId;
-        return propName !== groupByProp && propName !== ORDER_PROPERTY;
+        return propName !== groupByProp && !ORDER_PROPS_TO_SKIP.has(propName);
       })
       .map((propId) => {
         const value = entry.getValue(propId);
