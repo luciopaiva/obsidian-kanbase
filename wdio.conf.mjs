@@ -29,7 +29,7 @@ export const config = {
       "wdio:obsidianOptions": {
         appVersion,
         installerVersion,
-        plugins: [".", ".e2e-plugins/base-board"],
+        plugins: ["."],
         vault: "e2e/vault",
       },
     },

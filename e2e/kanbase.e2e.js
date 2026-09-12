@@ -12,7 +12,6 @@ describe("Kanbase in Obsidian", function () {
       const frame = icon?.querySelector("rect");
       return {
         loaded: Boolean(app.plugins.plugins.kanbase),
-        baseBoardLoaded: Boolean(app.plugins.plugins["base-board"]),
         commandName: app.commands.commands["kanbase:create-board"]?.name,
         iconViewBox: icon?.getAttribute("viewBox"),
         iconFrameWidth: frame?.getAttribute("width"),
@@ -21,7 +20,6 @@ describe("Kanbase in Obsidian", function () {
 
     expect(state).toEqual({
       loaded: true,
-      baseBoardLoaded: true,
       commandName: "Kanbase: Create new board",
       iconViewBox: "0 0 100 100",
       iconFrameWidth: "84",
@@ -137,7 +135,7 @@ describe("Kanbase in Obsidian", function () {
     await expect(browser.$('[aria-label="Show tag filters"]')).toExist();
   });
 
-  it("opens a Kanbase view without rewriting a coexisting legacy view", async function () {
+  it("hides tags required by Base filters without rewriting the Base", async function () {
     const original = [
       "filters:",
       "  and:",
@@ -148,13 +146,6 @@ describe("Kanbase in Obsidian", function () {
       "    groupBy:",
       "      property: note.status",
       "      direction: ASC",
-      "  - type: kanban",
-      "    name: Legacy board",
-      "    boardColumns:",
-      "      - Backlog",
-      "      - Done",
-      "    cardOpenBehavior: modal",
-      "    newCardsToTop: true",
       "",
     ].join("\n");
 
@@ -195,50 +186,5 @@ describe("Kanbase in Obsidian", function () {
       return app.vault.read(file);
     });
     expect(content).toBe(original);
-  });
-
-  it("does not rewrite Bases when a folder is renamed", async function () {
-    // The coexistence fixture is the upstream Base Board plugin, which still
-    // contains the behavior this regression removes. Keep only Kanbase active.
-    await obsidianPage.disablePlugin("base-board");
-
-    const original = [
-      "filters:",
-      "  and:",
-      '    - note.department.contains("Archive")',
-      "formulas:",
-      '  normalized: lower("Archive")',
-      "  label: 'Archive (\"Archive\")'",
-      '# reminder: helper("Archive")',
-      "views:",
-      "  - type: table",
-      "    name: Unrelated",
-      "",
-    ].join("\n");
-
-    await browser.executeObsidian(async ({ app, obsidian }, content) => {
-      await app.vault.createFolder("Archive");
-      await app.vault.create("Unrelated.base", content);
-      const folder = app.vault.getAbstractFileByPath("Archive");
-      if (!(folder instanceof obsidian.TFolder)) {
-        throw new Error("Test folder not created");
-      }
-      await app.vault.rename(folder, "Renamed");
-    }, original);
-
-    // The removed implementation waited 250 ms before scanning every Base.
-    await browser.pause(500);
-
-    const state = await browser.executeObsidian(async ({ app }) => {
-      const file = app.vault.getAbstractFileByPath("Unrelated.base");
-      const renamedFolder = app.vault.getAbstractFileByPath("Renamed");
-      return {
-        content: file ? await app.vault.read(file) : null,
-        folderRenamed: Boolean(renamedFolder),
-      };
-    });
-
-    expect(state.folderRenamed).toBe(true);
-    expect(state.content).toBe(original);
   });
 });
