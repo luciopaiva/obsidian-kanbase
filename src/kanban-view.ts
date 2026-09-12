@@ -23,6 +23,7 @@ import { BoardConfig } from "./board/board-config";
 import { BoardRenderer } from "./board/board-renderer";
 import { BoardUpdateCoordinator } from "./board/board-update-coordinator";
 import { CardNavigation } from "./cards/card-navigation";
+import { migrateLegacyViewSettings } from "./migration/base-board-migration";
 
 // ---------------------------------------------------------------------------
 //  Kanban View
@@ -101,6 +102,11 @@ export class KanbanView extends BasesView implements HoverParent {
         this.handleColumnReorder(orderedNames),
       getSelectedCards: () => this.cardSelection.getSelectedPaths(),
     });
+
+    // Run after the view has been attached so the containing .base file can be found.
+    window.setTimeout(() => {
+      void migrateLegacyViewSettings(this.app, this.scrollEl, this.config);
+    }, 0);
   }
 
   /**

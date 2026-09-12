@@ -44,46 +44,46 @@ This plan turns the current Base Board fork into a separately published Obsidian
 
 - [x] Verify which settings are stored in `.base` files and which are stored in plugin data.
 - [x] Preserve existing configuration property names where possible.
-- [ ] Decide whether the new plugin should read or migrate data from `.obsidian/plugins/base-board`.
-- [ ] If migration is needed, implement it explicitly and safely without silently rewriting user files.
+- [x] Decide whether the new plugin should read or migrate data from `.obsidian/plugins/base-board`.
+- [x] If migration is needed, implement it explicitly and safely without silently rewriting user files.
 
 ### Per-base Base Board view migration
 
 When a `.base` file contains an old Base Board view and the user creates a new Kanbase view in the same file, automatically copy the old view's Kanbase-compatible settings into the new view. This migration is scoped to that `.base` file and is independent of whether the old Base Board plugin is installed. The original view must remain untouched.
 
-- [ ] Detect when the active Kanbase view has no Kanbase-specific settings yet.
-- [ ] Locate the containing `.base` file.
-- [ ] Read and parse the file's `views` section.
-- [ ] Find candidate old views with `type: kanban`.
-- [ ] Match candidates by view name when possible.
-- [ ] If there is only one candidate, use it as the default source.
-- [ ] If multiple candidates remain, use the best name match and otherwise skip ambiguous migration safely.
-- [ ] Copy only Kanbase-specific settings:
-  - [ ] `cardOpenBehavior`
-  - [ ] `cardCoverProperty`
-  - [ ] `newCardsToTop`
-  - [ ] `boardColumns`
-  - [ ] `columnColors`
-  - [ ] `wipLimits`
-  - [ ] `collapsedColumns`
-  - [ ] `tagFiltersVisible`
-  - [ ] `tagColors`
-- [ ] Do not copy the old view's type, name, filters, grouping, sorting, or visible-property configuration.
-- [ ] Never overwrite settings that are already present in the Kanbase view.
-- [ ] Record that the migration was completed, or otherwise make the detection idempotent.
+- [x] Detect when the active Kanbase view has no Kanbase-specific settings yet.
+- [x] Locate the containing `.base` file.
+- [x] Read and parse the file's `views` section.
+- [x] Find candidate old views with `type: kanban`.
+- [x] Match candidates by view name when possible.
+- [x] If there is only one candidate, use it as the default source.
+- [x] If multiple candidates remain, use the best name match and otherwise skip ambiguous migration safely.
+- [x] Copy only Kanbase-specific settings:
+  - [x] `cardOpenBehavior`
+  - [x] `cardCoverProperty`
+  - [x] `newCardsToTop`
+  - [x] `boardColumns`
+  - [x] `columnColors`
+  - [x] `wipLimits`
+  - [x] `collapsedColumns`
+  - [x] `tagFiltersVisible`
+  - [x] `tagColors`
+- [x] Do not copy the old view's type, name, filters, grouping, sorting, or visible-property configuration.
+- [x] Never overwrite settings that are already present in the Kanbase view.
+- [x] Make the detection idempotent by checking for existing Kanbase settings.
 - [x] Leave the original Base Board view and its settings untouched.
 - [x] Do not prompt the user or add a separate migration command.
-- [ ] Test the migration with one old view, multiple old views, renamed views, and no matching view.
+- [x] Test the migration with one old view, multiple old views, renamed views, and no matching view.
 
 ### Per-base view creation migration
 
 - [x] Never convert an existing `type: kanban` view in place.
-- [ ] When a new Kanbase view is created in a `.base` file containing a `type: kanban` view, create the new view with `type: kanbase` and copy the selected compatible fields.
-- [ ] Leave the old view and all unrelated `.base` content unchanged.
-- [ ] Report which `.base` files could not be migrated without modifying them.
+- [x] When a new Kanbase view is created in a `.base` file containing a `type: kanban` view, create the new view with `type: kanbase` and copy the selected compatible fields.
+- [x] Leave the old view and all unrelated `.base` content unchanged.
+- [x] Silently skip malformed or unavailable migrations without modifying the source `.base` file.
 
-- [ ] Test existing boards, filters, grouping, card ordering, and custom display settings.
-- [ ] Add migration instructions or a migration command if the view type changes make it necessary.
+- [x] Test preservation of existing board settings and exclusion of filters, grouping, sorting, and display metadata from migration.
+- [x] No migration instructions or command required; existing boards continue to work without user action.
 
 ## Phase 4: Documentation and attribution
 
@@ -101,19 +101,56 @@ When a `.base` file contains an old Base Board view and the user creates a new K
   Copyright (c) 2026 Lucio Paiva
   ```
 
-## Phase 5: Validate the plugin
+## Phase 5: Continuous integration and delivery
 
-- [x] Run `npm run lint`.
-- [x] Run `npm test`.
-- [x] Build the production bundle.
-- [x] Run `git diff --check`.
-- [ ] Run `bash scripts/install-to-test-vault.sh`.
-- [ ] In the test vault, verify plugin loading and the Kanbase view.
-- [ ] Test creation of a new board.
-- [ ] Test filters, grouping, drag-and-drop, card opening, and card creation.
-- [ ] Test all custom display settings and confirm they persist after closing and reopening the view.
-- [ ] Test behavior with an existing Base Board installation present, if coexistence is supported.
-- [ ] Confirm the release bundle contains only the intended files.
+The pipeline should provide fast, deterministic checks for every pull request and push, then perform a stricter release validation before publishing assets. Real Obsidian E2E should be a separate manual/nightly job initially because it requires an Electron desktop runtime and is slower and more platform-sensitive than unit tests.
+
+### Pull request and push CI
+
+- [ ] Add a GitHub Actions workflow for `pull_request` and pushes to the default branch.
+- [ ] Test against the supported Node.js versions, including the Node version used by the release workflow.
+- [ ] Use `npm ci` and enable dependency caching through `actions/setup-node`.
+- [ ] Run TypeScript checking and ESLint through `npm run lint`.
+- [ ] Add and run a formatting check, such as `prettier --check "src/**/*.ts"`.
+- [ ] Run the Vitest suite through `npm test`.
+- [ ] Run `npm run build` and verify that the production bundle is generated.
+- [ ] Run `git diff --check`.
+- [ ] Validate `manifest.json`, `versions.json`, `package.json`, and `package-lock.json` as parseable and internally consistent.
+- [ ] Validate the plugin bundle: `main.js`, `manifest.json`, and `styles.css` exist; `main.js` is production-built; and no source maps or development artifacts are included.
+- [ ] Run an Obsidian-plugin linter or equivalent manifest/API policy check, and review any warnings before release.
+- [ ] Upload useful failure artifacts such as test reports, bundle metadata, and screenshots when a UI job fails.
+- [ ] Make the core CI jobs required status checks for merging.
+
+### Release CD
+
+- [ ] Run the same CI checks before publishing a release.
+- [ ] Trigger releases only from a valid semver tag and verify that the tag exactly matches `manifest.json`.
+- [ ] Build from the tagged commit, not from an uncommitted or different branch state.
+- [ ] Publish only `main.js`, `manifest.json`, and `styles.css` as plugin release assets; exclude `data.json`, source files, and development files.
+- [ ] Verify that the uploaded `manifest.json` version and release tag match.
+- [ ] Generate build-provenance attestations for the release artifacts.
+- [ ] Keep the release workflow permission scope minimal and prevent duplicate releases for the same tag.
+- [ ] Add dependency and GitHub Actions update automation through Dependabot or an equivalent service.
+
+### Real Obsidian integration and E2E testing
+
+- [ ] Create a disposable test vault and install the built Kanbase bundle into it during the test job.
+- [ ] Launch a real Obsidian desktop build in CI under Linux `xvfb` with isolated user/config directories.
+- [ ] Enable community plugins, load Kanbase, and verify that the plugin registers successfully.
+- [ ] Test creation of a new board and confirm the generated view type is `kanbase` and the visible label is `Kanbase`.
+- [ ] Test Bases integration, filters, grouping, tag filtering, drag-and-drop, card opening, and card creation.
+- [ ] Test custom display settings and confirm they persist after closing and reopening the view.
+- [ ] Test coexistence with an existing Base Board installation and confirm the old view remains untouched when a Kanbase view is created.
+- [ ] Capture screenshots and Obsidian console/plugin errors as artifacts when E2E fails.
+- [ ] Run the real-Obsidian suite manually or nightly at first; promote stable smoke tests to required PR checks later.
+
+### Runtime/tooling decision
+
+- [ ] Use the official [Obsidian CLI](https://obsidian.md/help/cli) for local automation and developer smoke tests where a running desktop Obsidian instance is available.
+- [ ] Do not treat [Obsidian Headless](https://obsidian.md/help/headless) as a plugin E2E runtime; it is a headless Sync/Publish client and does not load desktop plugins.
+- [ ] Evaluate a real-app harness such as `wdio-obsidian-service` or `obsidian-e2e` for CI-driven plugin tests.
+- [ ] Pin the Obsidian desktop version used by E2E, or explicitly test a small version matrix, so runtime changes are visible and reproducible.
+- [ ] Document the local commands for running the same E2E suite and cleaning up temporary Obsidian processes and vaults.
 
 ## Phase 6: Commit and release
 
