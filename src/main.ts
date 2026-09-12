@@ -1,4 +1,11 @@
-import { Plugin, QueryController, TFolder, TAbstractFile } from "obsidian";
+import {
+  addIcon,
+  Plugin,
+  QueryController,
+  removeIcon,
+  TFolder,
+  TAbstractFile,
+} from "obsidian";
 import { KanbanView } from "./kanban-view";
 import { CreateBoardModal } from "./ui/modals";
 import { updateBaseFolderReferences } from "./support/folder-rename";
@@ -9,6 +16,7 @@ import {
   MAX_CARD_TITLE_FONT_SIZE,
   MIN_CARD_TITLE_FONT_SIZE,
 } from "./settings";
+import { KANBASE_ICON_ID, KANBASE_ICON_SVG } from "./icons";
 
 export type CardTagPosition = "top" | "bottom";
 
@@ -49,6 +57,7 @@ export default class KanbasePlugin extends Plugin {
 
   async onload() {
     await this.loadPluginData();
+    addIcon(KANBASE_ICON_ID, KANBASE_ICON_SVG);
     const boardScaffolder = new BoardScaffolder(this.app);
     this.addSettingTab(new KanbaseSettingTab(this.app, this));
     this.registerHoverLinkSource("kanbase", {
@@ -58,7 +67,7 @@ export default class KanbasePlugin extends Plugin {
 
     this.registerBasesView("kanbase", {
       name: "Kanbase",
-      icon: "lucide-kanban",
+      icon: KANBASE_ICON_ID,
       factory: (controller: QueryController, containerEl: HTMLElement) => {
         const view = new KanbanView(controller, containerEl, this);
         this.boardViews.add(view);
@@ -88,6 +97,7 @@ export default class KanbasePlugin extends Plugin {
   }
 
   onunload() {
+    removeIcon(KANBASE_ICON_ID);
     if (this.folderRenameFlushTimer !== null) {
       window.clearTimeout(this.folderRenameFlushTimer);
     }

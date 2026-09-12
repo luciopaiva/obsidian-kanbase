@@ -7,16 +7,24 @@ describe("Kanbase in Obsidian", function () {
   });
 
   it("loads the plugin and registers its command", async function () {
-    const state = await browser.executeObsidian(({ app }) => ({
-      loaded: Boolean(app.plugins.plugins.kanbase),
-      baseBoardLoaded: Boolean(app.plugins.plugins["base-board"]),
-      commandName: app.commands.commands["kanbase:create-board"]?.name,
-    }));
+    const state = await browser.executeObsidian(({ app, obsidian }) => {
+      const icon = obsidian.getIcon("kanbase-logo");
+      const frame = icon?.querySelector("rect");
+      return {
+        loaded: Boolean(app.plugins.plugins.kanbase),
+        baseBoardLoaded: Boolean(app.plugins.plugins["base-board"]),
+        commandName: app.commands.commands["kanbase:create-board"]?.name,
+        iconViewBox: icon?.getAttribute("viewBox"),
+        iconFrameWidth: frame?.getAttribute("width"),
+      };
+    });
 
     expect(state).toEqual({
       loaded: true,
       baseBoardLoaded: true,
       commandName: "Kanbase: Create new board",
+      iconViewBox: "0 0 100 100",
+      iconFrameWidth: "84",
     });
   });
 
