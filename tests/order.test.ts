@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   compareOrderValues,
+  copyLegacyOrderIfMissing,
   generateOrderKey,
   generateOrderKeys,
   isOrderKey,
+  readFrontmatterOrder,
   readOrderValue,
 } from "../src/support/order";
 
@@ -47,5 +49,35 @@ describe("fractional card ordering", () => {
     expect(readOrderValue("a0")).toBe("a0");
     expect(isOrderKey(generateOrderKey(null, null))).toBe(true);
     expect(isOrderKey("not a generated key")).toBe(false);
+  });
+
+  it("prefers Kanbase order and falls back to legacy order", () => {
+    expect(
+      readFrontmatterOrder({
+        kanbase_order: "a1",
+        kanban_order: "a0",
+      }),
+    ).toBe("a1");
+    expect(readFrontmatterOrder({ kanban_order: 20 })).toBe(20);
+    expect(readFrontmatterOrder({})).toBeNull();
+  });
+
+  it("copies legacy order without replacing either property", () => {
+    const legacyOnly: Record<string, unknown> = { kanban_order: "a0" };
+    expect(copyLegacyOrderIfMissing(legacyOnly)).toBe(true);
+    expect(legacyOnly).toEqual({
+      kanban_order: "a0",
+      kanbase_order: "a0",
+    });
+
+    const alreadyAdopted: Record<string, unknown> = {
+      kanban_order: "a0",
+      kanbase_order: "b0",
+    };
+    expect(copyLegacyOrderIfMissing(alreadyAdopted)).toBe(false);
+    expect(alreadyAdopted).toEqual({
+      kanban_order: "a0",
+      kanbase_order: "b0",
+    });
   });
 });
