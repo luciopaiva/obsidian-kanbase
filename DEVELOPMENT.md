@@ -47,3 +47,8 @@ obsidian eval code='Boolean(app.plugins.plugins["kanbase"])'
 Obsidian Headless is not used because it is a Sync/Publish client and does not
 load desktop community plugins. The real-app suite is intentionally separate
 from required pull-request CI.
+
+## Releases
+
+See [RELEASING.md](RELEASING.md) for the versioning, validation, publication,
+and post-release verification checklist.
