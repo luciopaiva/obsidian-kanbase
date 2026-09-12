@@ -7,16 +7,24 @@ describe("Kanbase in Obsidian", function () {
   });
 
   it("loads the plugin and registers its command", async function () {
-    const state = await browser.executeObsidian(({ app }) => ({
-      loaded: Boolean(app.plugins.plugins.kanbase),
-      baseBoardLoaded: Boolean(app.plugins.plugins["base-board"]),
-      commandName: app.commands.commands["kanbase:create-board"]?.name,
-    }));
+    const state = await browser.executeObsidian(({ app, obsidian }) => {
+      const icon = obsidian.getIcon("kanbase-logo");
+      const frame = icon?.querySelector("rect");
+      return {
+        loaded: Boolean(app.plugins.plugins.kanbase),
+        baseBoardLoaded: Boolean(app.plugins.plugins["base-board"]),
+        commandName: app.commands.commands["kanbase:create-board"]?.name,
+        iconViewBox: icon?.getAttribute("viewBox"),
+        iconFrameWidth: frame?.getAttribute("width"),
+      };
+    });
 
     expect(state).toEqual({
       loaded: true,
       baseBoardLoaded: true,
       commandName: "Kanbase: Create new board",
+      iconViewBox: "0 0 100 100",
+      iconFrameWidth: "84",
     });
   });
 
@@ -131,6 +139,9 @@ describe("Kanbase in Obsidian", function () {
 
   it("opens a Kanbase view without rewriting a coexisting legacy view", async function () {
     const original = [
+      "filters:",
+      "  and:",
+      '    - file.tags.contains("smoke")',
       "views:",
       "  - type: kanbase",
       "    name: Smoke",
@@ -151,7 +162,7 @@ describe("Kanbase in Obsidian", function () {
       await app.vault.create("Smoke.base", content);
       await app.vault.create(
         "Card.md",
-        "---\nstatus: Backlog\ntags: [smoke]\n---\n# Card\n",
+        "---\nstatus: Backlog\ntags: [smoke, visible]\n---\n# Card\n",
       );
       const file = app.vault.getAbstractFileByPath("Smoke.base");
       if (!(file instanceof obsidian.TFile))
@@ -163,6 +174,21 @@ describe("Kanbase in Obsidian", function () {
     await expect(browser.$(".kanbase-toolbar-title")).toHaveText(
       "Smoke Kanbase",
     );
+    await expect(
+      browser.$(
+        "//span[contains(@class, 'kanbase-filter-label') and normalize-space()='visible']",
+      ),
+    ).toExist();
+    await expect(
+      browser.$(
+        "//span[contains(@class, 'kanbase-filter-label') and normalize-space()='smoke']",
+      ),
+    ).not.toExist();
+    await expect(
+      browser.$(
+        "//span[contains(@class, 'kanbase-card-tag') and normalize-space()='smoke']",
+      ),
+    ).not.toExist();
 
     const content = await browser.executeObsidian(async ({ app }) => {
       const file = app.vault.getAbstractFileByPath("Smoke.base");

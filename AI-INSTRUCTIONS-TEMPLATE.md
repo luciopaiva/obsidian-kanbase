@@ -1,6 +1,6 @@
 # Task Management (Obsidian Kanbase)
 
-This repository uses the [Kanbase](https://github.com/mderazon/obsidian-kanbase) Obsidian plugin to manage tasks via Kanban boards. The Kanban board is purely a visual layer on top of standard markdown files and frontmatter.
+This repository uses the [Kanbase](https://github.com/luciopaiva/obsidian-kanbase) Obsidian plugin to manage tasks via Kanban boards. The Kanban board is purely a visual layer on top of standard markdown files and frontmatter.
 
 When instructed to "create a task", "update a task", or "move a task", you must directly create or edit standard Markdown files in the designated tasks folder and manage their YAML frontmatter.
 

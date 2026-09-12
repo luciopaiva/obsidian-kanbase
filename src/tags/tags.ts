@@ -107,8 +107,14 @@ export class Tags {
 
   public getTagsForCardDisplay(file: TFile): string[] {
     const tags = this.extractTagsFromFile(file);
-    if (!this.view.plugin.shouldHideBaseFilterTags()) return tags;
-    return tags.filter((tag) => !this.tagsRequiredByBaseFilters.has(tag));
+    return tags.filter((tag) => !this.isTagHiddenByBaseFilter(tag));
+  }
+
+  public isTagHiddenByBaseFilter(tag: string): boolean {
+    return (
+      this.view.plugin.shouldHideBaseFilterTags() &&
+      this.tagsRequiredByBaseFilters.has(tag)
+    );
   }
 
   /**
