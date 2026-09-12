@@ -1,15 +1,13 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="logo-dark.svg">
-    <img alt="Kanbase Logo" src="logo-light.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/luciopaiva/obsidian-kanbase/HEAD/logo-dark.svg">
+    <img alt="Kanbase Logo" src="https://raw.githubusercontent.com/luciopaiva/obsidian-kanbase/HEAD/logo-light.svg">
   </picture>
 </p>
 
 # Kanbase
 
 **Kanbase** is yet another Kanban board view for [Obsidian Bases](https://obsidian.md). It lets you organize your notes into visual columns based on any property in their frontmatter, providing a seamless drag-and-drop experience for managing tasks and structured data.
-
-Kanbase is a fork of Michael DeRazon's [original plugin](https://github.com/mderazon/obsidian-base-board). It has since diverged considerably from Michael's version, enough to justify creating a separate plugin.
 
 ![Kanbase demo](demo.gif)
 
@@ -89,7 +87,7 @@ instructions.
 
 ## Attribution
 
-Kanbase is derived from [Base Board](https://github.com/mderazon/obsidian-base-board), originally created by [Michael DeRazon](https://github.com/mderazon).
+Kanbase is derived from [Base Board](https://github.com/mderazon/obsidian-base-board), originally created by [Michael DeRazon](https://github.com/mderazon). It has since diverged considerably from Michael's version, enough to justify creating a separate plugin.
 
 ## License
 
