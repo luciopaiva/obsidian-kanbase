@@ -139,6 +139,9 @@ describe("Kanbase in Obsidian", function () {
 
   it("opens a Kanbase view without rewriting a coexisting legacy view", async function () {
     const original = [
+      "filters:",
+      "  and:",
+      '    - file.tags.contains("smoke")',
       "views:",
       "  - type: kanbase",
       "    name: Smoke",
@@ -159,7 +162,7 @@ describe("Kanbase in Obsidian", function () {
       await app.vault.create("Smoke.base", content);
       await app.vault.create(
         "Card.md",
-        "---\nstatus: Backlog\ntags: [smoke]\n---\n# Card\n",
+        "---\nstatus: Backlog\ntags: [smoke, visible]\n---\n# Card\n",
       );
       const file = app.vault.getAbstractFileByPath("Smoke.base");
       if (!(file instanceof obsidian.TFile))
@@ -171,6 +174,21 @@ describe("Kanbase in Obsidian", function () {
     await expect(browser.$(".kanbase-toolbar-title")).toHaveText(
       "Smoke Kanbase",
     );
+    await expect(
+      browser.$(
+        "//span[contains(@class, 'kanbase-filter-label') and normalize-space()='visible']",
+      ),
+    ).toExist();
+    await expect(
+      browser.$(
+        "//span[contains(@class, 'kanbase-filter-label') and normalize-space()='smoke']",
+      ),
+    ).not.toExist();
+    await expect(
+      browser.$(
+        "//span[contains(@class, 'kanbase-card-tag') and normalize-space()='smoke']",
+      ),
+    ).not.toExist();
 
     const content = await browser.executeObsidian(async ({ app }) => {
       const file = app.vault.getAbstractFileByPath("Smoke.base");

@@ -27,11 +27,14 @@ export class TagFilterBar {
     for (const group of this.view.currentGroups) {
       for (const entry of group.entries) {
         if (entry.file instanceof TFile) {
-          tagsByCard.push(this.tags.extractTagsFromFile(entry.file));
+          tagsByCard.push(this.tags.getTagsForCardDisplay(entry.file));
         }
       }
     }
     this.tagCounts = countTagsByCard(tagsByCard);
+    for (const tag of this.filters.keys()) {
+      if (this.tags.isTagHiddenByBaseFilter(tag)) this.filters.delete(tag);
+    }
   }
 
   public matches(file: TFile): boolean {
