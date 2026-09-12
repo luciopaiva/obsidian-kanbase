@@ -1,5 +1,5 @@
 import { App, Notice, TFile } from "obsidian";
-import { sanitizeFilename } from "../support/constants";
+import { ORDER_PROPERTY, sanitizeFilename } from "../support/constants";
 
 export interface BoardConfig {
   name: string;
@@ -93,7 +93,7 @@ export class BoardScaffolder {
         const content = [
           "---",
           `${groupBy}: ${task.value}`,
-          `kanban_order: ${task.order}`,
+          `${ORDER_PROPERTY}: ${task.order}`,
           tagsLine,
           "---",
           "",

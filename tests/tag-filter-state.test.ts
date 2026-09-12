@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getDesktopTagFilterState,
   getNextTagFilterState,
   matchesTagFilters,
   type ActiveTagFilterState,
@@ -10,6 +11,18 @@ describe("getNextTagFilterState", () => {
     expect(getNextTagFilterState("none")).toBe("include");
     expect(getNextTagFilterState("include")).toBe("exclude");
     expect(getNextTagFilterState("exclude")).toBe("none");
+  });
+
+  it("uses direct include and clear actions for desktop clicks", () => {
+    expect(getDesktopTagFilterState("none", false)).toBe("include");
+    expect(getDesktopTagFilterState("include", false)).toBe("none");
+    expect(getDesktopTagFilterState("exclude", false)).toBe("none");
+  });
+
+  it("uses direct exclude and clear actions for shift-clicks", () => {
+    expect(getDesktopTagFilterState("none", true)).toBe("exclude");
+    expect(getDesktopTagFilterState("include", true)).toBe("exclude");
+    expect(getDesktopTagFilterState("exclude", true)).toBe("none");
   });
 });
 
