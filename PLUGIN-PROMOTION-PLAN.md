@@ -119,13 +119,13 @@ The pipeline should provide fast, deterministic checks for every pull request an
 
 ## Phase 6: Commit and release
 
-- [ ] Review `git status` and ensure the local install script is not included in the commit.
-- [ ] Commit the repository changes in logical commits.
-- [ ] Push the default branch and confirm the root `manifest.json` is correct at `HEAD`.
-- [ ] Create a GitHub release tagged exactly `1.0.0`.
-- [ ] Attach `main.js`, `manifest.json`, and `styles.css` to the release.
-- [ ] Do not attach development files or `data.json`.
-- [ ] Verify that the release assets match the manifest version.
+- [x] Review `git status` and ensure the local install script is not included in the commit.
+- [x] Commit the repository changes in logical commits.
+- [x] Push the default branch and confirm the root `manifest.json` is correct at `HEAD`.
+- [x] Create a GitHub release tagged exactly `1.0.0`.
+- [x] Attach `main.js`, `manifest.json`, and `styles.css` to the release.
+- [x] Do not attach development files or `data.json`.
+- [x] Verify that the release assets match the manifest version.
 
 ## Phase 7: Submit to the Obsidian community directory
 

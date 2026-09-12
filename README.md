@@ -15,19 +15,17 @@ Kanbase is a fork of Michael DeRazon's [original plugin](https://github.com/mder
 
 ## Key Features
 
-- **Property-Based Columns**: Instantly generate columns from any frontmatter property.
-- **Intuitive Drag & Drop**: Move cards between columns to update their properties automatically, and reorder cards within a column.
-- **Inline Power**: Rename cards or column titles directly on the board.
-- **Native Editing Modal**: Open any card into a fully-functional Obsidian editor floating directly over your workspace.
-- **Rich Cards**: View key metadata fields as chips on each card for a quick overview.
-- **Configurable Card Title**: Set `cardTitleProperty: note.title` in your `.base` file to use a frontmatter property (e.g. `title`) as the card heading instead of the filename.
-- **Tags**: Color-coded tag chips on cards with a clickable filter bar to narrow the board by tag.
-- **Hover Preview**: Native note previews on hover (uses the **Page preview** core plugin).
-- **One-Click Creation**: Add new notes directly to a specific column without leaving the board view.
-- **WIP Limits**: Set per-column work-in-progress limits via the column header context menu. Columns that exceed their limit are highlighted in red.
-- **Collapsible Columns**: Collapse any column to save space; the state is remembered per board.
-- **Card Cover Images**: Display cover images at the top of cards by specifying an image frontmatter property (e.g., `cover: "[[image.png]]"` or a web URL). Defaults to the `cover` property.
-- **Data First**: All changes are written directly to your Markdown files.
+- **Property-Based Columns**: Group notes into columns using any frontmatter property.
+- **Drag, Drop & Bulk Move**: Reorder cards, move them between columns, or select and move multiple cards together.
+- **Column Management**: Add, rename, reorder, color, collapse, and remove columns directly from the board, with optional work-in-progress limits.
+- **Rich, Customizable Cards**: Display selected properties, cover images, configurable titles, adjustable title size, and tags above or below the title.
+- **Advanced Tag Filtering**: See per-tag card counts and cycle tags between included, excluded, and inactive states. The filter bar can be hidden per board.
+- **Base-Aware Tag Display**: Optionally hide tags already required by the underlying Base filters.
+- **Flexible Card Opening**: Open notes in the active pane, a new tab, a split, or a floating editing modal.
+- **Optional Hover Previews**: Enable native Obsidian previews for cards using the **Page preview** core plugin.
+- **Inline Editing**: Rename cards and columns and edit card tags without leaving the board.
+- **Quick Card Creation**: Create notes in a column using the configured folder, template, default properties, and top or bottom placement.
+- **Markdown-Native Data**: Card moves and edits update ordinary Markdown files and frontmatter; Kanbase does not maintain a separate task database.
 
 ## Usage
 
@@ -70,7 +68,19 @@ This ensures new cards automatically receive required frontmatter fields, keepin
 
 ### From Obsidian Community Plugins
 
-Search for **Kanbase** in the Obsidian Community Plugins browser and click **Install**, or view the plugin directly on the [Obsidian Community Plugins directory](https://community.obsidian.md/plugins/kanbase).
+Search for **Kanbase** in the Obsidian Community Plugins browser and click
+**Install**, or view the plugin directly in the
+[Obsidian Community Plugins directory](https://community.obsidian.md/plugins/kanbase).
+
+### Using BRAT
+
+Kanbase can also be installed manually through
+[BRAT](https://github.com/TfTHacker/obsidian42-brat):
+
+1. Install and enable BRAT from Obsidian's Community Plugins browser.
+2. Open **Settings → BRAT → Add Beta Plugin**.
+3. Enter `luciopaiva/obsidian-kanbase` and select **Add Plugin**.
+4. Enable **Kanbase** under **Settings → Community plugins**.
 
 ## Development
 

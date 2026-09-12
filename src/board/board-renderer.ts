@@ -1,5 +1,6 @@
 import { BasesEntryGroup, NullValue, setIcon } from "obsidian";
 import type { KanbanView } from "../kanban-view";
+import { KANBASE_ICON_ID } from "../icons";
 import { getGroupForColumn } from "./board-grouping";
 
 interface BoardScrollState {
@@ -55,7 +56,7 @@ export class BoardRenderer {
       });
       setIcon(
         msgEl.createSpan({ cls: "kanbase-placeholder-icon" }),
-        "lucide-kanban",
+        KANBASE_ICON_ID,
       );
       msgEl.createEl("p", {
         text: 'Set "group by" in the sort menu to organize cards into columns.',
