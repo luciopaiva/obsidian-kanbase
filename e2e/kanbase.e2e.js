@@ -196,4 +196,49 @@ describe("Kanbase in Obsidian", function () {
     });
     expect(content).toBe(original);
   });
+
+  it("does not rewrite Bases when a folder is renamed", async function () {
+    // The coexistence fixture is the upstream Base Board plugin, which still
+    // contains the behavior this regression removes. Keep only Kanbase active.
+    await obsidianPage.disablePlugin("base-board");
+
+    const original = [
+      "filters:",
+      "  and:",
+      '    - note.department.contains("Archive")',
+      "formulas:",
+      '  normalized: lower("Archive")',
+      "  label: 'Archive (\"Archive\")'",
+      '# reminder: helper("Archive")',
+      "views:",
+      "  - type: table",
+      "    name: Unrelated",
+      "",
+    ].join("\n");
+
+    await browser.executeObsidian(async ({ app, obsidian }, content) => {
+      await app.vault.createFolder("Archive");
+      await app.vault.create("Unrelated.base", content);
+      const folder = app.vault.getAbstractFileByPath("Archive");
+      if (!(folder instanceof obsidian.TFolder)) {
+        throw new Error("Test folder not created");
+      }
+      await app.vault.rename(folder, "Renamed");
+    }, original);
+
+    // The removed implementation waited 250 ms before scanning every Base.
+    await browser.pause(500);
+
+    const state = await browser.executeObsidian(async ({ app }) => {
+      const file = app.vault.getAbstractFileByPath("Unrelated.base");
+      const renamedFolder = app.vault.getAbstractFileByPath("Renamed");
+      return {
+        content: file ? await app.vault.read(file) : null,
+        folderRenamed: Boolean(renamedFolder),
+      };
+    });
+
+    expect(state.folderRenamed).toBe(true);
+    expect(state.content).toBe(original);
+  });
 });
