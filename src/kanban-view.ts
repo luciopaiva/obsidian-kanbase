@@ -5,6 +5,7 @@ import {
   HoverParent,
   HoverPopover,
   QueryController,
+  parseYaml,
 } from "obsidian";
 import type KanbasePlugin from "./main";
 import { DragDropManager } from "./board/drag-drop";
@@ -105,7 +106,12 @@ export class KanbanView extends BasesView implements HoverParent {
 
     // Run after the view has been attached so the containing .base file can be found.
     window.setTimeout(() => {
-      void migrateLegacyViewSettings(this.app, this.scrollEl, this.config);
+      void migrateLegacyViewSettings(
+        this.app,
+        this.scrollEl,
+        this.config,
+        parseYaml,
+      );
     }, 0);
   }
 

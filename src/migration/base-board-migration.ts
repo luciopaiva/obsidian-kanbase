@@ -1,6 +1,7 @@
 import type { App, BasesViewConfig, TFile } from "obsidian";
 
 const LEGACY_VIEW_TYPE = "kanban";
+const KANBASE_VIEW_TYPE = "kanbase";
 
 export const MIGRATABLE_KEYS = [
   "cardOpenBehavior",
@@ -15,12 +16,8 @@ export const MIGRATABLE_KEYS = [
 ] as const;
 
 type UnknownRecord = Record<string, unknown>;
-type ViewConfig = Pick<BasesViewConfig, "name" | "get" | "set">;
-
-async function parseBaseFile(source: string): Promise<unknown> {
-  const { parseYaml } = await import("obsidian");
-  return parseYaml(source);
-}
+type ViewConfig = Pick<BasesViewConfig, "name" | "set">;
+type YamlParser = (source: string) => unknown;
 
 function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -89,26 +86,41 @@ function normalizedName(value: unknown): string | null {
     : null;
 }
 
-/** Select one old view, or null when the source is missing or ambiguous. */
-export function selectLegacyView(
+function selectViewByType(
   views: unknown,
-  currentViewName: string,
+  viewType: string,
+  viewName: string,
 ): UnknownRecord | null {
   if (!Array.isArray(views)) return null;
 
   const candidates = views.filter(
-    (view): view is UnknownRecord =>
-      isRecord(view) && view.type === LEGACY_VIEW_TYPE,
+    (view): view is UnknownRecord => isRecord(view) && view.type === viewType,
   );
   if (candidates.length === 0) return null;
   if (candidates.length === 1) return candidates[0];
 
-  const target = normalizedName(currentViewName);
+  const target = normalizedName(viewName);
   if (!target) return null;
   const matches = candidates.filter(
     (view) => normalizedName(view.name) === target,
   );
   return matches.length === 1 ? matches[0] : null;
+}
+
+/** Select one old view, or null when the source is missing or ambiguous. */
+export function selectLegacyView(
+  views: unknown,
+  currentViewName: string,
+): UnknownRecord | null {
+  return selectViewByType(views, LEGACY_VIEW_TYPE, currentViewName);
+}
+
+/** Select the raw Kanbase view whose runtime config triggered migration. */
+export function selectKanbaseView(
+  views: unknown,
+  currentViewName: string,
+): UnknownRecord | null {
+  return selectViewByType(views, KANBASE_VIEW_TYPE, currentViewName);
 }
 
 /** Extract and validate only settings supported by Kanbase. */
@@ -125,13 +137,13 @@ export function readMigratableSettings(view: unknown): UnknownRecord | null {
   return Object.keys(settings).length > 0 ? settings : null;
 }
 
-export function hasConfiguredKanbaseSettings(
-  config: Pick<ViewConfig, "get">,
-): boolean {
-  return MIGRATABLE_KEYS.some((key) => {
-    const value = config.get(key);
-    return value !== undefined && value !== null;
-  });
+export function hasStoredKanbaseSettings(view: unknown): boolean {
+  return (
+    isRecord(view) &&
+    MIGRATABLE_KEYS.some((key) =>
+      Object.prototype.hasOwnProperty.call(view, key),
+    )
+  );
 }
 
 function findContainingBaseFile(app: App, scrollEl: HTMLElement): TFile | null {
@@ -160,15 +172,17 @@ export async function migrateLegacyViewSettings(
   app: App,
   scrollEl: HTMLElement,
   config: ViewConfig,
+  parseYaml: YamlParser,
 ): Promise<void> {
   try {
-    if (hasConfiguredKanbaseSettings(config)) return;
-
     const baseFile = findContainingBaseFile(app, scrollEl);
     if (!baseFile) return;
 
-    const parsed = await parseBaseFile(await app.vault.read(baseFile));
+    const parsed = parseYaml(await app.vault.read(baseFile));
     if (!isRecord(parsed)) return;
+
+    const kanbaseView = selectKanbaseView(parsed.views, config.name);
+    if (!kanbaseView || hasStoredKanbaseSettings(kanbaseView)) return;
 
     const legacyView = selectLegacyView(parsed.views, config.name);
     const settings = readMigratableSettings(legacyView);

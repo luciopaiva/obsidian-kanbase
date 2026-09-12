@@ -142,6 +142,8 @@ describe("Kanbase in Obsidian", function () {
       "    boardColumns:",
       "      - Backlog",
       "      - Done",
+      "    cardOpenBehavior: modal",
+      "    newCardsToTop: true",
       "",
     ].join("\n");
 
@@ -162,12 +164,18 @@ describe("Kanbase in Obsidian", function () {
       "Smoke Kanbase",
     );
 
-    const content = await browser.executeObsidian(async ({ app }) => {
-      const file = app.vault.getAbstractFileByPath("Smoke.base");
-      return app.vault.read(file);
+    let content = "";
+    await browser.waitUntil(async () => {
+      content = await browser.executeObsidian(async ({ app }) => {
+        const file = app.vault.getAbstractFileByPath("Smoke.base");
+        return app.vault.read(file);
+      });
+      return (content.match(/cardOpenBehavior: modal/g) ?? []).length === 2;
     });
     expect(content).toContain("type: kanban");
     expect(content).toContain("type: kanbase");
     expect(content).toContain("name: Legacy board");
+    expect((content.match(/boardColumns:/g) ?? []).length).toBe(2);
+    expect((content.match(/newCardsToTop: true/g) ?? []).length).toBe(2);
   });
 });

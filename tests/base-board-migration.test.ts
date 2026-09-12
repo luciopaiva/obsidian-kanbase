@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  hasConfiguredKanbaseSettings,
+  hasStoredKanbaseSettings,
   readMigratableSettings,
+  selectKanbaseView,
   selectLegacyView,
 } from "../src/migration/base-board-migration";
 
@@ -27,6 +28,21 @@ describe("Base Board migration", () => {
 
     expect(selectLegacyView([first, second], "Board")).toBeNull();
     expect(selectLegacyView([{ type: "table" }], "Board")).toBeNull();
+  });
+
+  it("selects the current Kanbase view by name", () => {
+    const current = { type: "kanbase", name: "Current" };
+    const other = { type: "kanbase", name: "Other" };
+
+    expect(selectKanbaseView([other, current], " current ")).toBe(current);
+    expect(selectKanbaseView([current], "Renamed")).toBe(current);
+  });
+
+  it("skips ambiguous Kanbase views", () => {
+    const first = { type: "kanbase", name: "Board" };
+    const second = { type: "kanbase", name: "Board" };
+
+    expect(selectKanbaseView([first, second], "Board")).toBeNull();
   });
 
   it("copies only valid Kanbase settings", () => {
@@ -56,16 +72,18 @@ describe("Base Board migration", () => {
     ).toBeNull();
   });
 
-  it("treats false and empty collections as configured", () => {
-    const config = {
-      get: (key: string) =>
-        key === "newCardsToTop"
-          ? false
-          : key === "boardColumns"
-            ? []
-            : undefined,
-    };
-
-    expect(hasConfiguredKanbaseSettings(config)).toBe(true);
+  it("checks stored YAML keys rather than runtime defaults", () => {
+    expect(hasStoredKanbaseSettings({ type: "kanbase", name: "New" })).toBe(
+      false,
+    );
+    expect(
+      hasStoredKanbaseSettings({ type: "kanbase", newCardsToTop: false }),
+    ).toBe(true);
+    expect(
+      hasStoredKanbaseSettings({ type: "kanbase", boardColumns: [] }),
+    ).toBe(true);
+    expect(
+      hasStoredKanbaseSettings({ type: "kanbase", cardCoverProperty: null }),
+    ).toBe(true);
   });
 });
