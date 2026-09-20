@@ -147,7 +147,8 @@ describe("Kanbase in Obsidian", function () {
 
     const firstColumnAfterOpen = browser.$(".kanbase-column");
     await firstColumnAfterOpen.$(".kanbase-column-add-card").click();
-    const cardInput = firstColumnAfterOpen.$(".kanbase-add-card-input");
+    const cardInput = browser.$(".modal-container input[type='text']");
+    await cardInput.waitForExist();
     await cardInput.setValue("E2E-created card");
     await browser.keys("Enter");
     await expect(
@@ -155,7 +156,6 @@ describe("Kanbase in Obsidian", function () {
         "//div[contains(@class, 'kanbase-card-title') and contains(., 'E2E-created card')]",
       ),
     ).toExist();
-    await browser.keys("Escape");
     await browser.waitUntil(
       async () => !(await browser.$(".modal-container").isExisting()),
     );

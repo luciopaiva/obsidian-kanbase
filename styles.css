@@ -748,25 +748,20 @@
   height: 14px;
 }
 
-.kanbase-add-card-input-wrapper {
-  padding: 4px 8px 8px;
+/* ---- Modals: stack label above a full-width input ---- */
+
+.kanbase-modal-stacked-setting {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
 }
 
-.kanbase-add-card-input {
+.kanbase-modal-stacked-setting .setting-item-control {
   width: 100%;
-  box-sizing: border-box;
-  font-family: inherit;
-  font-size: var(--font-ui-small);
-  padding: 8px 10px;
-  background-color: var(--background-primary);
-  color: var(--text-normal);
-  border: 1px solid var(--interactive-accent);
-  border-radius: var(--radius-s);
-  outline: none;
 }
 
-.kanbase-add-card-input::placeholder {
-  color: var(--text-faint);
+.kanbase-modal-full-width-input {
+  width: 100%;
 }
 
 /* ---- Board Toolbar / Filter Bar ---- */
