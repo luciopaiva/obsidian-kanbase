@@ -2,6 +2,7 @@ import { BasesEntry, Notice } from "obsidian";
 import { ORDER_PROPERTY } from "../support/constants";
 import { generateOrderKey, isOrderKey, OrderValue } from "../support/order";
 import type { KanbanView } from "../kanban-view";
+import { InputModal } from "../ui/modals";
 
 export class CardCreationManager {
   private view: KanbanView;
@@ -10,53 +11,16 @@ export class CardCreationManager {
     this.view = view;
   }
 
-  public startInline(
-    triggerEl: HTMLElement,
-    columnName: string,
-    orderedEntries: BasesEntry[],
-  ): void {
+  public startInline(columnName: string, orderedEntries: BasesEntry[]): void {
     const initialOrder = this.getInitialOrder(orderedEntries);
-    const columnEl = triggerEl.closest(".kanbase-column");
-    const cardsEl =
-      (columnEl?.querySelector(".kanbase-cards") as HTMLElement | null) ??
-      triggerEl.parentElement!;
-
-    triggerEl.classList.add("kanbase-hidden");
-    const inputWrapper = cardsEl.createDiv({
-      cls: "kanbase-add-card-input-wrapper",
-    });
-    const input = inputWrapper.createEl("input", {
-      cls: "kanbase-add-card-input",
-      attr: { type: "text", placeholder: "Card title…" },
-    });
-    input.focus();
-
-    let committed = false;
-    const commit = async () => {
-      if (committed) return;
-      committed = true;
-      const title = input.value.trim();
-      inputWrapper.remove();
-      triggerEl.classList.remove("kanbase-hidden");
-      if (title) {
-        await this.createCard(title, columnName, initialOrder);
-      }
-    };
-
-    input.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        void commit();
-      } else if (event.key === "Escape") {
-        event.preventDefault();
-        committed = true;
-        inputWrapper.remove();
-        triggerEl.classList.remove("kanbase-hidden");
-      }
-    });
-    input.addEventListener("blur", () => {
-      void commit();
-    });
+    new InputModal(
+      this.view.app,
+      `New card in ${columnName}`,
+      "Card title…",
+      (title: string) => {
+        void this.createCard(title, columnName, initialOrder);
+      },
+    ).open();
   }
 
   private getInitialOrder(orderedEntries: BasesEntry[]): OrderValue {

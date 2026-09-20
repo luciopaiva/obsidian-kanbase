@@ -31,23 +31,27 @@ export class InputModal extends Modal {
     const { contentEl } = this;
     contentEl.createEl("h3", { text: this.title });
 
-    new Setting(contentEl).setName("Name").addText((text) => {
-      text.setPlaceholder(this.placeholder);
-      if (this.value) {
-        text.setValue(this.value);
-      }
-      text.onChange((v) => (this.value = v));
-      // Focus and handle Enter key
-      window.setTimeout(() => {
-        text.inputEl.focus();
-        text.inputEl.addEventListener("keydown", (e: KeyboardEvent) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            this.submit();
-          }
-        });
-      }, 50);
-    });
+    new Setting(contentEl)
+      .setName("Name")
+      .setClass("kanbase-modal-stacked-setting")
+      .addText((text) => {
+        text.setPlaceholder(this.placeholder);
+        text.inputEl.addClass("kanbase-modal-full-width-input");
+        if (this.value) {
+          text.setValue(this.value);
+        }
+        text.onChange((v) => (this.value = v));
+        // Focus and handle Enter key
+        window.setTimeout(() => {
+          text.inputEl.focus();
+          text.inputEl.addEventListener("keydown", (e: KeyboardEvent) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              this.submit();
+            }
+          });
+        }, 50);
+      });
 
     new Setting(contentEl).addButton((btn) => {
       btn

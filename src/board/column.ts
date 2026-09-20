@@ -143,7 +143,7 @@ export class ColumnManager {
     setIcon(addCardHeaderBtn, "plus");
     addCardHeaderBtn.addEventListener("click", (e: MouseEvent) => {
       e.stopPropagation();
-      this.view.cardCreation.startInline(addCardHeaderBtn, columnName, sorted);
+      this.view.cardCreation.startInline(columnName, sorted);
     });
 
     // ---- Column menu button ----
