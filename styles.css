@@ -468,6 +468,21 @@
   border-color: var(--interactive-accent);
 }
 
+/* Flash briefly to draw attention to a newly created card */
+.kanbase-card--highlight {
+  animation: kanbase-card-highlight-flash 1.2s ease-out;
+}
+
+@keyframes kanbase-card-highlight-flash {
+  0% {
+    box-shadow: 0 0 0 2px var(--interactive-accent);
+    border-color: var(--interactive-accent);
+  }
+  100% {
+    box-shadow: none;
+  }
+}
+
 .kanbase-card:active {
   cursor: grabbing;
 }
