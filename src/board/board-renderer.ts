@@ -13,8 +13,14 @@ export class BoardRenderer {
   public readonly cardElCache = new Map<string, HTMLElement>();
   public readonly columnElCache = new Map<string, HTMLElement>();
   private isFirstRender = true;
+  private pendingFocusPath: string | null = null;
 
   constructor(private readonly view: KanbanView) {}
+
+  /** Scroll to and highlight the card at `path` once it appears in a render. */
+  public requestFocus(path: string): void {
+    this.pendingFocusPath = path;
+  }
 
   public render(): void {
     this.view.boardConfig.ensureFileNameInOrder();
@@ -97,6 +103,52 @@ export class BoardRenderer {
     this.view.columnManager.renderAddColumnButton(boardEl);
     this.view.dragDropManager.initBoard(boardEl);
     this.restoreScrollState(boardEl, scrollState);
+    this.applyPendingFocus();
+  }
+
+  private applyPendingFocus(): void {
+    const path = this.pendingFocusPath;
+    if (!path) return;
+    const cardEl = this.view.containerEl.querySelector<HTMLElement>(
+      `[data-file-path="${CSS.escape(path)}"]`,
+    );
+    // Card may not be grouped/rendered yet (frontmatter write still in flight)
+    // — keep waiting, applyPendingFocus runs again on the next render.
+    if (!cardEl) return;
+
+    this.pendingFocusPath = null;
+    const highlight = () => {
+      cardEl.addClass("kanbase-card--highlight");
+      cardEl.addEventListener(
+        "animationend",
+        () => cardEl.removeClass("kanbase-card--highlight"),
+        { once: true },
+      );
+    };
+
+    const cardsEl = cardEl.closest<HTMLElement>(".kanbase-cards");
+    const targetTop = cardsEl
+      ? this.view.boardConfig.shouldAddNewCardsToTop()
+        ? 0
+        : cardsEl.scrollHeight
+      : 0;
+    if (!cardsEl || Math.abs(cardsEl.scrollTop - targetTop) < 1) {
+      highlight();
+      return;
+    }
+
+    // "scrollend" tells us the smooth scroll finished; fall back to a timer
+    // in case the browser never fires it (e.g. the scroll gets interrupted).
+    const fallback = window.setTimeout(() => {
+      cardsEl.removeEventListener("scrollend", onScrollEnd);
+      highlight();
+    }, 1000);
+    const onScrollEnd = () => {
+      window.clearTimeout(fallback);
+      highlight();
+    };
+    cardsEl.addEventListener("scrollend", onScrollEnd, { once: true });
+    cardsEl.scrollTo({ top: targetTop, behavior: "smooth" });
   }
 
   private captureScrollState(): BoardScrollState {

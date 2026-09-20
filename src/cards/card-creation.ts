@@ -1,4 +1,4 @@
-import { BasesEntry, Notice } from "obsidian";
+import { BasesEntry, Notice, TFile } from "obsidian";
 import { ORDER_PROPERTY } from "../support/constants";
 import { generateOrderKey, isOrderKey, OrderValue } from "../support/order";
 import type { KanbanView } from "../kanban-view";
@@ -76,7 +76,21 @@ export class CardCreationManager {
     };
 
     try {
+      // createFileForView doesn't return the created file, so capture it
+      // via the vault event to scroll to and highlight it once rendered.
+      const createdFile = new Promise<TFile | null>((resolve) => {
+        const ref = this.view.app.vault.on("create", (file) => {
+          this.view.app.vault.offref(ref);
+          resolve(file instanceof TFile ? file : null);
+        });
+        window.setTimeout(() => {
+          this.view.app.vault.offref(ref);
+          resolve(null);
+        }, 3000);
+      });
       await this.view.createFileForView(title, applyDefaults);
+      const newFile = await createdFile;
+      if (newFile) this.view.renderer.requestFocus(newFile.path);
     } catch (error) {
       new Notice(`Failed to create card: ${String(error)}`);
     }

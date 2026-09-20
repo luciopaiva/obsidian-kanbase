@@ -1,0 +1,32 @@
+# Configures GitHub's auto-generated release notes (used by
+# `gh release create --generate-notes` in release-plugin.yml).
+# Only affects grouping/exclusion of PRs — label PRs accordingly before
+# tagging a release. PRs labeled "release" (the version-bump PR) are hidden
+# since they carry no user-facing changes of their own.
+changelog:
+  exclude:
+    labels:
+      - release
+    authors:
+      - dependabot
+      - dependabot[bot]
+  categories:
+    - title: 🚀 Features
+      labels:
+        - enhancement
+        - feature
+    - title: 🐛 Fixes
+      labels:
+        - bug
+        - fix
+    - title: 📦 Dependencies
+      labels:
+        - dependencies
+    - title: 🧰 Maintenance
+      labels:
+        - chore
+        - refactor
+        - documentation
+    - title: Other Changes
+      labels:
+        - "*"
