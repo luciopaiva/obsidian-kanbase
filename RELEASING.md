@@ -6,8 +6,13 @@ prefix.
 
 ## Prepare the release
 
+- [ ] Merge user-facing changes as their own PR(s), each labeled `enhancement`,
+      `bug`, `fix`, `dependencies`, or `chore` per `.github/release.yml` so the
+      tag's auto-generated release notes group them correctly.
 - [ ] Start from the latest `main` and choose the next semantic version.
-- [ ] Update all version metadata with:
+- [ ] Open a separate, minimal version-bump PR labeled `release` (this label
+      is excluded from the auto-generated notes) and update all version
+      metadata with:
 
   ```sh
   npm version <version> --no-git-tag-version
