@@ -1,5 +1,7 @@
 import { App, Notice } from "obsidian";
 import { DragAutoScroller } from "./drag-auto-scroll";
+import { DragEdgeTargets } from "./drag-edge-targets";
+import type { EdgePosition } from "./drag-edge-targets";
 
 // We use dataTransfer types to distinguish card vs column drags
 const CARD_MIME = "application/x-kanban-card";
@@ -14,6 +16,8 @@ export interface DragDropCallbacks {
   ) => Promise<void>;
   /** Column header was dragged to a new position. */
   onColumnReorder: (orderedColumnNames: string[]) => void;
+  /** Card was dropped on a "move to top/bottom" helper target. */
+  onEdgeDrop: (filePath: string, toTop: boolean) => void;
   /** Returns the set of currently selected card file paths. */
   getSelectedCards: () => ReadonlySet<string>;
 }
@@ -30,6 +34,9 @@ export class DragDropManager {
   /** Other selected card elements dimmed during multi-drag */
   private multiDragEls: HTMLElement[] = [];
   private autoScroller = new DragAutoScroller();
+  private edgeTargets = new DragEdgeTargets();
+  /** Set while the pointer sits on a "move to top/bottom" helper target. */
+  private hoveredEdgePosition: EdgePosition | null = null;
   private lastDragOverColumn: HTMLElement | null = null;
   private dropHighlightEl: HTMLElement | null = null;
   private dropHighlightBoardEl: HTMLElement | null = null;
@@ -79,6 +86,7 @@ export class DragDropManager {
 
   private teardownBoard(): void {
     this.autoScroller.stop();
+    this.edgeTargets.hide();
     if (!this.boardEl) return;
     this.boardEl.removeEventListener("dragstart", this.boundHandlers.dragStart);
     this.boardEl.removeEventListener("dragover", this.boundHandlers.dragOver);
@@ -277,6 +285,7 @@ export class DragDropManager {
       cardEl.parentElement?.insertBefore(this.placeholderEl, cardEl);
       cardEl.addClass("kanbase-card--dragging");
       this.boardEl?.addClass("kanbase-board--is-dragging");
+      this.edgeTargets.show(this.boardEl);
 
       // Dim all other selected cards during multi-drag
       if (isMultiDrag && this.boardEl) {
@@ -316,6 +325,17 @@ export class DragDropManager {
   }
 
   private handleCardDragOver(e: DragEvent): void {
+    this.edgeTargets.scheduleRefresh();
+
+    // "Move to top/bottom" helper targets take precedence over card hit-testing
+    const edgeHit = this.edgeTargets.resolve(e.target);
+    this.edgeTargets.setActive(edgeHit);
+    this.hoveredEdgePosition = edgeHit?.position ?? null;
+    if (edgeHit) {
+      this.handleEdgeTargetDragOver(edgeHit.cardsEl, edgeHit.position);
+      return;
+    }
+
     // Find the cards container we're hovering over
     const closestCardsContainer = (e.target as HTMLElement).closest(
       ".kanbase-cards",
@@ -340,24 +360,9 @@ export class DragDropManager {
       ".kanbase-column",
     ) as HTMLElement | null;
 
-    if (this.boardEl) {
-      const nextColumn =
-        hoveredColumn instanceof HTMLElement ? hoveredColumn : null;
-      if (nextColumn !== this.lastDragOverColumn) {
-        this.lastDragOverColumn?.classList.remove(
-          "kanbase-column--drag-over",
-          "kanbase-column--drag-expanded",
-        );
-        if (nextColumn) {
-          nextColumn.classList.add("kanbase-column--drag-over");
-          // Expand a collapsed column so it can receive the drop.
-          if (nextColumn.classList.contains("kanbase-column--collapsed")) {
-            nextColumn.classList.add("kanbase-column--drag-expanded");
-          }
-        }
-        this.lastDragOverColumn = nextColumn;
-      }
-    }
+    this.setDragOverColumn(
+      hoveredColumn instanceof HTMLElement ? hoveredColumn : null,
+    );
 
     if (!cardsContainer) {
       this.removePlaceholder();
@@ -389,6 +394,30 @@ export class DragDropManager {
     if (afterElement) {
       cardsContainer.insertBefore(this.placeholderEl, afterElement);
     } else {
+      cardsContainer.appendChild(this.placeholderEl);
+    }
+  }
+
+  /** Park the placeholder at the very start or end of the hovered column. */
+  private handleEdgeTargetDragOver(
+    cardsContainer: HTMLElement,
+    position: "top" | "bottom",
+  ): void {
+    const columnEl = cardsContainer.closest(".kanbase-column");
+    this.setDragOverColumn(columnEl instanceof HTMLElement ? columnEl : null);
+
+    if (!this.placeholderEl) {
+      this.placeholderEl = this.boardEl!.createDiv();
+      this.placeholderEl.className = "kanbase-card-placeholder";
+      this.placeholderEl.style.height = `${this.draggedCardHeight}px`;
+    }
+
+    if (position === "top") {
+      const firstChild = cardsContainer.firstElementChild;
+      if (this.placeholderEl !== firstChild) {
+        cardsContainer.insertBefore(this.placeholderEl, firstChild);
+      }
+    } else if (this.placeholderEl !== cardsContainer.lastElementChild) {
       cardsContainer.appendChild(this.placeholderEl);
     }
   }
@@ -436,10 +465,28 @@ export class DragDropManager {
   //  Drag End
   // ---------------------------------------------------------------------------
 
+  private setDragOverColumn(nextColumn: HTMLElement | null): void {
+    if (!this.boardEl || nextColumn === this.lastDragOverColumn) return;
+    this.lastDragOverColumn?.classList.remove(
+      "kanbase-column--drag-over",
+      "kanbase-column--drag-expanded",
+    );
+    if (nextColumn) {
+      nextColumn.classList.add("kanbase-column--drag-over");
+      // Expand a collapsed column so it can receive the drop.
+      if (nextColumn.classList.contains("kanbase-column--collapsed")) {
+        nextColumn.classList.add("kanbase-column--drag-expanded");
+      }
+    }
+    this.lastDragOverColumn = nextColumn;
+  }
+
   private onDragEnd(): void {
     this.boardEl?.removeClass("kanbase-board--is-dragging");
 
     this.autoScroller.stop();
+    this.edgeTargets.hide();
+    this.hoveredEdgePosition = null;
 
     // Restore multi-drag ghost cards
     for (const el of this.multiDragEls) {
@@ -547,6 +594,7 @@ export class DragDropManager {
 
     const droppedEl = this.draggedEl;
     const placeholderEl = this.placeholderEl;
+    const edgePosition = this.hoveredEdgePosition;
     const additionalDroppedEls = Array.from(this.callbacks.getSelectedCards())
       .filter((path) => path !== filePath && !orderedPaths.includes(path))
       .map((path) =>
@@ -582,6 +630,10 @@ export class DragDropManager {
       }
     }
     this.onDragEnd();
+
+    if (edgePosition) {
+      this.callbacks.onEdgeDrop(filePath, edgePosition === "top");
+    }
 
     try {
       await this.callbacks.onCardDrop(filePath, targetColumnName, orderedPaths);

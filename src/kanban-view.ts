@@ -99,6 +99,8 @@ export class KanbanView extends BasesView implements HoverParent {
       ) => this.cardMoves.handleDrop(filePath, targetColumn, orderedPaths),
       onColumnReorder: (orderedNames: string[]) =>
         this.handleColumnReorder(orderedNames),
+      onEdgeDrop: (filePath: string, toTop: boolean) =>
+        this.renderer.requestFocus(filePath, toTop),
       getSelectedCards: () => this.cardSelection.getSelectedPaths(),
     });
   }
