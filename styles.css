@@ -704,6 +704,55 @@
   animation: none;
 }
 
+/* ---- Temporary "move to top/bottom" drop targets ---- */
+/* Flex siblings of the cards container, so they sit outside the scroll
+   viewport and don't overlap the drag auto-scroll edge zones. */
+
+.kanbase-drop-edge {
+  display: none;
+  flex: 0 0 auto;
+  height: 40px;
+  margin: 0 8px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+  border: 2px dashed var(--interactive-accent);
+  border-radius: var(--radius-s);
+  background-color: color-mix(
+    in srgb,
+    var(--interactive-accent) 10%,
+    var(--background-secondary)
+  );
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+}
+
+.kanbase-drop-edge--top {
+  margin-top: 4px;
+}
+
+.kanbase-drop-edge--bottom {
+  margin-bottom: 8px;
+}
+
+.kanbase-drop-edge--visible {
+  display: flex;
+  pointer-events: auto;
+}
+
+.kanbase-drop-edge--active {
+  border-style: solid;
+  color: var(--text-on-accent);
+  background-color: var(--interactive-accent);
+}
+
+.kanbase-drop-edge-label {
+  pointer-events: none;
+}
+
 /* ---- Add column button ---- */
 
 .kanbase-add-column-btn {
