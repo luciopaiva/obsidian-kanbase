@@ -14,12 +14,18 @@ export class BoardRenderer {
   public readonly columnElCache = new Map<string, HTMLElement>();
   private isFirstRender = true;
   private pendingFocusPath: string | null = null;
+  private pendingFocusTop: boolean | null = null;
 
   constructor(private readonly view: KanbanView) {}
 
-  /** Scroll to and highlight the card at `path` once it appears in a render. */
-  public requestFocus(path: string): void {
+  /**
+   * Scroll to and highlight the card at `path` once it appears in a render.
+   * `toTop` picks which end of the column to scroll to, defaulting to the
+   * board's "new cards to top" preference.
+   */
+  public requestFocus(path: string, toTop?: boolean): void {
     this.pendingFocusPath = path;
+    this.pendingFocusTop = toTop ?? null;
   }
 
   public render(): void {
@@ -117,6 +123,14 @@ export class BoardRenderer {
     if (!cardEl) return;
 
     this.pendingFocusPath = null;
+    const toTop =
+      this.pendingFocusTop ?? this.view.boardConfig.shouldAddNewCardsToTop();
+    this.pendingFocusTop = null;
+    this.focusCard(cardEl, toTop);
+  }
+
+  /** Scroll the card's column to the given end, then flash the card. */
+  private focusCard(cardEl: HTMLElement, toTop: boolean): void {
     const highlight = () => {
       cardEl.addClass("kanbase-card--highlight");
       cardEl.addEventListener(
@@ -127,11 +141,7 @@ export class BoardRenderer {
     };
 
     const cardsEl = cardEl.closest<HTMLElement>(".kanbase-cards");
-    const targetTop = cardsEl
-      ? this.view.boardConfig.shouldAddNewCardsToTop()
-        ? 0
-        : cardsEl.scrollHeight
-      : 0;
+    const targetTop = cardsEl ? (toTop ? 0 : cardsEl.scrollHeight) : 0;
     if (!cardsEl || Math.abs(cardsEl.scrollTop - targetTop) < 1) {
       highlight();
       return;
