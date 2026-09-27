@@ -6,6 +6,7 @@ export class BoardUpdateCoordinator {
   constructor(
     private readonly acknowledgeData: () => void,
     private readonly render: () => void,
+    private readonly isDragging: () => boolean,
   ) {}
 
   public onDataUpdated(): void {
@@ -34,11 +35,28 @@ export class BoardUpdateCoordinator {
   }
 
   public scheduleRender(): void {
+    // A mid-drag render would wipe the placeholder/dragged element and orphan drag state.
+    if (this.isDragging()) {
+      this.pendingDataRender = true;
+      return;
+    }
     if (this.renderTimer) window.clearTimeout(this.renderTimer);
     this.renderTimer = window.setTimeout(() => {
       this.renderTimer = null;
+      if (this.isDragging()) {
+        this.pendingDataRender = true;
+        return;
+      }
       this.render();
     }, 50);
+  }
+
+  /** Flush any render that was deferred while a drag was in progress. */
+  public notifyDragEnded(): void {
+    if (this.pendingDataRender) {
+      this.pendingDataRender = false;
+      this.scheduleRender();
+    }
   }
 
   public destroy(): void {

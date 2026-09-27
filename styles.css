@@ -29,6 +29,126 @@
   align-items: flex-start;
 }
 
+/* ---- Swimlanes ---- */
+
+.kanbase-board--swimlanes {
+  flex-direction: column;
+  align-items: stretch;
+  overflow-y: auto;
+}
+
+.kanbase-swimlane-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.kanbase-swimlane-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 2px;
+  cursor: default;
+}
+
+.kanbase-swimlane-row--collapsed .kanbase-swimlane-header {
+  cursor: pointer;
+}
+
+.kanbase-swimlane-collapse-btn,
+.kanbase-swimlane-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-s);
+  padding: 2px;
+}
+
+.kanbase-swimlane-collapse-btn:hover,
+.kanbase-swimlane-menu-btn:hover {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.kanbase-swimlane-title {
+  font-weight: var(--font-semibold);
+  font-size: var(--font-ui-medium);
+}
+
+.kanbase-swimlane-count {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  background-color: var(--background-secondary);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.kanbase-swimlane-columns {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  overflow-x: auto;
+}
+
+.kanbase-swimlane-row--collapsed .kanbase-swimlane-columns {
+  display: none;
+}
+
+.kanbase-swimlane-row:not(:last-child) {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.kanbase-swimlane-drag-handle {
+  flex-shrink: 0;
+  color: var(--text-faint);
+  opacity: 0.3;
+  transition: opacity 0.15s ease;
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  cursor: grab;
+}
+
+.kanbase-swimlane-drag-handle:active {
+  cursor: grabbing;
+}
+
+.kanbase-swimlane-header:hover .kanbase-swimlane-drag-handle {
+  opacity: 1;
+}
+
+.kanbase-swimlane-row--dragging {
+  /* Collapse to zero so it doesn't occupy space alongside the placeholder.
+     Negative margin eats the board's flex gap on both sides so no extra
+     space remains, mirroring the same trick used for dragged columns. */
+  opacity: 0;
+  pointer-events: none;
+  height: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+  margin: -12px 0;
+  border: none;
+}
+
+.kanbase-swimlane-row-placeholder {
+  flex: 0 0 auto;
+  border: 1px dashed var(--interactive-accent);
+  border-radius: var(--radius-m);
+  background-color: color-mix(
+    in srgb,
+    var(--interactive-accent) 8%,
+    transparent
+  );
+  min-height: 48px;
+  animation: placeholder-appear 0.12s ease;
+}
+
 /* Utility — used to hide the + button while inline card creation input is open */
 .kanbase-column-header .kanbase-hidden {
   display: none;
@@ -225,6 +345,11 @@
   /* Larger hit area */
   padding: 2px 4px;
   margin: -2px -4px;
+  cursor: grab;
+}
+
+.kanbase-column-drag-handle:active {
+  cursor: grabbing;
 }
 
 .kanbase-column-header:hover .kanbase-column-drag-handle {

@@ -9,6 +9,7 @@ import {
   readFrontmatterOrder,
   readOrderValue,
 } from "../support/order";
+import { replaceRowValue } from "../board/swimlanes";
 import type { KanbanView } from "../kanban-view";
 
 export class CardMoveCoordinator {
@@ -76,6 +77,7 @@ export class CardMoveCoordinator {
     filePath: string,
     targetColumnName: string,
     orderedPaths: string[],
+    rowChange?: { fromRow: string | null; toRow: string | null },
   ): Promise<void> {
     const groupByProperty = this.view.boardConfig.getGroupByProperty();
     if (!groupByProperty) {
@@ -107,20 +109,33 @@ export class CardMoveCoordinator {
 
     try {
       await this.view.updates.applyBatchUpdate(async () => {
+        const swimlaneProperty = this.view.boardConfig.getSwimlaneProperty();
         const movePromises = pathsToMove.map((path) => {
           const file = this.view.app.vault.getAbstractFileByPath(path);
           if (!(file instanceof TFile)) return Promise.resolve();
-          if (this.getCardSourceColumn(path) === targetColumnName) {
-            return Promise.resolve();
-          }
+          // Row changes only apply to the card that was actually dragged.
+          const appliesRowChange = rowChange && path === filePath;
+          const columnUnchanged =
+            this.getCardSourceColumn(path) === targetColumnName;
+          if (columnUnchanged && !appliesRowChange) return Promise.resolve();
           return this.view.app.fileManager.processFrontMatter(
             file,
             (frontmatter: Record<string, unknown>) => {
-              this.view.boardConfig.applyGroupByValue(
-                frontmatter,
-                groupByProperty,
-                targetColumnName,
-              );
+              if (!columnUnchanged) {
+                this.view.boardConfig.applyGroupByValue(
+                  frontmatter,
+                  groupByProperty,
+                  targetColumnName,
+                );
+              }
+              if (appliesRowChange && swimlaneProperty) {
+                replaceRowValue(
+                  frontmatter,
+                  swimlaneProperty,
+                  rowChange.fromRow,
+                  rowChange.toRow,
+                );
+              }
             },
           );
         });

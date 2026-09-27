@@ -101,6 +101,7 @@ export class CardManager {
     entry: BasesEntry,
     columnName: string,
     existingCardEl?: HTMLElement | null,
+    rowValue?: string,
   ): void {
     const filePath = entry.file?.path ?? "";
     const cardEl = existingCardEl ?? cardsEl.createDiv({ cls: "kanbase-card" });
@@ -113,6 +114,7 @@ export class CardManager {
     if (existingCardEl) {
       cardsEl.appendChild(cardEl);
       cardEl.dataset.columnName = columnName;
+      if (rowValue !== undefined) cardEl.dataset.swimlaneRow = rowValue;
       cardEl.removeClass("kanbase-card--dragging");
       cardEl.removeClass("kanbase-card--drag-ghost");
       cardEl.removeClass("kanbase-card--selected");
@@ -122,6 +124,7 @@ export class CardManager {
       cardEl.setAttr("draggable", "true");
       cardEl.dataset.filePath = filePath;
       cardEl.dataset.columnName = columnName;
+      if (rowValue !== undefined) cardEl.dataset.swimlaneRow = rowValue;
     }
     cardEl.dataset.renderVersion = renderVersion;
 

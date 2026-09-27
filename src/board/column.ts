@@ -25,13 +25,24 @@ export class ColumnManager {
     group: BasesEntryGroup | null,
     columnIndex: number,
     existingColumnEl?: HTMLElement,
+    options?: {
+      /** Row-scoped subset of entries to actually render/count (swimlanes). */
+      displayEntries?: BasesEntry[];
+      /** Swimlane row this column instance belongs to, if any. */
+      rowValue?: string;
+      /** Column headers aren't draggable-to-reorder when nested in a row. */
+      allowDrag?: boolean;
+    },
   ): void {
     const isNoValue = columnName === NO_VALUE_COLUMN;
     const entries = this.view.cardMoves.getEntriesForColumn(columnName, group);
+    const displayEntries = options?.displayEntries ?? entries;
+    const rowValue = options?.rowValue;
+    const allowDrag = options?.allowDrag ?? true;
     const isCollapsed = this.view.preferences.isColumnCollapsed(columnName);
 
     // Sort entries up-front using a stable fallback
-    const sorted = [...entries].sort((a: BasesEntry, b: BasesEntry) => {
+    const sorted = [...displayEntries].sort((a: BasesEntry, b: BasesEntry) => {
       const pathA = a.file?.path ?? "";
       const pathB = b.file?.path ?? "";
       const orderComparison = this.view.cardMoves.compareCardOrder(
@@ -61,11 +72,12 @@ export class ColumnManager {
     boardEl.appendChild(columnEl);
     columnEl.dataset.columnName = columnName;
     columnEl.dataset.columnIndex = String(columnIndex);
+    if (rowValue !== undefined) columnEl.dataset.swimlaneRow = rowValue;
     columnEl.classList.toggle("kanbase-column--collapsed", isCollapsed);
 
     // ---- WIP limit check ----
     const wipLimit = this.view.preferences.getWipLimit(columnName);
-    if (wipLimit !== null && entries.length > wipLimit) {
+    if (wipLimit !== null && displayEntries.length > wipLimit) {
       columnEl.addClass("kanbase-column--wip-overflow");
     }
 
@@ -78,12 +90,14 @@ export class ColumnManager {
 
     // ---- Header ----
     const headerEl = columnEl.createDiv({ cls: "kanbase-column-header" });
-    headerEl.setAttr("draggable", "true");
+    headerEl.setAttr("draggable", allowDrag ? "true" : "false");
 
-    const dragHandle = headerEl.createDiv({
-      cls: "kanbase-column-drag-handle",
-    });
-    setIcon(dragHandle, "grip-vertical");
+    if (allowDrag) {
+      const dragHandle = headerEl.createDiv({
+        cls: "kanbase-column-drag-handle",
+      });
+      setIcon(dragHandle, "grip-vertical");
+    }
 
     headerEl.addEventListener("click", (e: MouseEvent) => {
       if (isCollapsed) {
@@ -126,8 +140,8 @@ export class ColumnManager {
     // Show "count / limit" when a WIP limit is set
     const countText =
       wipLimit !== null
-        ? `${entries.length} / ${wipLimit}`
-        : String(entries.length);
+        ? `${displayEntries.length} / ${wipLimit}`
+        : String(displayEntries.length);
     const countEl = headerEl.createSpan({
       text: countText,
       cls: "kanbase-column-count",
@@ -143,7 +157,7 @@ export class ColumnManager {
     setIcon(addCardHeaderBtn, "plus");
     addCardHeaderBtn.addEventListener("click", (e: MouseEvent) => {
       e.stopPropagation();
-      this.view.cardCreation.startInline(columnName, sorted);
+      this.view.cardCreation.startInline(columnName, sorted, rowValue);
     });
 
     // ---- Column menu button ----
@@ -195,12 +209,15 @@ export class ColumnManager {
 
     visibleCards.forEach((entry) => {
       const filePath = entry.file?.path ?? "";
-      const cachedCardEl = this.view.renderer.cardElCache.get(filePath);
+      const cachedCardEl = this.view.renderer.cardElCache.get(
+        this.view.renderer.cardCacheKey(rowValue, filePath),
+      );
       this.view.cardManager.renderCard(
         cardsEl,
         entry,
         columnName,
         cachedCardEl,
+        rowValue,
       );
     });
 
