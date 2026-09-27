@@ -28,6 +28,21 @@ export class BoardRenderer {
     this.pendingFocusTop = toTop ?? null;
   }
 
+  /** Composite cache key so the same card can be cached once per swimlane row. */
+  public cardCacheKey(
+    rowValue: string | null | undefined,
+    path: string,
+  ): string {
+    return rowValue ? `${rowValue}::${path}` : path;
+  }
+
+  public columnCacheKey(
+    rowValue: string | null | undefined,
+    name: string,
+  ): string {
+    return rowValue ? `${rowValue}::${name}` : name;
+  }
+
   public render(): void {
     this.view.boardConfig.ensureFileNameInOrder();
     this.view.cardSelection.clear();
@@ -36,7 +51,13 @@ export class BoardRenderer {
     this.cardElCache.clear();
     this.view.containerEl.querySelectorAll(".kanbase-card").forEach((el) => {
       const path = (el as HTMLElement).dataset.filePath;
-      if (path) this.cardElCache.set(path, el as HTMLElement);
+      if (path) {
+        const rowValue = (el as HTMLElement).dataset.swimlaneRow;
+        this.cardElCache.set(
+          this.cardCacheKey(rowValue, path),
+          el as HTMLElement,
+        );
+      }
     });
 
     this.columnElCache.clear();
@@ -45,7 +66,8 @@ export class BoardRenderer {
       .forEach((el) => {
         const name = el.dataset.columnName;
         if (name) {
-          this.columnElCache.set(name, el);
+          const rowValue = el.dataset.swimlaneRow;
+          this.columnElCache.set(this.columnCacheKey(rowValue, name), el);
           el.remove();
         }
       });
@@ -95,16 +117,22 @@ export class BoardRenderer {
       this.view.toolbar.areTagFiltersVisible(),
     );
 
-    columns.forEach((columnName, idx) => {
-      const group = getGroupForColumn(this.view.currentGroups, columnName);
-      this.view.columnManager.renderColumn(
-        boardEl,
-        columnName,
-        group,
-        idx,
-        this.columnElCache.get(columnName),
-      );
-    });
+    const swimlaneProperty = this.view.boardConfig.getSwimlaneProperty();
+    if (swimlaneProperty) {
+      boardEl.addClass("kanbase-board--swimlanes");
+      this.view.swimlaneManager.render(boardEl, columns, swimlaneProperty);
+    } else {
+      columns.forEach((columnName, idx) => {
+        const group = getGroupForColumn(this.view.currentGroups, columnName);
+        this.view.columnManager.renderColumn(
+          boardEl,
+          columnName,
+          group,
+          idx,
+          this.columnElCache.get(this.columnCacheKey(null, columnName)),
+        );
+      });
+    }
 
     this.view.columnManager.renderAddColumnButton(boardEl);
     this.view.dragDropManager.initBoard(boardEl);
@@ -170,7 +198,12 @@ export class BoardRenderer {
       .forEach((columnEl) => {
         const name = columnEl.dataset.columnName;
         const cardsEl = columnEl.querySelector<HTMLElement>(".kanbase-cards");
-        if (name && cardsEl) columnTops.set(name, cardsEl.scrollTop);
+        if (name && cardsEl) {
+          columnTops.set(
+            this.columnCacheKey(columnEl.dataset.swimlaneRow, name),
+            cardsEl.scrollTop,
+          );
+        }
       });
     return {
       boardLeft: boardEl?.scrollLeft ?? 0,
@@ -190,7 +223,10 @@ export class BoardRenderer {
       .forEach((columnEl) => {
         const name = columnEl.dataset.columnName;
         const cardsEl = columnEl.querySelector<HTMLElement>(".kanbase-cards");
-        const scrollTop = name ? state.columnTops.get(name) : undefined;
+        const key = name
+          ? this.columnCacheKey(columnEl.dataset.swimlaneRow, name)
+          : undefined;
+        const scrollTop = key ? state.columnTops.get(key) : undefined;
         if (cardsEl && scrollTop !== undefined) cardsEl.scrollTop = scrollTop;
       });
   }

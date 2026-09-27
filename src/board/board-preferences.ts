@@ -1,7 +1,9 @@
 import {
   CONFIG_KEY_COLLAPSED_COLUMNS,
+  CONFIG_KEY_COLLAPSED_SWIMLANES,
   CONFIG_KEY_COLUMN_COLORS,
   CONFIG_KEY_COLUMNS,
+  CONFIG_KEY_SWIMLANE_ROWS,
   CONFIG_KEY_TAG_FILTERS,
   CONFIG_KEY_TAG_FILTERS_VISIBLE,
   CONFIG_KEY_WIP_LIMITS,
@@ -136,6 +138,52 @@ export class BoardPreferences {
     if (!collapsed[columnName]) return;
     delete collapsed[columnName];
     this.view.config?.set(CONFIG_KEY_COLLAPSED_COLUMNS, collapsed);
+  }
+
+  /**
+   * Row order for swimlanes, merged with any newly discovered row values.
+   * Only persists when discovery actually introduces a new row — writing
+   * to the config on every render would retrigger a data-updated cascade.
+   */
+  public getSwimlaneRows(discoveredRows: string[]): string[] {
+    const stored = this.view.config?.get(CONFIG_KEY_SWIMLANE_ROWS) as
+      string[] | undefined;
+    const rows = stored?.length ? [...stored] : [];
+    let changed = false;
+    for (const row of discoveredRows) {
+      if (!rows.includes(row)) {
+        rows.push(row);
+        changed = true;
+      }
+    }
+    if (changed) this.saveSwimlaneRows(rows);
+    return rows;
+  }
+
+  public saveSwimlaneRows(rows: string[]): void {
+    this.view.config?.set(CONFIG_KEY_SWIMLANE_ROWS, rows);
+  }
+
+  public isSwimlaneCollapsed(row: string): boolean {
+    return !!this.getCollapsedSwimlanes()[row];
+  }
+
+  public toggleSwimlaneCollapsed(row: string): void {
+    const collapsed = this.getCollapsedSwimlanes();
+    if (collapsed[row]) {
+      delete collapsed[row];
+    } else {
+      collapsed[row] = true;
+    }
+    this.view.config?.set(CONFIG_KEY_COLLAPSED_SWIMLANES, collapsed);
+    this.view.updates.scheduleRender();
+  }
+
+  private getCollapsedSwimlanes(): Record<string, boolean> {
+    const raw = this.view.config?.get(CONFIG_KEY_COLLAPSED_SWIMLANES);
+    return raw && typeof raw === "object"
+      ? (raw as Record<string, boolean>)
+      : {};
   }
 
   private getColumnColors(): Record<string, string> {

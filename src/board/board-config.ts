@@ -3,6 +3,7 @@ import {
   CONFIG_KEY_ADD_TO_TOP,
   CONFIG_KEY_COVER_PROPERTY,
   CONFIG_KEY_OPEN_BEHAVIOR,
+  CONFIG_KEY_SWIMLANE,
 } from "../support/constants";
 import { applyGroupByValue, getGroupByValueType } from "./board-grouping";
 
@@ -25,6 +26,36 @@ export class BoardConfig {
     const fromGet = cfg?.get("groupBy") as { property?: string } | undefined;
     if (fromGet?.property) return this.stripNotePrefix(fromGet.property);
     return null;
+  }
+
+  /**
+   * The frontmatter property used to split cards into swimlane rows, read
+   * from the `.base` file's own `swimlane.property` view config. Unlike
+   * `groupBy`, Bases has no native concept of this, so it's plugin-owned
+   * config the user must set manually in the `.base` file. Absent means no
+   * swimlanes — the board renders exactly as it does today.
+   */
+  public getSwimlaneProperty(): string | null {
+    const cfg = this.getConfig() as
+      | { swimlane?: { property?: string }; get(key: string): unknown }
+      | undefined;
+    const swimlane = cfg?.swimlane;
+    if (swimlane?.property) return this.stripNotePrefix(swimlane.property);
+
+    const fromGet = cfg?.get(CONFIG_KEY_SWIMLANE) as
+      { property?: string } | undefined;
+    if (fromGet?.property) return this.stripNotePrefix(fromGet.property);
+    return null;
+  }
+
+  /** Set (or, when `property` is null, clear) the swimlane property. */
+  public setSwimlaneProperty(property: string | null): void {
+    const trimmed = property?.trim();
+    this.getConfig()?.set(
+      CONFIG_KEY_SWIMLANE,
+      trimmed ? { property: trimmed } : null,
+    );
+    this.onChange();
   }
 
   public getCardOpenBehavior(): CardOpenBehavior {
