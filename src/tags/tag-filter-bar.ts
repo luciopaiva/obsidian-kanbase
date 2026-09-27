@@ -17,6 +17,7 @@ export class TagFilterBar {
   private tags: Tags;
   private tagCounts = new Map<string, number>();
   private filters = new Map<string, ActiveTagFilterState>();
+  private hasLoadedPersistedFilters = false;
 
   constructor(view: KanbanView, tags: Tags) {
     this.view = view;
@@ -24,6 +25,14 @@ export class TagFilterBar {
   }
 
   public refresh(): void {
+    if (!this.hasLoadedPersistedFilters) {
+      this.hasLoadedPersistedFilters = true;
+      const stored = this.view.preferences.getTagFilters();
+      for (const tag of Object.keys(stored)) {
+        this.filters.set(tag, stored[tag]);
+      }
+    }
+
     const tagsByCard: string[][] = [];
     for (const group of this.view.currentGroups) {
       for (const entry of group.entries) {
@@ -33,9 +42,14 @@ export class TagFilterBar {
       }
     }
     this.tagCounts = countTagsByCard(tagsByCard);
+    let removedHiddenTag = false;
     for (const tag of this.filters.keys()) {
-      if (this.tags.isTagHiddenByBaseFilter(tag)) this.filters.delete(tag);
+      if (this.tags.isTagHiddenByBaseFilter(tag)) {
+        this.filters.delete(tag);
+        removedHiddenTag = true;
+      }
     }
+    if (removedHiddenTag) this.persistFilters();
   }
 
   public matches(file: TFile): boolean {
@@ -69,6 +83,7 @@ export class TagFilterBar {
       });
       clearButton.addEventListener("click", () => {
         this.filters.clear();
+        this.persistFilters();
         this.view.updates.scheduleRender();
       });
     }
@@ -138,8 +153,17 @@ export class TagFilterBar {
       } else {
         this.filters.set(tag, nextState);
       }
+      this.persistFilters();
       this.view.updates.scheduleRender();
     });
+  }
+
+  private persistFilters(): void {
+    const filters: Record<string, ActiveTagFilterState> = {};
+    for (const [tag, state] of this.filters) {
+      filters[tag] = state;
+    }
+    this.view.preferences.setTagFilters(filters);
   }
 
   private getFilterState(tag: string): TagFilterState {

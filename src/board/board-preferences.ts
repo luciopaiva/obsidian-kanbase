@@ -2,10 +2,12 @@ import {
   CONFIG_KEY_COLLAPSED_COLUMNS,
   CONFIG_KEY_COLUMN_COLORS,
   CONFIG_KEY_COLUMNS,
+  CONFIG_KEY_TAG_FILTERS,
   CONFIG_KEY_TAG_FILTERS_VISIBLE,
   CONFIG_KEY_WIP_LIMITS,
   NO_VALUE_COLUMN,
 } from "../support/constants";
+import type { ActiveTagFilterState } from "../tags/tag-filter-state";
 import type { KanbanView } from "../kanban-view";
 
 export class BoardPreferences {
@@ -94,6 +96,16 @@ export class BoardPreferences {
   public setTagFiltersVisible(visible: boolean): void {
     this.view.config?.set(CONFIG_KEY_TAG_FILTERS_VISIBLE, visible);
     this.view.updates.scheduleRender();
+  }
+
+  public getTagFilters(): Record<string, ActiveTagFilterState> {
+    const stored = this.view.config?.get(CONFIG_KEY_TAG_FILTERS) as
+      Record<string, ActiveTagFilterState> | undefined;
+    return stored ?? {};
+  }
+
+  public setTagFilters(filters: Record<string, ActiveTagFilterState>): void {
+    this.view.config?.set(CONFIG_KEY_TAG_FILTERS, filters);
   }
 
   public isColumnCollapsed(columnName: string): boolean {
