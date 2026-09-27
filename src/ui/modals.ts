@@ -41,16 +41,15 @@ export class InputModal extends Modal {
           text.setValue(this.value);
         }
         text.onChange((v) => (this.value = v));
-        // Focus and handle Enter key
-        window.setTimeout(() => {
-          text.inputEl.focus();
-          text.inputEl.addEventListener("keydown", (e: KeyboardEvent) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              this.submit();
-            }
-          });
-        }, 50);
+        // Handle Enter key immediately; only focus needs to wait for the
+        // modal's open transition, otherwise a fast Enter can race it.
+        text.inputEl.addEventListener("keydown", (e: KeyboardEvent) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            this.submit();
+          }
+        });
+        window.setTimeout(() => text.inputEl.focus(), 50);
       });
 
     new Setting(contentEl).addButton((btn) => {
@@ -110,15 +109,13 @@ export class WipLimitModal extends Modal {
           text.setValue(String(this.currentLimit));
         }
         text.onChange((v) => (this.value = v));
-        window.setTimeout(() => {
-          text.inputEl.focus();
-          text.inputEl.addEventListener("keydown", (e: KeyboardEvent) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              this.submit();
-            }
-          });
-        }, 50);
+        text.inputEl.addEventListener("keydown", (e: KeyboardEvent) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            this.submit();
+          }
+        });
+        window.setTimeout(() => text.inputEl.focus(), 50);
       });
 
     new Setting(contentEl).addButton((btn) => {
