@@ -230,6 +230,7 @@ export class CardManager {
           "kanbase-card",
           this.view.app.workspace.getMostRecentLeaf(),
         );
+        this.addMoveToEdgeItems(menu, filePath);
         menu.showAtMouseEvent(e);
       });
     }
@@ -453,6 +454,35 @@ export class CardManager {
       valueEl.setText(value);
     }
     return chip;
+  }
+
+  /** "Move to top"/"Move to bottom" entries for the card's right-click menu. */
+  private addMoveToEdgeItems(menu: Menu, filePath: string): void {
+    menu.addSeparator();
+    menu.addItem((item) => {
+      item
+        .setTitle("Move to top")
+        .setIcon("lucide-arrow-up-to-line")
+        .onClick(() => this.moveCardToEdge(filePath, true));
+    });
+    menu.addItem((item) => {
+      item
+        .setTitle("Move to bottom")
+        .setIcon("lucide-arrow-down-to-line")
+        .onClick(() => this.moveCardToEdge(filePath, false));
+    });
+  }
+
+  private async moveCardToEdge(
+    filePath: string,
+    toTop: boolean,
+  ): Promise<void> {
+    try {
+      await this.view.cardMoves.moveCardToEdge(filePath, toTop);
+      this.view.renderer.requestFocus(filePath, toTop);
+    } catch (error) {
+      new Notice(`Could not move card: ${String(error)}`);
+    }
   }
 
   private showCardActionMenu(

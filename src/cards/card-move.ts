@@ -134,6 +134,23 @@ export class CardMoveCoordinator {
     }
   }
 
+  /** Move a card to the very top or bottom of its current column. */
+  public async moveCardToEdge(filePath: string, toTop: boolean): Promise<void> {
+    const columnName = this.getCardSourceColumn(filePath);
+    if (!columnName) return;
+
+    const orderedPaths = this.getOrderedPathsForColumn(columnName).filter(
+      (path) => path !== filePath,
+    );
+    if (toTop) {
+      orderedPaths.unshift(filePath);
+    } else {
+      orderedPaths.push(filePath);
+    }
+
+    await this.handleDrop(filePath, columnName, orderedPaths);
+  }
+
   public async movePathsToColumn(
     filePaths: string[],
     targetColumn: string,
