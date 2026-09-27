@@ -369,7 +369,33 @@ export class CardManager {
           tagEl.addClass("kanbase-card-tag-dark");
         }
       }
+      tagEl.addEventListener("mouseenter", () => this.dimCardsWithoutTag(tag));
+      tagEl.addEventListener("mouseleave", () => this.clearDimmedCards());
     }
+  }
+
+  /** Dim every rendered card that doesn't carry `tag`, to spotlight matches on hover. */
+  private dimCardsWithoutTag(tag: string): void {
+    const boardEl = this.view.containerEl.querySelector(".kanbase-board");
+    if (!boardEl) return;
+    for (const cardEl of Array.from(
+      boardEl.querySelectorAll<HTMLElement>(".kanbase-card"),
+    )) {
+      const path = cardEl.dataset.filePath;
+      const file = path
+        ? this.view.app.vault.getAbstractFileByPath(path)
+        : null;
+      const hasTag =
+        file instanceof TFile &&
+        this.view.tags.extractTagsFromFile(file).includes(tag);
+      cardEl.toggleClass("kanbase-card--dimmed", !hasTag);
+    }
+  }
+
+  private clearDimmedCards(): void {
+    this.view.containerEl
+      .querySelectorAll(".kanbase-card--dimmed")
+      .forEach((el) => el.removeClass("kanbase-card--dimmed"));
   }
 
   private getRenderVersion(entry: BasesEntry): string {

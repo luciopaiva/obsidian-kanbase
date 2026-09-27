@@ -973,6 +973,11 @@
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
+/* Spotlight cards sharing a tag while hovering it on another card */
+.kanbase-card--dimmed {
+  opacity: 0.35;
+}
+
 .kanbase-filter-pill.kanbase-filter-pill-light {
   color: #ffffff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
