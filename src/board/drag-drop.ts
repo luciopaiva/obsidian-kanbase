@@ -3,9 +3,10 @@ import { DragAutoScroller } from "./drag-auto-scroll";
 import { DragEdgeTargets } from "./drag-edge-targets";
 import type { EdgePosition } from "./drag-edge-targets";
 
-// We use dataTransfer types to distinguish card vs column drags
+// We use dataTransfer types to distinguish card vs column vs row drags
 const CARD_MIME = "application/x-kanban-card";
 const COLUMN_MIME = "application/x-kanban-column";
+const ROW_MIME = "application/x-kanban-row";
 
 export interface DragDropCallbacks {
   /** Card dropped (same or different column). orderedPaths = new card order in target column. */
@@ -13,13 +14,18 @@ export interface DragDropCallbacks {
     filePath: string,
     targetColumnName: string,
     orderedFilePaths: string[],
+    rowChange?: { fromRow: string | null; toRow: string | null },
   ) => Promise<void>;
   /** Column header was dragged to a new position. */
   onColumnReorder: (orderedColumnNames: string[]) => void;
+  /** Swimlane row header was dragged to a new position. */
+  onRowReorder: (orderedRowValues: string[]) => void;
   /** Card was dropped on a "move to top/bottom" helper target. */
   onEdgeDrop: (filePath: string, toTop: boolean) => void;
   /** Returns the set of currently selected card file paths. */
   getSelectedCards: () => ReadonlySet<string>;
+  /** Fired once a drag interaction (of any kind) has fully ended. */
+  onDragEnd?: () => void;
 }
 
 export class DragDropManager {
@@ -28,7 +34,7 @@ export class DragDropManager {
   private boardEl: HTMLElement | null = null;
   private draggedEl: HTMLElement | null = null;
   private placeholderEl: HTMLElement | null = null;
-  private dragType: "card" | "column" | null = null;
+  private dragType: "card" | "column" | "row" | null = null;
   /** Height of the dragged card, used to size the placeholder */
   private draggedCardHeight = 0;
   /** Other selected card elements dimmed during multi-drag */
@@ -37,6 +43,10 @@ export class DragDropManager {
   private edgeTargets = new DragEdgeTargets();
   /** Set while the pointer sits on a "move to top/bottom" helper target. */
   private hoveredEdgePosition: EdgePosition | null = null;
+  /** Swimlane row the dragged card was rendered under, if any. */
+  private draggedRowValue: string | null = null;
+  /** Container holding the sibling columns being reordered (board root, or a swimlane row's columns wrapper). */
+  private dragColumnsContainer: HTMLElement | null = null;
   private lastDragOverColumn: HTMLElement | null = null;
   private dropHighlightEl: HTMLElement | null = null;
   private dropHighlightBoardEl: HTMLElement | null = null;
@@ -84,6 +94,11 @@ export class DragDropManager {
     this.teardownBoard();
   }
 
+  /** True while a card/column/row drag is in progress — a re-render mid-drag would destroy the placeholder and orphan drag state. */
+  public isDragging(): boolean {
+    return this.dragType !== null;
+  }
+
   private teardownBoard(): void {
     this.autoScroller.stop();
     this.edgeTargets.hide();
@@ -108,6 +123,40 @@ export class DragDropManager {
     if (!e.dataTransfer) return;
     this.clearDropHighlight();
 
+    // Check if dragging a swimlane row header
+    const rowHeaderEl = (e.target as HTMLElement).closest(
+      ".kanbase-swimlane-header",
+    );
+    if (rowHeaderEl) {
+      const isInteractive = (e.target as HTMLElement).closest(
+        ".kanbase-swimlane-collapse-btn, .kanbase-swimlane-menu-btn, .kanbase-swimlane-title, .kanbase-swimlane-count, input, button",
+      );
+      if (isInteractive) return;
+
+      const rowEl = rowHeaderEl.closest(".kanbase-swimlane-row");
+      if (!(rowEl instanceof HTMLElement)) return;
+      this.dragType = "row";
+      this.draggedEl = rowEl;
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData(ROW_MIME, rowEl.dataset.swimlaneRow ?? "");
+
+      const headerRect = (rowHeaderEl as HTMLElement).getBoundingClientRect();
+      e.dataTransfer.setDragImage(
+        rowHeaderEl,
+        e.clientX - headerRect.left,
+        e.clientY - headerRect.top,
+      );
+
+      window.requestAnimationFrame(() => {
+        this.placeholderEl = this.boardEl!.createDiv();
+        this.placeholderEl.className = "kanbase-swimlane-row-placeholder";
+        rowEl.parentElement?.insertBefore(this.placeholderEl, rowEl);
+        rowEl.addClass("kanbase-swimlane-row--dragging");
+        this.boardEl?.addClass("kanbase-board--is-dragging");
+      });
+      return;
+    }
+
     // Check if dragging a column header
     const headerEl = (e.target as HTMLElement).closest(
       ".kanbase-column-header",
@@ -125,6 +174,7 @@ export class DragDropManager {
       if (!(columnEl instanceof HTMLElement)) return;
       this.dragType = "column";
       this.draggedEl = columnEl;
+      this.dragColumnsContainer = columnEl.parentElement;
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData(COLUMN_MIME, columnEl.dataset.columnName ?? "");
 
@@ -152,6 +202,7 @@ export class DragDropManager {
     if (!(cardEl instanceof HTMLElement)) return;
     this.dragType = "card";
     this.draggedEl = cardEl;
+    this.draggedRowValue = cardEl.dataset.swimlaneRow ?? null;
     const cardRect = cardEl.getBoundingClientRect();
     this.draggedCardHeight = cardRect.height;
     e.dataTransfer.effectAllowed = "move";
@@ -321,6 +372,8 @@ export class DragDropManager {
       this.handleColumnDragOver(e);
     } else if (this.dragType === "card") {
       this.handleCardDragOver(e);
+    } else if (this.dragType === "row") {
+      this.handleRowDragOver(e);
     }
   }
 
@@ -423,21 +476,60 @@ export class DragDropManager {
   }
 
   private handleColumnDragOver(e: DragEvent): void {
-    if (!this.boardEl) return;
+    const container = this.dragColumnsContainer;
+    if (!container) return;
 
     if (!this.placeholderEl) {
-      this.placeholderEl = this.boardEl.createDiv();
+      this.placeholderEl = container.createDiv();
       this.placeholderEl.className = "kanbase-column-placeholder";
     }
 
     const afterElement = this.getDragAfterElement(
-      this.boardEl,
+      container,
       ".kanbase-column:not(.kanbase-column--dragging)",
       e.clientX,
       "horizontal",
     );
 
     // Skip DOM mutation if placeholder is already in the right spot
+    const desiredNext =
+      afterElement ??
+      container.querySelector(".kanbase-add-column-btn") ??
+      null;
+    if (
+      this.placeholderEl.nextElementSibling === desiredNext &&
+      this.placeholderEl.parentElement === container
+    ) {
+      return;
+    }
+
+    if (afterElement) {
+      container.insertBefore(this.placeholderEl, afterElement);
+    } else {
+      const addBtn = container.querySelector(".kanbase-add-column-btn");
+      if (addBtn) {
+        container.insertBefore(this.placeholderEl, addBtn);
+      } else {
+        container.appendChild(this.placeholderEl);
+      }
+    }
+  }
+
+  private handleRowDragOver(e: DragEvent): void {
+    if (!this.boardEl) return;
+
+    if (!this.placeholderEl) {
+      this.placeholderEl = this.boardEl.createDiv();
+      this.placeholderEl.className = "kanbase-swimlane-row-placeholder";
+    }
+
+    const afterElement = this.getDragAfterElement(
+      this.boardEl,
+      ".kanbase-swimlane-row:not(.kanbase-swimlane-row--dragging)",
+      e.clientY,
+      "vertical",
+    );
+
     const desiredNext =
       afterElement ??
       this.boardEl.querySelector(".kanbase-add-column-btn") ??
@@ -464,7 +556,6 @@ export class DragDropManager {
   // ---------------------------------------------------------------------------
   //  Drag End
   // ---------------------------------------------------------------------------
-
   private setDragOverColumn(nextColumn: HTMLElement | null): void {
     if (!this.boardEl || nextColumn === this.lastDragOverColumn) return;
     this.lastDragOverColumn?.classList.remove(
@@ -487,6 +578,7 @@ export class DragDropManager {
     this.autoScroller.stop();
     this.edgeTargets.hide();
     this.hoveredEdgePosition = null;
+    this.draggedRowValue = null;
 
     // Restore multi-drag ghost cards
     for (const el of this.multiDragEls) {
@@ -497,6 +589,7 @@ export class DragDropManager {
     if (this.draggedEl) {
       this.draggedEl.removeClass("kanbase-card--dragging");
       this.draggedEl.removeClass("kanbase-column--dragging");
+      this.draggedEl.removeClass("kanbase-swimlane-row--dragging");
     }
     this.removePlaceholder();
     this.draggedEl = null;
@@ -514,6 +607,8 @@ export class DragDropManager {
     }
     this.lastDragOverColumn = null;
     this.dragType = null;
+    this.dragColumnsContainer = null;
+    this.callbacks.onDragEnd?.();
   }
 
   // ---------------------------------------------------------------------------
@@ -526,19 +621,50 @@ export class DragDropManager {
     if (this.dragType === "column") {
       this.handleColumnDrop(e);
       this.onDragEnd();
+    } else if (this.dragType === "row") {
+      this.handleRowDrop();
+      this.onDragEnd();
     } else if (this.dragType === "card") {
       await this.handleCardDrop(e);
     }
   }
 
-  private handleColumnDrop(e: DragEvent): void {
+  private handleRowDrop(): void {
     if (!this.boardEl) return;
+    const draggedRowValue = this.draggedEl?.dataset.swimlaneRow;
+    if (!draggedRowValue) return;
+
+    // Collect row values in DOM order (placeholder marks the new position)
+    const orderedValues: string[] = [];
+    for (const child of Array.from(this.boardEl.children)) {
+      if (child === this.placeholderEl) {
+        orderedValues.push(draggedRowValue);
+      } else if (
+        child.classList.contains("kanbase-swimlane-row") &&
+        !child.classList.contains("kanbase-swimlane-row--dragging")
+      ) {
+        const value = (child as HTMLElement).dataset.swimlaneRow;
+        if (value && value !== draggedRowValue) {
+          orderedValues.push(value);
+        }
+      }
+    }
+    if (!orderedValues.includes(draggedRowValue)) {
+      orderedValues.push(draggedRowValue);
+    }
+
+    this.callbacks.onRowReorder(orderedValues);
+  }
+
+  private handleColumnDrop(e: DragEvent): void {
+    const container = this.dragColumnsContainer;
+    if (!container) return;
     const draggedColumnName = this.draggedEl?.dataset.columnName;
     if (!draggedColumnName) return;
 
     // Collect column names in DOM order (placeholder marks the new position)
     const orderedNames: string[] = [];
-    for (const child of Array.from(this.boardEl.children)) {
+    for (const child of Array.from(container.children)) {
       if (child === this.placeholderEl) {
         orderedNames.push(draggedColumnName);
       } else if (
@@ -615,10 +741,18 @@ export class DragDropManager {
 
     // Commit the user's visual intent before the first asynchronous write.
     // replaceChild moves the existing node, preserving its identity and subtree.
+    const targetRowAttr = columnEl.dataset.swimlaneRow;
     if (droppedEl && placeholderEl?.parentElement) {
       placeholderEl.parentElement.replaceChild(droppedEl, placeholderEl);
       this.placeholderEl = null;
       droppedEl.dataset.columnName = targetColumnName;
+      // Keep the card's row cache key in sync so the next render reuses this
+      // element instead of leaving it stale and spawning a duplicate.
+      if (targetRowAttr !== undefined) {
+        droppedEl.dataset.swimlaneRow = targetRowAttr;
+      } else {
+        delete droppedEl.dataset.swimlaneRow;
+      }
       droppedEl.removeClass("kanbase-card--dragging");
       this.showDropHighlight(droppedEl);
 
@@ -626,17 +760,35 @@ export class DragDropManager {
       for (const additionalEl of additionalDroppedEls) {
         droppedEl.parentElement?.insertBefore(additionalEl, insertionPoint);
         additionalEl.dataset.columnName = targetColumnName;
+        if (targetRowAttr !== undefined) {
+          additionalEl.dataset.swimlaneRow = targetRowAttr;
+        } else {
+          delete additionalEl.dataset.swimlaneRow;
+        }
         additionalEl.removeClass("kanbase-card--drag-ghost");
       }
     }
+    // Capture before onDragEnd() resets it.
+    const sourceRowValue = this.draggedRowValue;
     this.onDragEnd();
 
     if (edgePosition) {
       this.callbacks.onEdgeDrop(filePath, edgePosition === "top");
     }
 
+    const targetRowValue = targetRowAttr ?? null;
+    const rowChange =
+      targetRowValue !== sourceRowValue
+        ? { fromRow: sourceRowValue, toRow: targetRowValue }
+        : undefined;
+
     try {
-      await this.callbacks.onCardDrop(filePath, targetColumnName, orderedPaths);
+      await this.callbacks.onCardDrop(
+        filePath,
+        targetColumnName,
+        orderedPaths,
+        rowChange,
+      );
     } catch (error) {
       this.clearDropHighlight();
       for (const position of originalPositions.reverse()) {

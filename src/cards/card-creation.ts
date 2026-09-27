@@ -1,6 +1,7 @@
 import { BasesEntry, Notice, TFile } from "obsidian";
 import { ORDER_PROPERTY } from "../support/constants";
 import { generateOrderKey, isOrderKey, OrderValue } from "../support/order";
+import { addRowValue } from "../board/swimlanes";
 import type { KanbanView } from "../kanban-view";
 import { InputModal } from "../ui/modals";
 
@@ -11,14 +12,18 @@ export class CardCreationManager {
     this.view = view;
   }
 
-  public startInline(columnName: string, orderedEntries: BasesEntry[]): void {
+  public startInline(
+    columnName: string,
+    orderedEntries: BasesEntry[],
+    rowValue?: string,
+  ): void {
     const initialOrder = this.getInitialOrder(orderedEntries);
     new InputModal(
       this.view.app,
       `New card in ${columnName}`,
       "Card title…",
       (title: string) => {
-        void this.createCard(title, columnName, initialOrder);
+        void this.createCard(title, columnName, initialOrder, rowValue);
       },
     ).open();
   }
@@ -50,6 +55,7 @@ export class CardCreationManager {
     title: string,
     columnName: string,
     order: OrderValue,
+    rowValue?: string,
   ): Promise<void> {
     const groupByProperty = this.view.boardConfig.getGroupByProperty();
     if (!groupByProperty) {
@@ -72,6 +78,12 @@ export class CardCreationManager {
         groupByProperty,
         columnName,
       );
+      if (rowValue) {
+        const swimlaneProperty = this.view.boardConfig.getSwimlaneProperty();
+        if (swimlaneProperty) {
+          addRowValue(frontmatter, swimlaneProperty, rowValue);
+        }
+      }
       frontmatter[ORDER_PROPERTY] = order;
     };
 

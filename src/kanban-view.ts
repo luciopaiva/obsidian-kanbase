@@ -23,6 +23,7 @@ import { BoardConfig } from "./board/board-config";
 import { BoardRenderer } from "./board/board-renderer";
 import { BoardUpdateCoordinator } from "./board/board-update-coordinator";
 import { CardNavigation } from "./cards/card-navigation";
+import { SwimlaneManager } from "./board/swimlane-renderer";
 
 // ---------------------------------------------------------------------------
 //  Kanban View
@@ -55,6 +56,8 @@ export class KanbanView extends BasesView implements HoverParent {
   public updates: BoardUpdateCoordinator;
   public navigation: CardNavigation;
   public cardManager: CardManager;
+  /** Renders the board split into swimlane rows, when configured. */
+  public swimlaneManager: SwimlaneManager;
 
   /** Tag metadata, colors, editing, and Base-filter suppression. */
   public tags: Tags;
@@ -85,23 +88,35 @@ export class KanbanView extends BasesView implements HoverParent {
     this.updates = new BoardUpdateCoordinator(
       () => this.cardMoves.acknowledge(),
       () => this.render(),
+      () => this.dragDropManager.isDragging(),
     );
     this.preferences = new BoardPreferences(this);
     this.cardCreation = new CardCreationManager(this);
     this.cardManager = new CardManager(this);
     this.columnManager = new ColumnManager(this);
+    this.swimlaneManager = new SwimlaneManager(this);
 
     this.dragDropManager = new DragDropManager(this.app, {
       onCardDrop: (
         filePath: string,
         targetColumn: string,
         orderedPaths: string[],
-      ) => this.cardMoves.handleDrop(filePath, targetColumn, orderedPaths),
+        rowChange?: { fromRow: string | null; toRow: string | null },
+      ) =>
+        this.cardMoves.handleDrop(
+          filePath,
+          targetColumn,
+          orderedPaths,
+          rowChange,
+        ),
       onColumnReorder: (orderedNames: string[]) =>
         this.handleColumnReorder(orderedNames),
+      onRowReorder: (orderedRowValues: string[]) =>
+        this.handleRowReorder(orderedRowValues),
       onEdgeDrop: (filePath: string, toTop: boolean) =>
         this.renderer.requestFocus(filePath, toTop),
       getSelectedCards: () => this.cardSelection.getSelectedPaths(),
+      onDragEnd: () => this.updates.notifyDragEnded(),
     });
   }
 
@@ -185,6 +200,11 @@ export class KanbanView extends BasesView implements HoverParent {
 
   private handleColumnReorder(orderedNames: string[]): void {
     this.preferences.saveColumns(orderedNames);
+    this.render();
+  }
+
+  private handleRowReorder(orderedRowValues: string[]): void {
+    this.preferences.saveSwimlaneRows(orderedRowValues);
     this.render();
   }
 }

@@ -37,6 +37,18 @@ export const CONFIG_KEY_COVER_PROPERTY = "cardCoverProperty";
 /** Key used by BasesViewConfig.set/get to persist if new cards should be added to the top in the .base file. */
 export const CONFIG_KEY_ADD_TO_TOP = "newCardsToTop";
 
+/** Key used by BasesViewConfig.set/get to persist the swimlane config (property) in the .base file. */
+export const CONFIG_KEY_SWIMLANE = "swimlane";
+
+/** Key used by BasesViewConfig.set/get to persist swimlane row order. */
+export const CONFIG_KEY_SWIMLANE_ROWS = "swimlaneRows";
+
+/** Key used by BasesViewConfig.set/get to persist collapsed swimlane state. */
+export const CONFIG_KEY_COLLAPSED_SWIMLANES = "collapsedSwimlanes";
+
+/** Row label used when an entry has no value for the swimlane property. */
+export const NO_VALUE_SWIMLANE = "(No value)";
+
 /**
  * Regex matching characters that are invalid in file/folder names.
  * Used when sanitizing user input before creating vault items.
