@@ -1,6 +1,4 @@
 import {
-  AbstractInputSuggest,
-  App,
   Menu,
   Modal,
   Setting,
@@ -129,10 +127,6 @@ class PropertyFieldModal extends Modal {
           .onChange((value) => {
             this.property = value;
           });
-        new PropertySuggest(this.app, text.inputEl).onSelect((value) => {
-          text.setValue(value);
-          this.property = value;
-        });
       })
       .addExtraButton((button) =>
         button
@@ -162,37 +156,5 @@ class PropertyFieldModal extends Modal {
 
   onClose(): void {
     this.contentEl.empty();
-  }
-}
-
-/** Type-ahead suggestions sourced from frontmatter property names used in the vault. */
-class PropertySuggest extends AbstractInputSuggest<string> {
-  constructor(app: App, inputEl: HTMLInputElement) {
-    super(app, inputEl);
-  }
-
-  protected getSuggestions(query: string): string[] {
-    const lower = query.toLowerCase();
-    return this.getAllPropertyNames().filter((name) =>
-      name.toLowerCase().includes(lower),
-    );
-  }
-
-  renderSuggestion(value: string, el: HTMLElement): void {
-    el.setText(value);
-  }
-
-  private getAllPropertyNames(): string[] {
-    const names = new Set<string>();
-    for (const file of this.app.vault.getMarkdownFiles()) {
-      const frontmatter =
-        this.app.metadataCache.getFileCache(file)?.frontmatter;
-      if (!frontmatter) continue;
-      for (const key of Object.keys(frontmatter)) {
-        if (key === "position") continue;
-        names.add(key);
-      }
-    }
-    return Array.from(names).sort();
   }
 }
