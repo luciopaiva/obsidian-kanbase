@@ -18,3 +18,12 @@ are categorized by PR label, per `.github/release.yml`. To keep them useful:
 
 See `RELEASING.md` for the full release process (versioning, tagging,
 validation, publishing).
+
+## Vault-scanning APIs require explicit consent
+
+Never call APIs that enumerate the whole vault (`vault.getFiles()`,
+`vault.getMarkdownFiles()`, iterating `metadataCache` for every file, etc.)
+without first asking the user and getting explicit approval. Obsidian's
+plugin store flags these as a "Vault Enumeration" capability, so they must be
+a deliberate, justified tradeoff — not an implementation convenience.
+
