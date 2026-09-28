@@ -1,6 +1,9 @@
 # Obsidian vault for testing
 kanban-base/
 
+# Local dev helper, not meant to be committed
+scripts/install-to-test-vault.sh
+
 # npm
 node_modules/
 
