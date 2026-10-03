@@ -2,6 +2,7 @@ import { setIcon, setTooltip, TFile } from "obsidian";
 import { relativeLuminance } from "../support/color-utils";
 import { countTagsByCard } from "./tag-counts";
 import { TagSortControl } from "./tag-sort-control";
+import { TagVisibilityControl } from "./tag-visibility-control";
 import { ColorPickerModal } from "../ui/color-picker-modal";
 import type { KanbanView } from "../kanban-view";
 import type { Tags } from "./tags";
@@ -78,6 +79,9 @@ export class TagFilterBar {
     });
     searchInput.value = this.tagSearch;
     let sortOrder = this.view.preferences.getTagSortOrder();
+    let selectedOnly =
+      this.filters.size > 0 &&
+      this.view.preferences.areOnlySelectedTagsVisible();
     const pillsEl = barEl.createDiv({ cls: "kanbase-filter-tags" });
 
     const tagsArray = Array.from(this.tagCounts.keys());
@@ -89,8 +93,10 @@ export class TagFilterBar {
     const renderMatchingTags = (): void => {
       pillsEl.empty();
       const query = this.tagSearch.trim().replace(/^#/, "").toLowerCase();
-      const matchingTags = tagsArray.filter((tag) =>
-        tag.toLowerCase().includes(query),
+      const matchingTags = tagsArray.filter(
+        (tag) =>
+          (!selectedOnly || this.filters.has(tag)) &&
+          tag.toLowerCase().includes(query),
       );
       if (sortOrder === "count") {
         // Stable sorting preserves alphabetical order for equal counts.
@@ -114,6 +120,16 @@ export class TagFilterBar {
       this.view.preferences.setTagSortOrder(order);
       renderMatchingTags();
     });
+    new TagVisibilityControl(
+      controlsEl,
+      selectedOnly,
+      this.filters.size === 0,
+      (value) => {
+        selectedOnly = value;
+        this.view.preferences.setOnlySelectedTagsVisible(value);
+        renderMatchingTags();
+      },
+    );
     searchInput.addEventListener("input", () => {
       this.tagSearch = searchInput.value;
       renderMatchingTags();
@@ -208,6 +224,9 @@ export class TagFilterBar {
       filters[tag] = state;
     }
     this.view.preferences.setTagFilters(filters);
+    if (this.filters.size === 0) {
+      this.view.preferences.setOnlySelectedTagsVisible(false);
+    }
   }
 
   private getFilterState(tag: string): TagFilterState {

@@ -1003,6 +1003,7 @@
 
 .kanbase-filter-controls {
   display: flex;
+  flex-basis: 100%;
   align-items: center;
   gap: 6px;
   max-width: 100%;
@@ -1013,7 +1014,8 @@
   flex-shrink: 0;
 }
 
-.kanbase-filter-sort button {
+.kanbase-filter-sort button,
+.kanbase-filter-selected-only {
   border-radius: 0;
   box-shadow: none;
   font-size: var(--font-ui-small);
@@ -1037,6 +1039,21 @@
   width: 160px;
   max-width: 100%;
   min-width: 0;
+}
+
+.kanbase-filter-selected-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--input-height);
+  height: var(--input-height);
+  border-radius: var(--radius-s);
+}
+
+.kanbase-filter-selected-only[aria-pressed="true"] {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
 }
 
 .kanbase-filter-tags {
