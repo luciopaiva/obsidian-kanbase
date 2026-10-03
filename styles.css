@@ -1001,6 +1001,38 @@
   background-color: var(--background-secondary);
 }
 
+.kanbase-filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.kanbase-filter-sort {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.kanbase-filter-sort button {
+  border-radius: 0;
+  box-shadow: none;
+  font-size: var(--font-ui-small);
+  padding: 0 8px;
+}
+
+.kanbase-filter-sort button:first-child {
+  border-radius: var(--radius-s) 0 0 var(--radius-s);
+}
+
+.kanbase-filter-sort button:last-child {
+  border-radius: 0 var(--radius-s) var(--radius-s) 0;
+}
+
+.kanbase-filter-sort button[aria-pressed="true"] {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
 .kanbase-filter-search {
   width: 160px;
   max-width: 100%;

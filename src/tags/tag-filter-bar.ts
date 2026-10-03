@@ -1,6 +1,7 @@
 import { setIcon, setTooltip, TFile } from "obsidian";
 import { relativeLuminance } from "../support/color-utils";
 import { countTagsByCard } from "./tag-counts";
+import { TagSortControl } from "./tag-sort-control";
 import { ColorPickerModal } from "../ui/color-picker-modal";
 import type { KanbanView } from "../kanban-view";
 import type { Tags } from "./tags";
@@ -68,19 +69,22 @@ export class TagFilterBar {
     const barEl = container.createDiv({ cls: "kanbase-filter-bar" });
     container.insertBefore(barEl, boardEl);
 
-    const searchInput = barEl.createEl("input", {
+    const controlsEl = barEl.createDiv({ cls: "kanbase-filter-controls" });
+    const searchInput = controlsEl.createEl("input", {
       cls: "kanbase-filter-search",
       type: "search",
       placeholder: "Filter tags…",
       attr: { "aria-label": "Filter tags by name" },
     });
     searchInput.value = this.tagSearch;
+    let sortOrder = this.view.preferences.getTagSortOrder();
     const pillsEl = barEl.createDiv({ cls: "kanbase-filter-tags" });
 
-    const tagsArray = Array.from(this.tagCounts.keys()).sort();
+    const tagsArray = Array.from(this.tagCounts.keys());
     for (const activeTag of this.filters.keys()) {
       if (!this.tagCounts.has(activeTag)) tagsArray.push(activeTag);
     }
+    tagsArray.sort();
 
     const renderMatchingTags = (): void => {
       pillsEl.empty();
@@ -88,6 +92,12 @@ export class TagFilterBar {
       const matchingTags = tagsArray.filter((tag) =>
         tag.toLowerCase().includes(query),
       );
+      if (sortOrder === "count") {
+        // Stable sorting preserves alphabetical order for equal counts.
+        matchingTags.sort(
+          (a, b) => (this.tagCounts.get(b) ?? 0) - (this.tagCounts.get(a) ?? 0),
+        );
+      }
       for (const tag of matchingTags) {
         this.renderTagPill(pillsEl, tag);
       }
@@ -99,6 +109,11 @@ export class TagFilterBar {
         });
       }
     };
+    new TagSortControl(controlsEl, sortOrder, (order) => {
+      sortOrder = order;
+      this.view.preferences.setTagSortOrder(order);
+      renderMatchingTags();
+    });
     searchInput.addEventListener("input", () => {
       this.tagSearch = searchInput.value;
       renderMatchingTags();

@@ -6,10 +6,12 @@ import {
   CONFIG_KEY_SWIMLANE_ROWS,
   CONFIG_KEY_TAG_FILTERS,
   CONFIG_KEY_TAG_FILTERS_VISIBLE,
+  CONFIG_KEY_TAG_SORT_ORDER,
   CONFIG_KEY_WIP_LIMITS,
   NO_VALUE_COLUMN,
 } from "../support/constants";
 import type { ActiveTagFilterState } from "../tags/tag-filter-state";
+import type { TagSortOrder } from "../tags/tag-sort-control";
 import type { KanbanView } from "../kanban-view";
 
 export class BoardPreferences {
@@ -108,6 +110,16 @@ export class BoardPreferences {
 
   public setTagFilters(filters: Record<string, ActiveTagFilterState>): void {
     this.view.config?.set(CONFIG_KEY_TAG_FILTERS, filters);
+  }
+
+  public getTagSortOrder(): TagSortOrder {
+    return this.view.config?.get(CONFIG_KEY_TAG_SORT_ORDER) === "count"
+      ? "count"
+      : "alphabetical";
+  }
+
+  public setTagSortOrder(order: TagSortOrder): void {
+    this.view.config?.set(CONFIG_KEY_TAG_SORT_ORDER, order);
   }
 
   public isColumnCollapsed(columnName: string): boolean {

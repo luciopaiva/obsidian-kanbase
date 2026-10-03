@@ -22,6 +22,9 @@ export const CONFIG_KEY_TAG_FILTERS_VISIBLE = "tagFiltersVisible";
 /** Key used by BasesViewConfig.set/get to persist the active tag filters. */
 export const CONFIG_KEY_TAG_FILTERS = "tagFilters";
 
+/** Key used by BasesViewConfig.set/get to persist tag bar ordering. */
+export const CONFIG_KEY_TAG_SORT_ORDER = "tagSortOrder";
+
 /** Key used by BasesViewConfig.set/get to persist card click behavior in the .base file. */
 export const CONFIG_KEY_OPEN_BEHAVIOR = "cardOpenBehavior";
 
