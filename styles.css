@@ -1001,6 +1001,24 @@
   background-color: var(--background-secondary);
 }
 
+.kanbase-filter-search {
+  width: 160px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.kanbase-filter-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.kanbase-filter-empty {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
 .kanbase-filter-pill {
   position: relative;
   display: inline-flex;
