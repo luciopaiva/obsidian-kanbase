@@ -18,6 +18,7 @@ export class TagFilterBar {
   private tagCounts = new Map<string, number>();
   private filters = new Map<string, ActiveTagFilterState>();
   private hasLoadedPersistedFilters = false;
+  private tagSearch = "";
 
   constructor(view: KanbanView, tags: Tags) {
     this.view = view;
@@ -67,14 +68,42 @@ export class TagFilterBar {
     const barEl = container.createDiv({ cls: "kanbase-filter-bar" });
     container.insertBefore(barEl, boardEl);
 
+    const searchInput = barEl.createEl("input", {
+      cls: "kanbase-filter-search",
+      type: "search",
+      placeholder: "Filter tags…",
+      attr: { "aria-label": "Filter tags by name" },
+    });
+    searchInput.value = this.tagSearch;
+    const pillsEl = barEl.createDiv({ cls: "kanbase-filter-tags" });
+
     const tagsArray = Array.from(this.tagCounts.keys()).sort();
     for (const activeTag of this.filters.keys()) {
       if (!this.tagCounts.has(activeTag)) tagsArray.push(activeTag);
     }
 
-    for (const tag of tagsArray) {
-      this.renderTagPill(barEl, tag);
-    }
+    const renderMatchingTags = (): void => {
+      pillsEl.empty();
+      const query = this.tagSearch.trim().replace(/^#/, "").toLowerCase();
+      const matchingTags = tagsArray.filter((tag) =>
+        tag.toLowerCase().includes(query),
+      );
+      for (const tag of matchingTags) {
+        this.renderTagPill(pillsEl, tag);
+      }
+      if (matchingTags.length === 0) {
+        pillsEl.createSpan({
+          cls: "kanbase-filter-empty",
+          text: "No matching tags",
+          attr: { role: "status" },
+        });
+      }
+    };
+    searchInput.addEventListener("input", () => {
+      this.tagSearch = searchInput.value;
+      renderMatchingTags();
+    });
+    renderMatchingTags();
 
     if (this.filters.size > 0) {
       const clearButton = barEl.createSpan({
