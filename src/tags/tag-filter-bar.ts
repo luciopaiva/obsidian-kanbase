@@ -2,7 +2,7 @@ import { setIcon, setTooltip, TFile } from "obsidian";
 import { relativeLuminance } from "../support/color-utils";
 import { countTagsByCard } from "./tag-counts";
 import { TagSortControl } from "./tag-sort-control";
-import { TagVisibilityControl } from "./tag-visibility-control";
+import { TagPriorityControl } from "./tag-priority-control";
 import { ColorPickerModal } from "../ui/color-picker-modal";
 import type { KanbanView } from "../kanban-view";
 import type { Tags } from "./tags";
@@ -79,9 +79,8 @@ export class TagFilterBar {
     });
     searchInput.value = this.tagSearch;
     let sortOrder = this.view.preferences.getTagSortOrder();
-    let selectedOnly =
-      this.filters.size > 0 &&
-      this.view.preferences.areOnlySelectedTagsVisible();
+    let selectedFirst =
+      this.filters.size > 0 && this.view.preferences.areSelectedTagsFirst();
     const pillsEl = barEl.createDiv({ cls: "kanbase-filter-tags" });
 
     const tagsArray = Array.from(this.tagCounts.keys());
@@ -93,15 +92,19 @@ export class TagFilterBar {
     const renderMatchingTags = (): void => {
       pillsEl.empty();
       const query = this.tagSearch.trim().replace(/^#/, "").toLowerCase();
-      const matchingTags = tagsArray.filter(
-        (tag) =>
-          (!selectedOnly || this.filters.has(tag)) &&
-          tag.toLowerCase().includes(query),
+      const matchingTags = tagsArray.filter((tag) =>
+        tag.toLowerCase().includes(query),
       );
       if (sortOrder === "count") {
         // Stable sorting preserves alphabetical order for equal counts.
         matchingTags.sort(
           (a, b) => (this.tagCounts.get(b) ?? 0) - (this.tagCounts.get(a) ?? 0),
+        );
+      }
+      if (selectedFirst) {
+        matchingTags.sort(
+          (first, second) =>
+            Number(this.filters.has(second)) - Number(this.filters.has(first)),
         );
       }
       for (const tag of matchingTags) {
@@ -120,13 +123,13 @@ export class TagFilterBar {
       this.view.preferences.setTagSortOrder(order);
       renderMatchingTags();
     });
-    new TagVisibilityControl(
+    new TagPriorityControl(
       controlsEl,
-      selectedOnly,
+      selectedFirst,
       this.filters.size === 0,
       (value) => {
-        selectedOnly = value;
-        this.view.preferences.setOnlySelectedTagsVisible(value);
+        selectedFirst = value;
+        this.view.preferences.setSelectedTagsFirst(value);
         renderMatchingTags();
       },
     );
@@ -225,7 +228,7 @@ export class TagFilterBar {
     }
     this.view.preferences.setTagFilters(filters);
     if (this.filters.size === 0) {
-      this.view.preferences.setOnlySelectedTagsVisible(false);
+      this.view.preferences.setSelectedTagsFirst(false);
     }
   }
 
