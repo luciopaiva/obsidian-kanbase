@@ -61,6 +61,81 @@ describe("Kanbase in Obsidian", function () {
       browser.$(
         "//span[contains(@class, 'kanbase-filter-label') and normalize-space()='planning']/parent::span",
       );
+    const selectedOnlyToggle = () => browser.$(".kanbase-filter-selected-only");
+    const initialTagCount = await browser.$$(".kanbase-filter-pill").length;
+    expect(initialTagCount).toBeGreaterThan(1);
+    await expect(selectedOnlyToggle()).toBeDisabled();
+    await expect(selectedOnlyToggle()).toHaveAttribute("aria-pressed", "false");
+    await expect(browser.$$(".kanbase-filter-pill")).toBeElementsArrayOfSize(
+      initialTagCount,
+    );
+    await planningFilter().click();
+    await expect(selectedOnlyToggle()).toBeEnabled();
+    const tagsAreaBefore = await browser
+      .$(".kanbase-filter-tags")
+      .getLocation();
+    await selectedOnlyToggle().click();
+    await expect(browser.$$(".kanbase-filter-pill")).toBeElementsArrayOfSize(1);
+    const tagsAreaAfter = await browser.$(".kanbase-filter-tags").getLocation();
+    expect(tagsAreaAfter).toEqual(tagsAreaBefore);
+    const tagsBelowControls = await browser.execute(() => {
+      const controls = document
+        .querySelector(".kanbase-filter-controls")
+        .getBoundingClientRect();
+      const tags = document
+        .querySelector(".kanbase-filter-tags")
+        .getBoundingClientRect();
+      return tags.top >= controls.bottom;
+    });
+    expect(tagsBelowControls).toBe(true);
+    await expect(planningFilter()).toHaveElementClass("is-active");
+    await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(1);
+    await browser.$('[aria-label="Sort by count, highest first"]').click();
+    await expect(browser.$$(".kanbase-filter-pill")).toBeElementsArrayOfSize(1);
+    const tagSearch = () => browser.$(".kanbase-filter-search");
+    await tagSearch().setValue("no-such-tag");
+    await expect(browser.$$(".kanbase-filter-pill")).toBeElementsArrayOfSize(0);
+    await tagSearch().setValue("planning");
+    await expect(planningFilter()).toExist();
+    await tagSearch().setValue("");
+    await browser.waitUntil(async () => {
+      const content = await browser.executeObsidian(async ({ app }) => {
+        const file = app.vault.getAbstractFileByPath(
+          "Generated/Generated.base",
+        );
+        return file ? app.vault.read(file) : "";
+      });
+      return content.includes("tagFiltersSelectedOnly: true");
+    });
+    await browser.executeObsidian(async ({ app, obsidian }) => {
+      const leaf = app.workspace.activeLeaf;
+      const file = app.vault.getAbstractFileByPath("Generated/Generated.base");
+      if (!leaf || !(file instanceof obsidian.TFile)) {
+        throw new Error("Active board not found");
+      }
+      await leaf.setViewState({ type: "empty" });
+      await leaf.openFile(file);
+    });
+    await expect(selectedOnlyToggle()).toHaveAttribute("aria-pressed", "true");
+    await expect(browser.$$(".kanbase-filter-pill")).toBeElementsArrayOfSize(1);
+    await browser.execute(
+      (element) => {
+        element.dispatchEvent(
+          new MouseEvent("click", { bubbles: true, shiftKey: true }),
+        );
+      },
+      await planningFilter(),
+    );
+    await expect(planningFilter()).toHaveElementClass("is-excluded");
+    await expect(browser.$$(".kanbase-filter-pill")).toBeElementsArrayOfSize(1);
+    await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(4);
+    await planningFilter().click();
+    await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(5);
+    await expect(selectedOnlyToggle()).toBeDisabled();
+    await expect(selectedOnlyToggle()).toHaveAttribute("aria-pressed", "false");
+    await expect(browser.$$(".kanbase-filter-pill")).toBeElementsArrayOfSize(
+      initialTagCount,
+    );
     await planningFilter().click();
     await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(1);
     await planningFilter().click();

@@ -25,6 +25,8 @@ export const CONFIG_KEY_TAG_FILTERS = "tagFilters";
 /** Key used by BasesViewConfig.set/get to persist tag bar ordering. */
 export const CONFIG_KEY_TAG_SORT_ORDER = "tagSortOrder";
 
+export const CONFIG_KEY_TAG_FILTERS_SELECTED_ONLY = "tagFiltersSelectedOnly";
+
 /** Key used by BasesViewConfig.set/get to persist card click behavior in the .base file. */
 export const CONFIG_KEY_OPEN_BEHAVIOR = "cardOpenBehavior";
 
