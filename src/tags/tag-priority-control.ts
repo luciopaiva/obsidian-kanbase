@@ -1,6 +1,6 @@
 import { setIcon, setTooltip } from "obsidian";
 
-export class TagVisibilityControl {
+export class TagPriorityControl {
   private value: boolean;
   private button: HTMLButtonElement;
 
@@ -8,11 +8,11 @@ export class TagVisibilityControl {
     container: HTMLElement,
     value: boolean,
     disabled: boolean,
-    onChange: (selectedOnly: boolean) => void,
+    onChange: (selectedFirst: boolean) => void,
   ) {
     this.value = value;
     this.button = container.createEl("button", {
-      cls: "kanbase-filter-selected-only",
+      cls: "kanbase-filter-selected-first",
       attr: { type: "button" },
     });
     this.button.disabled = disabled;
@@ -26,10 +26,12 @@ export class TagVisibilityControl {
   }
 
   private updateButton(): void {
-    const label = this.value ? "Show all tags" : "Hide unselected tags";
+    const label = this.value
+      ? "Use normal tag order"
+      : "Show selected tags first";
     this.button.setAttr("aria-label", label);
     this.button.setAttr("aria-pressed", String(this.value));
-    setIcon(this.button, this.value ? "lucide-eye-off" : "lucide-eye");
+    setIcon(this.button, "lucide-list-filter");
     setTooltip(this.button, label);
   }
 }

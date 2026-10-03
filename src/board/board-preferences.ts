@@ -5,8 +5,8 @@ import {
   CONFIG_KEY_COLUMNS,
   CONFIG_KEY_SWIMLANE_ROWS,
   CONFIG_KEY_TAG_FILTERS,
-  CONFIG_KEY_TAG_FILTERS_SELECTED_ONLY,
   CONFIG_KEY_TAG_FILTERS_VISIBLE,
+  CONFIG_KEY_TAG_SELECTED_FIRST,
   CONFIG_KEY_TAG_SORT_ORDER,
   CONFIG_KEY_WIP_LIMITS,
   NO_VALUE_COLUMN,
@@ -123,12 +123,12 @@ export class BoardPreferences {
     this.view.config?.set(CONFIG_KEY_TAG_SORT_ORDER, order);
   }
 
-  public areOnlySelectedTagsVisible(): boolean {
-    return this.view.config?.get(CONFIG_KEY_TAG_FILTERS_SELECTED_ONLY) === true;
+  public areSelectedTagsFirst(): boolean {
+    return this.view.config?.get(CONFIG_KEY_TAG_SELECTED_FIRST) === true;
   }
 
-  public setOnlySelectedTagsVisible(selectedOnly: boolean): void {
-    this.view.config?.set(CONFIG_KEY_TAG_FILTERS_SELECTED_ONLY, selectedOnly);
+  public setSelectedTagsFirst(selectedFirst: boolean): void {
+    this.view.config?.set(CONFIG_KEY_TAG_SELECTED_FIRST, selectedFirst);
   }
 
   public isColumnCollapsed(columnName: string): boolean {
