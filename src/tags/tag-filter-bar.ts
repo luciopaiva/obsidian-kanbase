@@ -98,8 +98,7 @@ export class TagFilterBar {
     setTooltip(clearSearchButton, "Clear tag search");
     clearSearchButton.disabled = this.tagSearch.length === 0;
     let sortOrder = this.view.preferences.getTagSortOrder();
-    let selectedFirst =
-      this.filters.size > 0 && this.view.preferences.areSelectedTagsFirst();
+    let selectedFirst = this.view.preferences.areSelectedTagsFirst();
     const pillsEl = barEl.createDiv({ cls: "kanbase-filter-tags" });
 
     const tagsArray = Array.from(this.tagCounts.keys());
@@ -142,16 +141,11 @@ export class TagFilterBar {
       this.view.preferences.setTagSortOrder(order);
       renderMatchingTags();
     });
-    new TagPriorityControl(
-      controlsEl,
-      selectedFirst,
-      this.filters.size === 0,
-      (value) => {
-        selectedFirst = value;
-        this.view.preferences.setSelectedTagsFirst(value);
-        renderMatchingTags();
-      },
-    );
+    new TagPriorityControl(controlsEl, selectedFirst, (value) => {
+      selectedFirst = value;
+      this.view.preferences.setSelectedTagsFirst(value);
+      renderMatchingTags();
+    });
     searchInput.addEventListener("input", () => {
       this.tagSearch = searchInput.value;
       clearSearchButton.disabled = this.tagSearch.length === 0;
@@ -258,9 +252,6 @@ export class TagFilterBar {
       filters[tag] = state;
     }
     this.view.preferences.setTagFilters(filters);
-    if (this.filters.size === 0) {
-      this.view.preferences.setSelectedTagsFirst(false);
-    }
   }
 
   private getFilterState(tag: string): TagFilterState {

@@ -111,7 +111,7 @@ describe("Kanbase in Obsidian", function () {
           separator: getComputedStyle(controls).borderBottomWidth,
         };
       });
-      expect(layout.heights).toEqual(Array(layout.heights.length).fill(26));
+      expect(layout.heights).toEqual(Array(layout.heights.length).fill(30));
       expect(layout.contained).toBe(true);
       expect(layout.tagGap).toBeGreaterThanOrEqual(10);
       expect(layout.clearRightGap).toBeCloseTo(0);
@@ -166,7 +166,8 @@ describe("Kanbase in Obsidian", function () {
     await browser.execute(() => {
       document.querySelector(".kanbase-filter-bar").style.width = "";
     });
-    await expect(selectedFirstToggle()).toBeDisabled();
+    await expect(selectedFirstToggle()).toBeEnabled();
+    await expect(browser.$(".kanbase-filter-selected-first svg")).toExist();
     await expect(
       browser.$(".kanbase-filter-controls button.kanbase-filter-clear"),
     ).toBeDisabled();
@@ -177,13 +178,35 @@ describe("Kanbase in Obsidian", function () {
     await expect(browser.$$(".kanbase-filter-pill")).toBeElementsArrayOfSize(
       initialTagCount,
     );
+    await toggleSelectedFirst();
+    await expect(selectedFirstToggle()).toHaveAttribute("aria-pressed", "true");
+    expect(await tagLabels()).toEqual(originalTagOrder);
+    await browser.waitUntil(async () => {
+      const content = await browser.executeObsidian(async ({ app }) => {
+        const file = app.vault.getAbstractFileByPath(
+          "Generated/Generated.base",
+        );
+        return app.vault.read(file);
+      });
+      return content.includes("tagSelectedFirst: true");
+    });
+    await browser.executeObsidian(async ({ app, obsidian }) => {
+      const leaf = app.workspace.activeLeaf;
+      const file = app.vault.getAbstractFileByPath("Generated/Generated.base");
+      if (!leaf || !(file instanceof obsidian.TFile)) {
+        throw new Error("Active board not found");
+      }
+      await leaf.setViewState({ type: "empty" });
+      await leaf.openFile(file);
+    });
+    await expect(selectedFirstToggle()).toBeEnabled();
+    await expect(selectedFirstToggle()).toHaveAttribute("aria-pressed", "true");
     await planningFilter().click();
     await expect(selectedFirstToggle()).toBeEnabled();
     await expect(browser.$(".kanbase-filter-clear")).toBeEnabled();
     const tagsAreaBefore = await browser
       .$(".kanbase-filter-tags")
       .getLocation();
-    await toggleSelectedFirst();
     await expect(browser.$$(".kanbase-filter-pill")).toBeElementsArrayOfSize(
       initialTagCount,
     );
@@ -334,18 +357,30 @@ describe("Kanbase in Obsidian", function () {
       "aria-expanded",
       "true",
     );
-    await expect(selectedFirstToggle()).toBeDisabled();
-    await expect(selectedFirstToggle()).toHaveAttribute(
-      "aria-pressed",
-      "false",
-    );
+    await expect(selectedFirstToggle()).toBeEnabled();
+    await expect(selectedFirstToggle()).toHaveAttribute("aria-pressed", "true");
     await expect(browser.$$(".kanbase-filter-pill")).toBeElementsArrayOfSize(
       initialTagCount,
     );
     await planningFilter().click();
     await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(1);
+    expect((await tagLabels())[0]).toBe("planning");
     await planningFilter().click();
     await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(5);
+    await expect(selectedFirstToggle()).toHaveAttribute("aria-pressed", "true");
+    await toggleSelectedFirst();
+    await expect(selectedFirstToggle()).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    const normalTagOrder = await tagLabels();
+    await planningFilter().click();
+    expect(await tagLabels()).toEqual(normalTagOrder);
+    await planningFilter().click();
+    await expect(selectedFirstToggle()).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
 
     const shiftClickPlanningFilter = async () => {
       await browser.execute(
