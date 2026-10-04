@@ -177,10 +177,10 @@ describe("Kanbase in Obsidian", function () {
     });
     await expect(selectedFirstToggle()).toBeEnabled();
     await expect(
-      browser.$(".kanbase-filter-normal-order svg.lucide-ungroup"),
+      browser.$(".kanbase-filter-normal-order svg.lucide-group"),
     ).toExist();
     await expect(
-      browser.$(".kanbase-filter-selected-first svg.lucide-group"),
+      browser.$(".kanbase-filter-selected-first svg.lucide-ungroup"),
     ).toExist();
     await expect(
       browser.$(
