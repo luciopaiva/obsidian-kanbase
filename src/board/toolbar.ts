@@ -1,15 +1,12 @@
 import type { KanbanView } from "../kanban-view";
-import { BoardFilterButton } from "./board-filter-button";
 import { BoardMoreMenu } from "./board-more-menu";
 
 export class BoardToolbar {
   private view: KanbanView;
-  private filterButton: BoardFilterButton;
   private moreMenu: BoardMoreMenu;
 
   constructor(view: KanbanView) {
     this.view = view;
-    this.filterButton = new BoardFilterButton(view);
     this.moreMenu = new BoardMoreMenu(view);
   }
 
@@ -29,8 +26,6 @@ export class BoardToolbar {
       cls: "kanbase-toolbar-title",
       text: baseName ? `${baseName} Kanbase` : "Kanbase",
     });
-
-    this.filterButton.render(toolbarEl);
 
     this.moreMenu.render(toolbarEl);
   }
