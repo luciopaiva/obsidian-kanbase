@@ -2,7 +2,7 @@ import { setIcon, setTooltip } from "obsidian";
 
 export class TagPriorityControl {
   private value: boolean;
-  private button: HTMLButtonElement;
+  private buttons: Map<boolean, HTMLButtonElement> = new Map();
 
   constructor(
     container: HTMLElement,
@@ -10,25 +10,36 @@ export class TagPriorityControl {
     onChange: (selectedFirst: boolean) => void,
   ) {
     this.value = value;
-    this.button = container.createEl("button", {
-      cls: "kanbase-filter-selected-first",
-      attr: { type: "button" },
+    const group = container.createDiv({
+      cls: "kanbase-filter-button-group",
+      attr: { role: "group", "aria-label": "Tag selection priority" },
     });
-    this.button.addEventListener("click", () => {
-      this.value = !this.value;
-      this.updateButton();
-      onChange(this.value);
-    });
-    this.updateButton();
+    for (const selectedFirst of [false, true]) {
+      const button = group.createEl("button", {
+        cls: selectedFirst
+          ? "kanbase-filter-selected-first"
+          : "kanbase-filter-normal-order",
+        attr: { type: "button" },
+      });
+      setIcon(button, selectedFirst ? "lucide-group" : "lucide-ungroup");
+      setTooltip(
+        button,
+        selectedFirst ? "Show selected tags first" : "Use normal tag order",
+      );
+      button.addEventListener("click", () => {
+        if (this.value === selectedFirst) return;
+        this.value = selectedFirst;
+        this.updateButtons();
+        onChange(selectedFirst);
+      });
+      this.buttons.set(selectedFirst, button);
+    }
+    this.updateButtons();
   }
 
-  private updateButton(): void {
-    const label = this.value
-      ? "Use normal tag order"
-      : "Show selected tags first";
-    this.button.setAttr("aria-label", label);
-    this.button.setAttr("aria-pressed", String(this.value));
-    setIcon(this.button, "lucide-ungroup");
-    setTooltip(this.button, label);
+  private updateButtons(): void {
+    for (const [selectedFirst, button] of this.buttons) {
+      button.setAttr("aria-pressed", String(this.value === selectedFirst));
+    }
   }
 }
