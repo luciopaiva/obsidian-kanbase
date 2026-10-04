@@ -105,7 +105,15 @@ export class TagFilterBar {
     for (const activeTag of this.filters.keys()) {
       if (!this.tagCounts.has(activeTag)) tagsArray.push(activeTag);
     }
-    tagsArray.sort();
+    tagsArray.sort((first, second) => {
+      const firstLowercase = first.toLowerCase();
+      const secondLowercase = second.toLowerCase();
+      return firstLowercase < secondLowercase
+        ? -1
+        : firstLowercase > secondLowercase
+          ? 1
+          : 0;
+    });
 
     const renderMatchingTags = (): void => {
       pillsEl.empty();
