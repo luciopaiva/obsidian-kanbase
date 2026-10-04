@@ -3,6 +3,7 @@ import { relativeLuminance } from "../support/color-utils";
 import { countTagsByCard } from "./tag-counts";
 import { TagSortControl } from "./tag-sort-control";
 import { TagPriorityControl } from "./tag-priority-control";
+import { BoardFilterButton } from "../board/board-filter-button";
 import { ColorPickerModal } from "../ui/color-picker-modal";
 import type { KanbanView } from "../kanban-view";
 import type { Tags } from "./tags";
@@ -61,23 +62,41 @@ export class TagFilterBar {
   }
 
   public render(container: HTMLElement, isVisible: boolean): void {
-    if (!isVisible) return;
     if (this.tagCounts.size === 0 && this.filters.size === 0) return;
 
     const boardEl = container.querySelector(".kanbase-board");
     if (!boardEl) return;
 
     const barEl = container.createDiv({ cls: "kanbase-filter-bar" });
+    barEl.toggleClass("is-collapsed", !isVisible);
     container.insertBefore(barEl, boardEl);
 
+    const headerEl = barEl.createDiv({ cls: "kanbase-filter-header" });
+    const titleEl = headerEl.createEl("h3", {
+      cls: "kanbase-filter-title",
+    });
+    new BoardFilterButton(this.view).render(titleEl);
+
+    if (!isVisible) return;
+
     const controlsEl = barEl.createDiv({ cls: "kanbase-filter-controls" });
-    const searchInput = controlsEl.createEl("input", {
+    const searchEl = controlsEl.createDiv({
+      cls: "kanbase-filter-search-field",
+    });
+    const searchInput = searchEl.createEl("input", {
       cls: "kanbase-filter-search",
       type: "search",
       placeholder: "Filter tags…",
       attr: { "aria-label": "Filter tags by name" },
     });
     searchInput.value = this.tagSearch;
+    const clearSearchButton = searchEl.createEl("button", {
+      cls: "clickable-icon kanbase-filter-search-clear",
+      attr: { type: "button", "aria-label": "Clear tag search" },
+    });
+    setIcon(clearSearchButton, "lucide-x");
+    setTooltip(clearSearchButton, "Clear tag search");
+    clearSearchButton.disabled = this.tagSearch.length === 0;
     let sortOrder = this.view.preferences.getTagSortOrder();
     let selectedFirst =
       this.filters.size > 0 && this.view.preferences.areSelectedTagsFirst();
@@ -135,21 +154,33 @@ export class TagFilterBar {
     );
     searchInput.addEventListener("input", () => {
       this.tagSearch = searchInput.value;
+      clearSearchButton.disabled = this.tagSearch.length === 0;
       renderMatchingTags();
+    });
+    clearSearchButton.addEventListener("click", () => {
+      this.tagSearch = "";
+      searchInput.value = "";
+      clearSearchButton.disabled = true;
+      renderMatchingTags();
+      searchInput.focus();
     });
     renderMatchingTags();
 
-    if (this.filters.size > 0) {
-      const clearButton = barEl.createSpan({
-        cls: "kanbase-filter-clear",
-        text: "Clear",
-      });
-      clearButton.addEventListener("click", () => {
-        this.filters.clear();
-        this.persistFilters();
-        this.view.updates.scheduleRender();
-      });
-    }
+    const clearButton = controlsEl.createEl("button", {
+      cls: "kanbase-filter-clear",
+      attr: { type: "button", "aria-label": "Clear tag filters" },
+    });
+    const clearIcon = clearButton.createSpan();
+    clearIcon.setAttr("aria-hidden", "true");
+    setIcon(clearIcon, "lucide-x");
+    clearButton.createSpan({ text: "Clear" });
+    clearButton.disabled = this.filters.size === 0;
+    setTooltip(clearButton, "Clear tag filters");
+    clearButton.addEventListener("click", () => {
+      this.filters.clear();
+      this.persistFilters();
+      this.view.updates.scheduleRender();
+    });
   }
 
   private renderTagPill(container: HTMLElement, tag: string): void {

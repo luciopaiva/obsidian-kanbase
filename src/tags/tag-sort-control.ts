@@ -1,11 +1,11 @@
-import { setTooltip } from "obsidian";
+import { setIcon, setTooltip } from "obsidian";
 
 export type TagSortOrder = "alphabetical" | "count";
 
 /** Tag ordering buttons; persistence and tag rendering belong to the caller. */
 export class TagSortControl {
   private value: TagSortOrder;
-  private buttons = new Map<TagSortOrder, HTMLButtonElement>();
+  private button: HTMLButtonElement;
 
   constructor(
     container: HTMLElement,
@@ -13,41 +13,31 @@ export class TagSortControl {
     onChange: (order: TagSortOrder) => void,
   ) {
     this.value = value;
-    const group = container.createDiv({
+    this.button = container.createEl("button", {
       cls: "kanbase-filter-sort",
-      attr: { role: "group", "aria-label": "Tag sort order" },
+      attr: {
+        type: "button",
+      },
     });
 
-    for (const option of [
-      {
-        value: "alphabetical",
-        label: "A–Z",
-        tooltip: "Sort alphabetically",
-      },
-      {
-        value: "count",
-        label: "Count ↓",
-        tooltip: "Sort by count, highest first",
-      },
-    ] as const) {
-      const button = group.createEl("button", {
-        text: option.label,
-        attr: {
-          type: "button",
-          "aria-label": option.tooltip,
-          "aria-pressed": String(this.value === option.value),
-        },
-      });
-      setTooltip(button, option.tooltip);
-      this.buttons.set(option.value, button);
-      button.addEventListener("click", () => {
-        if (this.value === option.value) return;
-        this.value = option.value;
-        for (const [order, sortButton] of this.buttons) {
-          sortButton.setAttr("aria-pressed", String(this.value === order));
-        }
-        onChange(this.value);
-      });
-    }
+    this.button.addEventListener("click", () => {
+      this.value = this.value === "alphabetical" ? "count" : "alphabetical";
+      this.updateButton();
+      onChange(this.value);
+    });
+    this.updateButton();
+  }
+
+  private updateButton(): void {
+    const byCount = this.value === "count";
+    this.button.setAttr("aria-pressed", String(byCount));
+    setIcon(
+      this.button,
+      byCount ? "lucide-arrow-down-wide-narrow" : "lucide-arrow-down-az",
+    );
+    setTooltip(
+      this.button,
+      byCount ? "Sort alphabetically" : "Sort by count, highest first",
+    );
   }
 }
