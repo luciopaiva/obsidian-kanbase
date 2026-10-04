@@ -21,7 +21,7 @@ export class TagPriorityControl {
           : "kanbase-filter-normal-order",
         attr: { type: "button" },
       });
-      setIcon(button, selectedFirst ? "lucide-group" : "lucide-ungroup");
+      setIcon(button, selectedFirst ? "lucide-ungroup" : "lucide-group");
       setTooltip(
         button,
         selectedFirst ? "Show selected tags first" : "Use normal tag order",
