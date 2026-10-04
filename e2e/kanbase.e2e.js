@@ -63,9 +63,18 @@ describe("Kanbase in Obsidian", function () {
       );
     const selectedFirstToggle = () =>
       browser.$(".kanbase-filter-selected-first");
+    const countSort = () =>
+      browser.$('.kanbase-filter-sort[data-sort-order="count"]');
     const toggleSelectedFirst = () =>
       browser.execute(() => {
-        document.querySelector(".kanbase-filter-selected-first").click();
+        const selectedFirst = document.querySelector(
+          ".kanbase-filter-selected-first",
+        );
+        if (selectedFirst.getAttribute("aria-pressed") === "true") {
+          document.querySelector(".kanbase-filter-normal-order").click();
+        } else {
+          selectedFirst.click();
+        }
       });
     const tagLabels = () =>
       browser.execute(() =>
@@ -167,7 +176,34 @@ describe("Kanbase in Obsidian", function () {
       document.querySelector(".kanbase-filter-bar").style.width = "";
     });
     await expect(selectedFirstToggle()).toBeEnabled();
-    await expect(browser.$(".kanbase-filter-selected-first svg")).toExist();
+    await expect(
+      browser.$(".kanbase-filter-normal-order svg.lucide-ungroup"),
+    ).toExist();
+    await expect(
+      browser.$(".kanbase-filter-selected-first svg.lucide-group"),
+    ).toExist();
+    await expect(
+      browser.$(
+        '.kanbase-filter-sort[data-sort-order="alphabetical"] svg.lucide-arrow-down-az',
+      ),
+    ).toExist();
+    await expect(
+      browser.$$(".kanbase-filter-button-group"),
+    ).toBeElementsArrayOfSize(2);
+    const groupButtons = await browser.execute(() =>
+      Array.from(
+        document.querySelectorAll(".kanbase-filter-button-group button"),
+        (button) => ({
+          text: button.textContent.trim(),
+          width: button.getBoundingClientRect().width,
+        }),
+      ),
+    );
+    expect(groupButtons).toEqual(Array(4).fill({ text: "", width: 30 }));
+    await expect(browser.$(".kanbase-filter-normal-order")).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     await expect(
       browser.$(".kanbase-filter-controls button.kanbase-filter-clear"),
     ).toBeDisabled();
@@ -180,6 +216,14 @@ describe("Kanbase in Obsidian", function () {
     );
     await toggleSelectedFirst();
     await expect(selectedFirstToggle()).toHaveAttribute("aria-pressed", "true");
+    await browser.execute(() =>
+      document.querySelector(".kanbase-filter-selected-first").click(),
+    );
+    await expect(selectedFirstToggle()).toHaveAttribute("aria-pressed", "true");
+    await expect(browser.$(".kanbase-filter-normal-order")).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
     expect(await tagLabels()).toEqual(originalTagOrder);
     await browser.waitUntil(async () => {
       const content = await browser.executeObsidian(async ({ app }) => {
@@ -233,26 +277,27 @@ describe("Kanbase in Obsidian", function () {
     await expect(browser.$$(".kanbase-card")).toBeElementsArrayOfSize(1);
     await expect(
       browser.$$("button.kanbase-filter-sort"),
-    ).toBeElementsArrayOfSize(1);
-    await expect(browser.$(".kanbase-filter-sort")).toHaveAttribute(
-      "aria-pressed",
-      "false",
-    );
-    await expect(browser.$(".kanbase-filter-sort svg")).toExist();
-    await expect(browser.$(".kanbase-filter-sort")).toHaveAttribute(
+    ).toBeElementsArrayOfSize(2);
+    await expect(countSort()).toHaveAttribute("aria-pressed", "false");
+    await expect(
+      browser.$(
+        '.kanbase-filter-button-group[aria-label="Tag sort order"] svg.lucide-arrow-down-wide-narrow',
+      ),
+    ).toExist();
+    await expect(countSort()).toHaveAttribute(
       "aria-label",
       "Sort by count, highest first",
     );
     await browser.$('[aria-label="Sort by count, highest first"]').click();
-    await expect(browser.$(".kanbase-filter-sort")).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    await expect(browser.$(".kanbase-filter-sort svg")).toExist();
-    await expect(browser.$(".kanbase-filter-sort")).toHaveAttribute(
-      "aria-label",
-      "Sort alphabetically",
-    );
+    await expect(countSort()).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      browser.$(
+        '.kanbase-filter-button-group[aria-label="Tag sort order"] svg.lucide-arrow-down-wide-narrow',
+      ),
+    ).toExist();
+    await expect(
+      browser.$('.kanbase-filter-sort[data-sort-order="alphabetical"]'),
+    ).toHaveAttribute("aria-label", "Sort alphabetically");
     await expect(browser.$$(".kanbase-filter-pill")).toBeElementsArrayOfSize(
       initialTagCount,
     );
@@ -266,13 +311,12 @@ describe("Kanbase in Obsidian", function () {
       [...countOrderedTags].sort((first, second) => second - first),
     );
     await browser.execute(() =>
-      document.querySelector(".kanbase-filter-sort").click(),
+      document
+        .querySelector('.kanbase-filter-sort[data-sort-order="alphabetical"]')
+        .click(),
     );
-    await expect(browser.$(".kanbase-filter-sort")).toHaveAttribute(
-      "aria-pressed",
-      "false",
-    );
-    await expect(browser.$(".kanbase-filter-sort")).toHaveAttribute(
+    await expect(countSort()).toHaveAttribute("aria-pressed", "false");
+    await expect(countSort()).toHaveAttribute(
       "aria-label",
       "Sort by count, highest first",
     );
@@ -281,12 +325,11 @@ describe("Kanbase in Obsidian", function () {
       ...originalTagOrder.filter((tag) => tag !== "planning"),
     ]);
     await browser.execute(() =>
-      document.querySelector(".kanbase-filter-sort").click(),
+      document
+        .querySelector('.kanbase-filter-sort[data-sort-order="count"]')
+        .click(),
     );
-    await expect(browser.$(".kanbase-filter-sort")).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    await expect(countSort()).toHaveAttribute("aria-pressed", "true");
     const tagSearch = () => browser.$(".kanbase-filter-search");
     const clearTagSearch = () => browser.$('[aria-label="Clear tag search"]');
     await expect(clearTagSearch()).toBeDisabled();
@@ -326,10 +369,7 @@ describe("Kanbase in Obsidian", function () {
       await leaf.openFile(file);
     });
     await expect(selectedFirstToggle()).toHaveAttribute("aria-pressed", "true");
-    await expect(browser.$(".kanbase-filter-sort")).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    await expect(countSort()).toHaveAttribute("aria-pressed", "true");
     await expect(browser.$$(".kanbase-filter-pill")).toBeElementsArrayOfSize(
       initialTagCount,
     );

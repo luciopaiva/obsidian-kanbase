@@ -5,7 +5,7 @@ export type TagSortOrder = "alphabetical" | "count";
 /** Tag ordering buttons; persistence and tag rendering belong to the caller. */
 export class TagSortControl {
   private value: TagSortOrder;
-  private button: HTMLButtonElement;
+  private buttons: Map<TagSortOrder, HTMLButtonElement> = new Map();
 
   constructor(
     container: HTMLElement,
@@ -13,31 +13,41 @@ export class TagSortControl {
     onChange: (order: TagSortOrder) => void,
   ) {
     this.value = value;
-    this.button = container.createEl("button", {
-      cls: "kanbase-filter-sort",
-      attr: {
-        type: "button",
-      },
+    const group = container.createDiv({
+      cls: "kanbase-filter-button-group",
+      attr: { role: "group", "aria-label": "Tag sort order" },
     });
-
-    this.button.addEventListener("click", () => {
-      this.value = this.value === "alphabetical" ? "count" : "alphabetical";
-      this.updateButton();
-      onChange(this.value);
-    });
-    this.updateButton();
+    for (const order of ["alphabetical", "count"] as const) {
+      const button = group.createEl("button", {
+        cls: "kanbase-filter-sort",
+        attr: { type: "button", "data-sort-order": order },
+      });
+      setIcon(
+        button,
+        order === "alphabetical"
+          ? "lucide-arrow-down-az"
+          : "lucide-arrow-down-wide-narrow",
+      );
+      setTooltip(
+        button,
+        order === "alphabetical"
+          ? "Sort alphabetically"
+          : "Sort by count, highest first",
+      );
+      button.addEventListener("click", () => {
+        if (this.value === order) return;
+        this.value = order;
+        this.updateButtons();
+        onChange(order);
+      });
+      this.buttons.set(order, button);
+    }
+    this.updateButtons();
   }
 
-  private updateButton(): void {
-    const byCount = this.value === "count";
-    this.button.setAttr("aria-pressed", String(byCount));
-    setIcon(
-      this.button,
-      byCount ? "lucide-arrow-down-wide-narrow" : "lucide-arrow-down-az",
-    );
-    setTooltip(
-      this.button,
-      byCount ? "Sort alphabetically" : "Sort by count, highest first",
-    );
+  private updateButtons(): void {
+    for (const [order, button] of this.buttons) {
+      button.setAttr("aria-pressed", String(this.value === order));
+    }
   }
 }
