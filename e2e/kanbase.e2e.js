@@ -57,6 +57,28 @@ describe("Kanbase in Obsidian", function () {
     expect(generatedCard).toContain("kanbase_order: 0");
     expect(generatedCard).not.toContain("kanban_order:");
 
+    await browser.executeObsidian(async ({ app, obsidian }) => {
+      const file = app.vault.getAbstractFileByPath(
+        "Generated/Tasks/Plan project.md",
+      );
+      if (!(file instanceof obsidian.TFile)) {
+        throw new Error("Sample task not found");
+      }
+      await app.fileManager.processFrontMatter(file, (frontmatter) => {
+        frontmatter.tags = [
+          ...frontmatter.tags,
+          "Zebra-order-test",
+          "beta-order-test",
+          "alpha-order-test",
+        ];
+      });
+    });
+    await expect(
+      browser.$(
+        "//span[contains(@class, 'kanbase-filter-label') and normalize-space()='Zebra-order-test']",
+      ),
+    ).toExist();
+
     const planningFilter = () =>
       browser.$(
         "//span[contains(@class, 'kanbase-filter-label') and normalize-space()='planning']/parent::span",
@@ -84,6 +106,9 @@ describe("Kanbase in Obsidian", function () {
         ),
       );
     const originalTagOrder = await tagLabels();
+    expect(
+      originalTagOrder.filter((tag) => tag.endsWith("-order-test")),
+    ).toEqual(["alpha-order-test", "beta-order-test", "Zebra-order-test"]);
     const initialTagCount = await browser.$$(".kanbase-filter-pill").length;
     expect(initialTagCount).toBeGreaterThan(1);
     await expect(browser.$(".kanbase-filter-title")).toHaveText("Tag filters");
