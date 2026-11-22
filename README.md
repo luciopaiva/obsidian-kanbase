@@ -16,6 +16,7 @@
 - **Optional Hover Previews**: Enable native Obsidian previews for cards using the **Page preview** core plugin.
 - **Inline Editing**: Rename cards and columns and edit card tags without leaving the board.
 - **Quick Card Creation**: Create notes in a column using the configured folder, template, default properties, and top or bottom placement.
+- **Parent / Child Cards**: Right-click a card and choose **Create child** to add a linked subtask (same column, same tags); child cards show who their parent is, and hovering a parent spotlights its children on the board.
 - **Markdown-Native Data**: Card moves and edits update ordinary Markdown files and frontmatter; Kanbase does not maintain a separate task database.
 
 ## Usage

@@ -7,6 +7,14 @@ export const ORDER_PROPERTY = "kanbase_order";
 /** Previous Base Board order property, read only when adopting existing cards. */
 export const LEGACY_ORDER_PROPERTY = "kanban_order";
 
+/**
+ * Frontmatter property holding a wikilink to the note this card is a child of.
+ * Written by "Create child" and read back to render the parent indicator and
+ * to spotlight a parent's children on hover. Prefixed like the other Kanbase
+ * properties so it cannot collide with an existing `parent` in a vault.
+ */
+export const PARENT_PROPERTY = "kanbase_parent";
+
 /** Key used by BasesViewConfig.set/get to persist column order in the .base file. */
 export const CONFIG_KEY_COLUMNS = "boardColumns";
 

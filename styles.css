@@ -665,6 +665,38 @@
   padding-right: 24px; /* leave room for the edit button */
 }
 
+/* ---- Parent indicator (child cards) ---- */
+
+.kanbase-card-parent {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  margin-bottom: 4px;
+}
+
+/* The indicator sits right under the title, so tighten the title's gap */
+.kanbase-card-title:has(+ .kanbase-card-parent) {
+  margin-bottom: 2px;
+}
+
+.kanbase-card-parent-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.kanbase-card-parent-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.kanbase-card-parent-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ---- Card edit button ---- */
 
 .kanbase-card-edit-btn {
@@ -1305,6 +1337,16 @@
 /* Spotlight cards sharing a tag while hovering it on another card */
 .kanbase-card--dimmed {
   opacity: 0.35;
+}
+
+/* Spotlight a hovered parent card together with its children */
+.kanbase-board--hierarchy-hover .kanbase-card {
+  opacity: 0.35;
+}
+
+.kanbase-board--hierarchy-hover .kanbase-card--hierarchy-parent,
+.kanbase-board--hierarchy-hover .kanbase-card--hierarchy-child {
+  opacity: 1;
 }
 
 .kanbase-filter-pill.kanbase-filter-pill-light {

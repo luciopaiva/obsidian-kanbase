@@ -17,8 +17,10 @@ import { KanbanView } from "../kanban-view";
 import {
   LEGACY_ORDER_PROPERTY,
   ORDER_PROPERTY,
+  PARENT_PROPERTY,
   sanitizeFilename,
 } from "../support/constants";
+import { getParentDisplayName, resolveParentPath } from "./card-hierarchy";
 import { relativeLuminance } from "../support/color-utils";
 
 const IMAGE_EXTENSIONS = new Set([
@@ -212,6 +214,14 @@ export class CardManager {
         });
       });
 
+      // Hover → spotlight this card and its children (mirrors tag hover)
+      cardEl.addEventListener("mouseenter", () =>
+        this.spotlightHierarchy(cardEl, filePath),
+      );
+      cardEl.addEventListener("mouseleave", () =>
+        this.clearHierarchySpotlight(),
+      );
+
       // Right-click → batch move menu when cards are selected, otherwise standard file menu
       cardEl.addEventListener("contextmenu", (e: MouseEvent) => {
         e.preventDefault();
@@ -233,6 +243,18 @@ export class CardManager {
           "kanbase-card",
           this.view.app.workspace.getMostRecentLeaf(),
         );
+        menu.addSeparator();
+        menu.addItem((item) => {
+          item
+            .setTitle("Create child")
+            .setIcon("lucide-corner-down-right")
+            .onClick(() =>
+              this.view.cardCreation.startChild(
+                file,
+                cardEl.dataset.columnName ?? columnName,
+              ),
+            );
+        });
         this.addMoveToEdgeItems(menu, filePath);
         menu.showAtMouseEvent(e);
       });
@@ -260,6 +282,24 @@ export class CardManager {
       }
     }
     titleEl.createSpan({ text: cardTitle });
+
+    // ---- Parent indicator (only on child cards) ----
+    const parentName = getParentDisplayName(
+      this.view.app,
+      filePath,
+      this.getParentRaw(filePath),
+    );
+    if (parentName) {
+      const parentEl = cardEl.createDiv({ cls: "kanbase-card-parent" });
+      setIcon(
+        parentEl.createSpan({ cls: "kanbase-card-parent-icon" }),
+        "lucide-corner-down-right",
+      );
+      parentEl.createSpan({
+        cls: "kanbase-card-parent-text",
+        text: `Child of ${parentName}`,
+      });
+    }
 
     // ---- Edit button (visible on hover) ----
     const editBtn = cardEl.createDiv({ cls: "kanbase-card-edit-btn" });
@@ -292,6 +332,8 @@ export class CardManager {
       const propName = propId.startsWith("note.") ? propId.slice(5) : propId;
       if (groupByProp && propName === groupByProp) continue;
       if (ORDER_PROPS_TO_SKIP.has(propName)) continue;
+      // The parent link renders as its own indicator line, not as a chip.
+      if (propName === PARENT_PROPERTY) continue;
 
       const val = entry.getValue(propId);
       if (!val || val instanceof NullValue || !val.isTruthy()) continue;
@@ -401,6 +443,63 @@ export class CardManager {
       .forEach((el) => el.removeClass("kanbase-card--dimmed"));
   }
 
+  /**
+   * Spotlight the hovered card and its children by dimming every other card
+   * on the board — same effect as hovering a tag. Nothing is dimmed when the
+   * card has no children rendered, so regular cards keep their normal hover.
+   */
+  private spotlightHierarchy(cardEl: HTMLElement, parentPath: string): void {
+    if (!parentPath) return;
+    const boardEl =
+      this.view.containerEl.querySelector<HTMLElement>(".kanbase-board");
+    if (!boardEl) return;
+    const cards = Array.from(
+      boardEl.querySelectorAll<HTMLElement>(".kanbase-card"),
+    );
+    const children = cards.filter((el) => {
+      const path = el.dataset.filePath;
+      return (
+        !!path && path !== parentPath && this.getParentPath(path) === parentPath
+      );
+    });
+    if (children.length === 0) return;
+
+    boardEl.addClass("kanbase-board--hierarchy-hover");
+    cardEl.addClass("kanbase-card--hierarchy-parent");
+    for (const childEl of children) {
+      childEl.addClass("kanbase-card--hierarchy-child");
+    }
+  }
+
+  private clearHierarchySpotlight(): void {
+    this.view.containerEl
+      .querySelectorAll(
+        ".kanbase-board--hierarchy-hover," +
+          " .kanbase-card--hierarchy-parent," +
+          " .kanbase-card--hierarchy-child",
+      )
+      .forEach((el) => {
+        el.removeClass("kanbase-board--hierarchy-hover");
+        el.removeClass("kanbase-card--hierarchy-parent");
+        el.removeClass("kanbase-card--hierarchy-child");
+      });
+  }
+
+  /** Raw frontmatter value of the `kanbase_parent` property at `path`. */
+  private getParentRaw(path: string): unknown {
+    if (!path) return null;
+    const file = this.view.app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof TFile)) return null;
+    return this.view.app.metadataCache.getFileCache(file)?.frontmatter?.[
+      PARENT_PROPERTY
+    ];
+  }
+
+  /** Resolved vault path of the parent of the card at `path`, if any. */
+  private getParentPath(path: string): string | null {
+    return resolveParentPath(this.view.app, path, this.getParentRaw(path));
+  }
+
   private getRenderVersion(entry: BasesEntry): string {
     const file = entry.file;
     const groupByProp = this.view.boardConfig.getGroupByProperty();
@@ -427,6 +526,15 @@ export class CardManager {
       resolvedFile instanceof TFile
         ? this.view.tags.getTagsForCardDisplay(resolvedFile)
         : [];
+    const parentTarget = getParentDisplayName(
+      this.view.app,
+      file?.path ?? "",
+      resolvedFile instanceof TFile
+        ? this.view.app.metadataCache.getFileCache(resolvedFile)?.frontmatter?.[
+            PARENT_PROPERTY
+          ]
+        : null,
+    );
     const coverProperty = this.view.boardConfig.getCardCoverProperty();
     const cover =
       resolvedFile instanceof TFile && coverProperty
@@ -454,6 +562,7 @@ export class CardManager {
           : (file?.basename ?? "Untitled"),
       visibleProperties,
       tags,
+      parent: parentTarget ?? "",
       tagColors: this.view.tags.getColors(),
       tagPosition: this.view.plugin.getCardTagPosition(),
       titleFontSize: this.view.plugin.getCardTitleFontSize(),
